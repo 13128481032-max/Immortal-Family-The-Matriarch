@@ -6,7 +6,7 @@ import { buildSystemPrompt } from '../../services/promptBuilder';
  * AI 聊天界面组件
  * 为 NPC 提供基于 LLM 的智能对话能力
  */
-const ChatInterface = ({ npc, player, apiKey, apiUrl }) => {
+const ChatInterface = ({ npc, player, apiKey, apiUrl, gameState = {} }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -17,7 +17,7 @@ const ChatInterface = ({ npc, player, apiKey, apiUrl }) => {
   useEffect(() => {
     const systemPrompt = {
       role: "system",
-      content: buildSystemPrompt(npc, player)
+      content: buildSystemPrompt(npc, player, gameState)
     };
     
     // 尝试从 localStorage 加载历史记录
@@ -29,7 +29,7 @@ const ChatInterface = ({ npc, player, apiKey, apiUrl }) => {
     } else {
       setMessages([systemPrompt]);
     }
-  }, [npc.id, npc, player]);
+  }, [npc.id, npc, player, gameState]);
 
   // 自动滚动到底部
   useEffect(() => {
