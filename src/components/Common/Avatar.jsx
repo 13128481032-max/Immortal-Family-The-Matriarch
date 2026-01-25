@@ -49,21 +49,21 @@ const Avatar = ({ dna, size = 64, gender }) => {
     pointerEvents: 'none'
   };
 
-  // 构造资源路径（使用 /src/assets 路径，Vite 可直接提供）
+  // 构造资源路径（使用 public 目录，Vite 会将其复制到构建输出的根目录）
   const getMalePath = (part, idx) => {
-    if (part === 'base') return `/src/assets/male/base_face.png`;
+    if (part === 'base') return `/assets/male/base_face.png`;
     // 支持传入 -1 来表示无发型（光头）
     if (idx == null || idx < 0) return null;
     const num = String((idx || 0) + 1).padStart(2, '0');
-    return `/src/assets/male/${part}/${part}_${num}.png`;
+    return `/assets/male/${part}/${part}_${num}.png`;
   };
 
   // female 分层资源支持：base_face + tzone + mouth + hair
   const getFemalePath = (part, idx) => {
-    if (part === 'base') return `/src/assets/female/base_face.png`;
+    if (part === 'base') return `/assets/female/base_face.png`;
     // female assets use names like tzone01.png, mouth01.png, hair01.png (no underscore)
     const num = String((idx || 0) + 1).padStart(2, '0');
-    return `/src/assets/female/${part}/${part}${num}.png`;
+    return `/assets/female/${part}/${part}${num}.png`;
   };
 
   // 如果是 female，使用分层渲染（并支持发色着色）
