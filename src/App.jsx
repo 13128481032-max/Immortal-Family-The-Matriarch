@@ -1791,7 +1791,7 @@ function App() {
           onOptionSelect={handleOptionSelect}
           player={player}
           children={children}
-          npcs={npcs}
+          npcs={activeNpcs}
         />
       )}
 
