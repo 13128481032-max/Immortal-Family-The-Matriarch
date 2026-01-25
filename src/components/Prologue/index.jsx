@@ -117,21 +117,28 @@ const styles = {
     flexDirection: 'column', 
     gap: '15px', 
     width: '100%', 
-    maxWidth: '400px',
-    marginTop: '20px'
+    maxWidth: '500px',
+    marginTop: '20px',
+    padding: '0 15px'
   },
   btn: { 
-    padding: '15px', 
-    background: '#212121', 
-    border: '1px solid #444', 
-    color: 'white', 
-    borderRadius: '8px', 
+    padding: '15px 12px', 
+    background: '#1a1a1a', 
+    border: '2px solid #666', 
+    color: '#fff', 
+    borderRadius: '12px', 
     cursor: 'pointer', 
     textAlign: 'left', 
     transition: 'all 0.3s', 
     ':hover': { borderColor: '#d32f2f' },
-    fontSize: 'clamp(12px, 3vw, 14px)',
-    lineHeight: '1.5'
+    fontSize: 'clamp(13px, 3.5vw, 15px)',
+    lineHeight: '1.6',
+    whiteSpace: 'normal',
+    wordWrap: 'break-word',
+    minHeight: '70px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
   }
 };
 
