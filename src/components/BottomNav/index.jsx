@@ -19,7 +19,7 @@ const BottomNav = ({ activeTab, onTabChange }) => {
           onClick={() => onTabChange(tab.id)}
           style={{
             ...styles.btn,
-            color: activeTab === tab.id ? '#3e2723' : '#9e9e9e',
+            backgroundColor: activeTab === tab.id ? 'rgba(255,193,7,0.2)' : 'transparent',
             fontWeight: activeTab === tab.id ? 'bold' : 'normal'
           }}
         >
@@ -34,8 +34,8 @@ const BottomNav = ({ activeTab, onTabChange }) => {
 const styles = {
   container: {
     height: '70px',
-    backgroundColor: 'linear-gradient(135deg, #ffffff 0%, #f5f0e8 100%)', // 渐变背景
-    borderTop: '2px solid #d7ccc8', // 古色边框
+    background: 'linear-gradient(135deg, #3e2723 0%, #2c1810 100%)', // 深色渐变背景，提高对比度
+    borderTop: '2px solid #5d4037', // 深色边框
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
@@ -44,7 +44,7 @@ const styles = {
     left: 0,
     right: 0, // 撑满宽度
     zIndex: 100,
-    boxShadow: '0 -4px 15px rgba(0,0,0,0.1)', // 顶部阴影
+    boxShadow: '0 -4px 15px rgba(0,0,0,0.3)', // 加深阴影
     borderRadius: '16px 16px 0 0' // 顶部圆角
   },
   btn: {
@@ -54,16 +54,16 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     cursor: 'pointer',
-    padding: '8px',
+    padding: '8px 4px',
     borderRadius: '12px', // 圆角
     transition: 'all 0.3s ease',
     ':hover': {
-      background: 'rgba(139, 69, 19, 0.05)', // 悬停背景
+      background: 'rgba(255, 255, 255, 0.1)', // 悬停背景
       transform: 'translateY(-2px)'
     }
   },
   icon: { fontSize: '22px', marginBottom: '3px' },
-  label: { fontSize: '11px', color: '#5d4037', fontFamily: 'Microsoft YaHei, SimSun, serif' } // 中文字体
+  label: { fontSize: '11px', color: '#fff', fontFamily: 'Microsoft YaHei, SimSun, serif' } // 白色文字
 };
 
 export default BottomNav;
