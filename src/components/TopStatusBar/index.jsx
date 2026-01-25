@@ -60,14 +60,14 @@ const TopStatusBar = ({ player, isAuto, onBreakthrough }) => {
 const styles = {
   container: {
     height: '60px', // 减少高度，避免遮挡主界面
-    backgroundColor: 'linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%)', // 渐变背景
+    background: 'linear-gradient(135deg, #3e2723 0%, #2c1810 100%)', // 深色渐变背景，提高对比度
     color: '#fff',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0 15px',
+    padding: '0 10px',
     position: 'relative',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.15)', // 柔和阴影
+    boxShadow: '0 4px 15px rgba(0,0,0,0.3)', // 加深阴影
     borderRadius: '0 0 16px 16px' // 底部圆角
   },
   left: {
@@ -109,40 +109,43 @@ const styles = {
   },
   right: {
     display: 'flex',
-    gap: '20px',
-    alignItems: 'center'
+    gap: '8px',
+    alignItems: 'center',
+    flexShrink: 0
   },
   resource: {
     display: 'flex',
     alignItems: 'center',
-    gap: '5px',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    padding: '6px 12px',
+    gap: '4px',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: '5px 10px',
     borderRadius: '16px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
   },
   resourceIcon: {
-    fontSize: '14px'
+    fontSize: '16px'
   },
   resourceValue: {
-    fontSize: '14px',
-    fontWeight: 'bold'
+    fontSize: '13px',
+    fontWeight: 'bold',
+    color: '#fff'
   },
   time: {
     display: 'flex',
     alignItems: 'center',
-    gap: '5px',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    padding: '6px 12px',
+    gap: '4px',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: '5px 10px',
     borderRadius: '16px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
   },
   timeIcon: {
-    fontSize: '14px'
+    fontSize: '16px'
   },
   timeValue: {
-    fontSize: '14px',
-    fontWeight: 'bold'
+    fontSize: '13px',
+    fontWeight: 'bold',
+    color: '#fff'
   }
 };
 
