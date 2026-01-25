@@ -1,0 +1,149 @@
+/* Global ancient Chinese style */
+body {
+  font-family: 'Microsoft YaHei', 'SimSun', serif; /* 中文字体 */
+  background-color: #f5f0e8; /* 浅米色背景，营造古卷感 */
+  color: #5d4037; /* 深棕色文字，古色古香 */
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* 古色古香的纸张背景纹理 */
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-image: linear-gradient(rgba(245, 240, 232, 0.8), rgba(245, 240, 232, 0.8)), 
+                    radial-gradient(circle at 20% 50%, rgba(222, 184, 135, 0.3) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 30%, rgba(222, 184, 135, 0.2) 0%, transparent 50%);
+  background-size: 100% 100%, 100% 100%, 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* 柔和的阴影效果 */
+.shadow-soft {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* 古色古香的边框样式 */
+.border-ancient {
+  border: 2px solid #d7ccc8;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 古色古香的按钮样式 */
+.btn-ancient {
+  background: linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-ancient:hover {
+  background: linear-gradient(135deg, #6d4c41 0%, #5d4037 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-ancient:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 用于自动模式下的沙漏旋转动画 */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 呼吸动画，用于重要按钮 */
+@keyframes breathe {
+  0% { box-shadow: 0 0 0 0 rgba(139, 69, 19, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(139, 69, 19, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(139, 69, 19, 0); }
+}
+
+/* 淡入动画 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 平滑滚动 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f0e8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d7ccc8;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #bcaaa4;
+}
+
+/* AI 聊天界面动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 加载中的点点动画 */
+.loading-dots::after {
+  content: '...';
+  animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0%, 20% {
+    content: '.';
+  }
+  40% {
+    content: '..';
+  }
+  60%, 100% {
+    content: '...';
+  }
+}
+
+/* 输入框聚焦效果 */
+input:focus {
+  outline: none;
+  border-color: #d4af37 !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+/* 按钮禁用状态 */
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* 链接样式 */
+a {
+  color: #4e6a5d;
+  text-decoration: none;
+  margin: 0 4px;
+}
+
+a:hover {
+  color: #d4af37;
+  text-decoration: underline;
+}

@@ -1,0 +1,69 @@
+import React from 'react';
+
+const BottomNav = ({ activeTab, onTabChange }) => {
+  const tabs = [
+    { id: 'FAMILY', label: '家族', icon: '🌳' },
+    { id: 'NPC',    label: '情缘', icon: '💞' },
+    { id: 'ACTION', label: '修炼', icon: '🧘' }, // 这里包含了 办事/挑战
+    { id: 'REVENGE', label: '复仇', icon: '⚔️' },
+    { id: 'PLAYER', label: '主角', icon: '🧙‍♀️' }, // 新增：主角属性界面
+    { id: 'SYSTEM', label: '系统', icon: '⚙️' },
+    { id: 'LOG',    label: '纪事', icon: '📜' },
+  ];
+
+  return (
+    <div style={styles.container}>
+      {tabs.map(tab => (
+        <button 
+          key={tab.id}
+          onClick={() => onTabChange(tab.id)}
+          style={{
+            ...styles.btn,
+            color: activeTab === tab.id ? '#3e2723' : '#9e9e9e',
+            fontWeight: activeTab === tab.id ? 'bold' : 'normal'
+          }}
+        >
+          <div style={styles.icon}>{tab.icon}</div>
+          <div style={styles.label}>{tab.label}</div>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+const styles = {
+  container: {
+    height: '70px',
+    backgroundColor: 'linear-gradient(135deg, #ffffff 0%, #f5f0e8 100%)', // 渐变背景
+    borderTop: '2px solid #d7ccc8', // 古色边框
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    position: 'fixed', // 绝对定位在底部
+    bottom: 0,
+    left: 0,
+    right: 0, // 撑满宽度
+    zIndex: 100,
+    boxShadow: '0 -4px 15px rgba(0,0,0,0.1)', // 顶部阴影
+    borderRadius: '16px 16px 0 0' // 顶部圆角
+  },
+  btn: {
+    background: 'none',
+    border: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    cursor: 'pointer',
+    padding: '8px',
+    borderRadius: '12px', // 圆角
+    transition: 'all 0.3s ease',
+    ':hover': {
+      background: 'rgba(139, 69, 19, 0.05)', // 悬停背景
+      transform: 'translateY(-2px)'
+    }
+  },
+  icon: { fontSize: '22px', marginBottom: '3px' },
+  label: { fontSize: '11px', color: '#5d4037', fontFamily: 'Microsoft YaHei, SimSun, serif' } // 中文字体
+};
+
+export default BottomNav;
