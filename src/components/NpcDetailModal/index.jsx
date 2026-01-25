@@ -5,11 +5,18 @@ import TraitTag from '../Common/TraitTag.jsx';
 import Avatar from '../Common/Avatar.jsx';
 import ChatInterface from '../ChatInterface'; // 引入聊天组件
 
-const NpcDetailModal = ({ npc, onClose, onOptionSelect, player }) => {
+const NpcDetailModal = ({ npc, onClose, onOptionSelect, player, children = [], npcs = [] }) => {
   // 当前随机到的剧情事件
   const [currentEvent, setCurrentEvent] = useState(null);
   // 视图模式：'INFO' 或 'CHAT'
   const [viewMode, setViewMode] = useState('INFO');
+  
+  // 构建游戏状态对象
+  const gameState = {
+    children: children,
+    npcs: npcs,
+    // 可以添加更多游戏状态信息
+  };
 
   // 辅助组件：属性条
   const AttributeRow = ({ label, value, max=100, color }) => (
@@ -195,6 +202,7 @@ const NpcDetailModal = ({ npc, onClose, onOptionSelect, player }) => {
                     player={player} 
                     apiKey={apiKey}
                     apiUrl={apiUrl}
+                    gameState={gameState}
                   />
                 );
               })()}
