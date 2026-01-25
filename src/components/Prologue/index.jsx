@@ -76,12 +76,63 @@ const Prologue = ({ onFinish, onLoadGame }) => {
 };
 
 const styles = {
-  container: { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'black', color: 'white', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 999, padding: '20px', textAlign: 'center' },
-  title: { fontSize: '32px', marginBottom: '20px', animation: 'fadeIn 1s' },
-  sub: { fontSize: '16px', color: '#ccc', lineHeight: '1.6', maxWidth: '600px', animation: 'slideUp 1s' },
-  tip: { position: 'absolute', bottom: '50px', fontSize: '12px', color: '#666' },
-  choices: { display: 'flex', flexDirection: 'column', gap: '15px', width: '100%', maxWidth: '400px' },
-  btn: { padding: '15px', background: '#212121', border: '1px solid #444', color: 'white', borderRadius: '8px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.3s', ':hover': { borderColor: '#d32f2f' } }
+  container: { 
+    position: 'fixed', 
+    top: 0, 
+    left: 0, 
+    width: '100%', 
+    height: '100%', 
+    background: 'black', 
+    color: 'white', 
+    display: 'flex', 
+    flexDirection: 'column', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    zIndex: 999, 
+    padding: '20px', 
+    textAlign: 'center',
+    overflowY: 'auto'
+  },
+  title: { 
+    fontSize: 'clamp(20px, 5vw, 32px)', 
+    marginBottom: '20px', 
+    animation: 'fadeIn 1s' 
+  },
+  sub: { 
+    fontSize: 'clamp(14px, 3.5vw, 16px)', 
+    color: '#ccc', 
+    lineHeight: '1.6', 
+    maxWidth: '600px', 
+    animation: 'slideUp 1s',
+    padding: '0 10px'
+  },
+  tip: { 
+    position: 'absolute', 
+    bottom: '20px', 
+    fontSize: 'clamp(10px, 2.5vw, 12px)', 
+    color: '#666' 
+  },
+  choices: { 
+    display: 'flex', 
+    flexDirection: 'column', 
+    gap: '15px', 
+    width: '100%', 
+    maxWidth: '400px',
+    marginTop: '20px'
+  },
+  btn: { 
+    padding: '15px', 
+    background: '#212121', 
+    border: '1px solid #444', 
+    color: 'white', 
+    borderRadius: '8px', 
+    cursor: 'pointer', 
+    textAlign: 'left', 
+    transition: 'all 0.3s', 
+    ':hover': { borderColor: '#d32f2f' },
+    fontSize: 'clamp(12px, 3vw, 14px)',
+    lineHeight: '1.5'
+  }
 };
 
 export default Prologue;
