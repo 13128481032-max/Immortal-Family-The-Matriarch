@@ -1790,6 +1790,8 @@ function App() {
           onClose={() => setSelectedNpc(null)}
           onOptionSelect={handleOptionSelect}
           player={player}
+          children={children}
+          npcs={npcs}
         />
       )}
 
