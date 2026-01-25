@@ -79,14 +79,73 @@ const SectSelectionModal = ({ event, onClose, onAssign }) => {
 };
 
 const styles = {
-  overlay: { position: 'fixed', inset:0, background: 'rgba(0,0,0,0.7)', display:'flex', justifyContent:'center', alignItems:'center', zIndex:500 },
-  card: { width: '640px', background: '#fff', borderRadius: 12, padding: 20 },
-  content: { display: 'flex', gap: 12 },
-  childBox: { width: 220, padding: 12, background: '#fafafa', borderRadius: 8 },
-  listBox: { flex: 1, display: 'flex', flexDirection: 'column', gap: 8 },
-  sectRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10, borderRadius: 8, background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' },
-  btn: { padding: '8px 12px', background: '#3e2723', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' },
-  cancel: { padding: '8px 12px', background: '#ddd', border: 'none', borderRadius: 6, cursor: 'pointer' }
+  overlay: { 
+    position: 'fixed', 
+    inset: 0, 
+    background: 'rgba(0,0,0,0.7)', 
+    display: 'flex', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    zIndex: 500,
+    padding: '10px',
+    overflowY: 'auto'
+  },
+  card: { 
+    width: '100%',
+    maxWidth: '640px', 
+    background: '#fff', 
+    borderRadius: 12, 
+    padding: '16px',
+    maxHeight: '90vh',
+    overflowY: 'auto',
+    margin: 'auto'
+  },
+  content: { 
+    display: 'flex', 
+    gap: 12,
+    flexDirection: window.innerWidth <= 768 ? 'column' : 'row'
+  },
+  childBox: { 
+    width: window.innerWidth <= 768 ? '100%' : '220px',
+    padding: 12, 
+    background: '#fafafa', 
+    borderRadius: 8 
+  },
+  listBox: { 
+    flex: 1, 
+    display: 'flex', 
+    flexDirection: 'column', 
+    gap: 8 
+  },
+  sectRow: { 
+    display: 'flex', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    padding: 10, 
+    borderRadius: 8, 
+    background: '#fff', 
+    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+    flexDirection: window.innerWidth <= 480 ? 'column' : 'row',
+    gap: window.innerWidth <= 480 ? '10px' : '0'
+  },
+  btn: { 
+    padding: '8px 12px', 
+    background: '#3e2723', 
+    color: 'white', 
+    border: 'none', 
+    borderRadius: 6, 
+    cursor: 'pointer',
+    fontSize: 'clamp(12px, 3vw, 14px)',
+    whiteSpace: 'nowrap'
+  },
+  cancel: { 
+    padding: '8px 12px', 
+    background: '#ddd', 
+    border: 'none', 
+    borderRadius: 6, 
+    cursor: 'pointer',
+    fontSize: 'clamp(12px, 3vw, 14px)'
+  }
 };
 
 export default SectSelectionModal;
