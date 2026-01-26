@@ -67,13 +67,21 @@ const NpcCard = ({ npc, onInteract }) => {
         {/* 双修按钮 - 需要亲密关系（80+） */}
         {!npc.isChild && (
           <button 
-            onClick={() => onInteract(npc.id, 'DUAL_CULTIVATION')} 
+            onClick={() => {
+              const affection = npc.relationship?.affection || 0;
+              if (affection < 80) {
+                alert(`需要亲密关系才能双修（当前好感度 ${affection}，需要 >= 80）`);
+              } else {
+                onInteract(npc.id, 'DUAL_CULTIVATION');
+              }
+            }} 
             disabled={(npc.relationship?.affection || 0) < 80}
             style={{
               ...styles.btn, 
-              opacity: (npc.relationship?.affection || 0) < 80 ? 0.5 : 1,
-              backgroundColor: '#9c27b0',
-              color: 'white'
+              opacity: (npc.relationship?.affection || 0) < 80 ? 0.5 : 1, 
+              backgroundColor: '#7b1fa2', 
+              color: 'white',
+              cursor: (npc.relationship?.affection || 0) < 80 ? 'not-allowed' : 'pointer'
             }}
             title="双修大道，共享经验（需要80+好感）"
           >
@@ -84,13 +92,21 @@ const NpcCard = ({ npc, onInteract }) => {
         {/* 劝生按钮 - 需要亲密关系（80+） */}
         {!npc.isChild && (
           <button 
-            onClick={() => onInteract(npc.id, 'PROPOSE')} 
+            onClick={() => {
+              const affection = npc.relationship?.affection || 0;
+              if (affection < 80) {
+                alert(`需要亲密关系才能劝生（当前好感度 ${affection}，需要 >= 80）`);
+              } else {
+                onInteract(npc.id, 'PROPOSE');
+              }
+            }} 
             disabled={(npc.relationship?.affection || 0) < 80}
             style={{
               ...styles.btn, 
               opacity: (npc.relationship?.affection || 0) < 80 ? 0.5 : 1, 
               backgroundColor: '#d81b60', 
-              color: 'white'
+              color: 'white',
+              cursor: (npc.relationship?.affection || 0) < 80 ? 'not-allowed' : 'pointer'
             }}
             title="劝其为你诞子（需要80+好感）"
           >
