@@ -62,6 +62,8 @@ const ZoomableTree = ({ player, children, pregnantNpcs = [], onChildClick }) => 
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [touchStart, setTouchStart] = useState(null);
+  const [lastTouchDistance, setLastTouchDistance] = useState(null);
   const containerRef = useRef(null);
 
   // 滚轮缩放
@@ -86,6 +88,52 @@ const ZoomableTree = ({ player, children, pregnantNpcs = [], onChildClick }) => 
 
   const handleMouseUp = () => {
     setIsDragging(false);
+  };
+
+  // 触摸事件支持（移动端）
+  const getTouchDistance = (touches) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      // 单指拖动
+      setIsDragging(true);
+      setTouchStart({
+        x: e.touches[0].clientX - position.x,
+        y: e.touches[0].clientY - position.y
+      });
+    } else if (e.touches.length === 2) {
+      // 双指缩放
+      setLastTouchDistance(getTouchDistance(e.touches));
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.cancelable) e.preventDefault();
+    
+    if (e.touches.length === 1 && isDragging && touchStart) {
+      // 单指拖动
+      setPosition({
+        x: e.touches[0].clientX - touchStart.x,
+        y: e.touches[0].clientY - touchStart.y
+      });
+    } else if (e.touches.length === 2 && lastTouchDistance) {
+      // 双指缩放
+      const newDistance = getTouchDistance(e.touches);
+      const scaleFactor = newDistance / lastTouchDistance;
+      const newScale = Math.min(Math.max(0.2, scale * scaleFactor), 3);
+      setScale(newScale);
+      setLastTouchDistance(newDistance);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setTouchStart(null);
+    setLastTouchDistance(null);
   };
 
   // 构造根节点 (玩家自己)
@@ -117,12 +165,17 @@ const ZoomableTree = ({ player, children, pregnantNpcs = [], onChildClick }) => 
 
   return (
     <div
+      ref={containerRef}
       style={styles.viewport}
       onWheel={handleWheel}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
     >
       <div style={styles.controls}>
         <button onClick={() => setScale(Math.min(3, scale + 0.1))}>放大</button>
