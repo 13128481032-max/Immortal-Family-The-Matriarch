@@ -12,6 +12,33 @@ export default function NpcLogModal({ npc, onClose, playerAffection = 0 }) {
 
   if (!npc) return null;
 
+  // 检查是否达到查看门槛
+  if (playerAffection < 30) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="npc-log-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="log-modal-header">
+            <div className="log-modal-title">
+              <h2>{npc.name} 的日志</h2>
+            </div>
+            <button className="close-btn" onClick={onClose}>✕</button>
+          </div>
+          <div className="log-empty" style={{ padding: '80px 20px' }}>
+            <p style={{ fontSize: '64px', margin: '0 0 20px 0' }}>🔒</p>
+            <h3 style={{ color: '#ffd700', marginBottom: '12px' }}>关系不足</h3>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '16px' }}>
+              你与 {npc.name} 还不够熟悉<br/>
+              好感度达到 <span style={{ color: '#ffd700', fontWeight: 'bold' }}>30</span> 后才能查看{npc.gender === '女' ? '她' : '他'}的日志
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', marginTop: '20px' }}>
+              当前好感度：<span style={{ color: playerAffection < 10 ? '#f44336' : '#ff9800' }}>{playerAffection}</span> / 30
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // 获取可见的日志（根据好感度过滤私密内容）
   const visibleLogs = getVisibleLogs(npc, playerAffection);
   
