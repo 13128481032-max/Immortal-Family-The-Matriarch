@@ -79,7 +79,7 @@ export const generateChild = (mother, father, currentYear) => {
   // 1. 灵根资质计算 (父母平均值 + 随机变异)
   // 公式：(母资质 + 父资质)/2 + 变异(-15 ~ +15)
   // 如果父亲有特殊体质，变异偏正向
-  let baseApt = (mother.stats.aptitude + father.stats.aptitude) / 2;
+  let baseApt = ((mother.stats?.aptitude || 50) + (father.stats?.aptitude || 50)) / 2;
   let variance = Math.floor(Math.random() * 31) - 15; 
   
   // 基因突变 (5%概率 大幅提升或降低)
@@ -234,7 +234,7 @@ export const processChildrenGrowth = (children, playerResources) => {
     // --- 事件 C: 144个月(12岁)宗门抉择期（关键交互点） ---
     if (Math.floor(newChild.age * 12) === 144 && newChild.isTested && !newChild.sect) {
       // 1. 筛选出有门槛但孩子符合资质的宗门（包含散修作为选项）
-      const candidateSects = SECTS.filter(s => newChild.stats.aptitude >= (s.minApt || 0));
+      const candidateSects = SECTS.filter(s => (newChild.stats?.aptitude || 0) >= (s.minApt || 0));
 
       // 2. 为每个宗门计算契合度评分（基于灵根元素与资质差距）
       const scored = candidateSects.map(s => {
@@ -365,8 +365,8 @@ export const processChildrenGrowth = (children, playerResources) => {
         // 晋升逻辑：境界越高，职位越高
         let targetRankIdx = 0;
         if (newChild.cultivation > 500) targetRankIdx = 1; // 外门
-        if (newChild.cultivation > 2000 && newChild.stats.aptitude > 50) targetRankIdx = 2; // 内门
-        if (newChild.cultivation > 20000 && newChild.stats.aptitude > 80) targetRankIdx = 3; // 真传
+        if (newChild.cultivation > 2000 && (newChild.stats?.aptitude || 0) > 50) targetRankIdx = 2; // 内门
+        if (newChild.cultivation > 20000 && (newChild.stats?.aptitude || 0) > 80) targetRankIdx = 3; // 真传
         if (newChild.cultivation > 100000) targetRankIdx = 5; // 长老
 
         if (targetRankIdx > currentRankIdx) {
@@ -391,8 +391,8 @@ export const processChildrenGrowth = (children, playerResources) => {
       if (currentKidsCount < 3) {
         // 生1个 (确保一次只生一个)
         // 计算孙子资质 (父母资质平均值 + 变异)
-        const parentApt = newChild.stats.aptitude;
-        const spouseApt = newChild.spouse.stats?.aptitude || newChild.spouse.aptitude;
+        const parentApt = newChild.stats?.aptitude || 50;
+        const spouseApt = newChild.spouse?.stats?.aptitude || newChild.spouse?.aptitude || 50;
         const baseApt = (parentApt + spouseApt) / 2;
         const variance = Math.floor(Math.random() * 31) - 15;
         const finalApt = Math.max(1, Math.min(100, Math.floor(baseApt + variance)));

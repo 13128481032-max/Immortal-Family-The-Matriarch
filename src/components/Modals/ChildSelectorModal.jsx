@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ChildSelectorModal = ({ children, item, onSelect, onClose }) => {
+const ChildSelectorModal = ({ children, item, items, isBatch = false, onSelect, onClose }) => {
   const [hoveredId, setHoveredId] = React.useState(null);
 
   return (
@@ -12,7 +12,21 @@ const ChildSelectorModal = ({ children, item, onSelect, onClose }) => {
         </div>
 
         <div style={styles.tip}>
-          将 <strong style={{color: '#1976d2'}}>{item?.name}</strong> 分配给哪位子女？
+          {isBatch ? (
+            <>
+              批量分配 <strong style={{color: '#1976d2'}}>{items?.length || 0}</strong> 件物品给哪位子女？
+              <div style={{marginTop: '6px', fontSize: '11px', color: '#666'}}>
+                {items?.slice(0, 3).map((itm, idx) => (
+                  <span key={idx} style={{marginRight: '8px'}}>• {itm.name}</span>
+                ))}
+                {items?.length > 3 && `...等${items.length}件`}
+              </div>
+            </>
+          ) : (
+            <>
+              将 <strong style={{color: '#1976d2'}}>{item?.name}</strong> 分配给哪位子女？
+            </>
+          )}
         </div>
 
         <div style={styles.list}>

@@ -242,6 +242,96 @@ const ChildDetailModal = ({ child, onClose, onAction }) => {
               </div>
             </div>
 
+            {/* 4.5 修为进度 */}
+            {child.tierTitle && (
+              <div style={styles.section}>
+                <h4 style={styles.secTitle}>⚡ 修为进度</h4>
+                <div style={{fontSize: '12px', marginBottom: '8px'}}>
+                  <span style={{color: '#666'}}>当前境界: </span>
+                  <span style={{fontWeight: 'bold', color: '#9c27b0'}}>{child.tierTitle || '凡人'}</span>
+                </div>
+                {child.currentExp !== undefined && child.maxExp && (
+                  <div>
+                    {/* 修为进度条 */}
+                    <div style={{marginBottom: '4px'}}>
+                      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px'}}>
+                        <span style={{fontSize: '11px', color: '#666'}}>修为进度</span>
+                        <span style={{fontSize: '11px', color: '#666', fontWeight: 'bold'}}>
+                          {Math.floor((child.currentExp / child.maxExp) * 100)}%
+                        </span>
+                      </div>
+                      <div style={{
+                        width: '100%',
+                        height: '14px',
+                        background: 'linear-gradient(to right, #f0f0f0, #e0e0e0)',
+                        borderRadius: '7px',
+                        overflow: 'hidden',
+                        position: 'relative',
+                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                      }}>
+                        <div style={{
+                          width: `${Math.min(100, (child.currentExp / child.maxExp) * 100)}%`,
+                          height: '100%',
+                          background: 'linear-gradient(90deg, #9c27b0 0%, #d05ce3 100%)',
+                          borderRadius: '7px',
+                          transition: 'width 0.3s ease',
+                          boxShadow: '0 0 10px rgba(156, 39, 176, 0.5)',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}>
+                          {/* 闪光效果 */}
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '-100%',
+                            width: '100%',
+                            height: '100%',
+                            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                            animation: 'shimmer 2s infinite'
+                          }}></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* 经验数值 */}
+                    <div style={{fontSize: '11px', color: '#666', textAlign: 'right', marginTop: '2px'}}>
+                      {child.currentExp || 0} / {child.maxExp || 100}
+                    </div>
+                    
+                    {/* 修炼速度显示 */}
+                    {child.cultivationSpeed && (
+                      <div style={{
+                        marginTop: '8px',
+                        padding: '6px 10px',
+                        background: 'rgba(156, 39, 176, 0.05)',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(156, 39, 176, 0.1)'
+                      }}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px'}}>
+                          <span style={{fontSize: '11px', color: '#666'}}>修炼速度:</span>
+                          <span style={{fontSize: '11px', fontWeight: 'bold', color: '#9c27b0'}}>
+                            {Math.floor(child.cultivationSpeed)} 经验/月
+                          </span>
+                        </div>
+                        {(() => {
+                          const remainingExp = child.maxExp - child.currentExp;
+                          const monthsToBreakthrough = Math.ceil(remainingExp / child.cultivationSpeed);
+                          return (
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                              <span style={{fontSize: '11px', color: '#666'}}>预计突破:</span>
+                              <span style={{fontSize: '11px', fontWeight: 'bold', color: monthsToBreakthrough > 12 ? '#ff9800' : '#4caf50'}}>
+                                {monthsToBreakthrough > 12 ? `约${Math.floor(monthsToBreakthrough/12)}年` : `${monthsToBreakthrough}个月`}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* 5. 宗门与职业 */}
             <div style={styles.section}>
               <h4 style={styles.secTitle}>🏫 宗门职位</h4>

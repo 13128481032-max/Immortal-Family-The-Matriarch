@@ -410,10 +410,13 @@ export const calculateCultivationSpeed = (character, isMonthly = false) => {
 export const calculateChildFeedback = (child) => {
   if (child.age < 6) return 0; // 6岁以下未开始修炼，不反哺
   
-  // 凡人不反馈
-  if (child.tier === "凡人" || child.tierTitle === "凡人") return 0;
+  // 获取境界名称（兼容tier和tierTitle两个字段）
+  const tierName = child.tierTitle || child.tier || "凡人";
   
-  const tierConfig = getTierConfig(child.tierTitle || child.tier || "凡人");
+  // 凡人不反馈
+  if (tierName === "凡人") return 0;
+  
+  const tierConfig = getTierConfig(tierName);
   if (!tierConfig) return 0;
   
   let baseFeedback = tierConfig.feedback || 0;
@@ -422,13 +425,13 @@ export const calculateChildFeedback = (child) => {
   // --- ⚖️ 境界衰减 ---
   // 炼气期基础反馈太低，直接给固定值
   let feedback = 0;
-  if (child.tierTitle && child.tierTitle.includes("炼气")) {
+  if (tierName.includes("炼气")) {
     // 炼气期：基础2点（少年期1点）
     feedback = child.age < 16 ? 1 : 2;
-  } else if (child.tierTitle && child.tierTitle.includes("筑基")) {
+  } else if (tierName.includes("筑基")) {
     // 筑基期：baseFeedback * 0.7
     feedback = baseFeedback * 0.7;
-  } else if (child.tierTitle && (child.tierTitle.includes("金丹") || child.tierTitle.includes("元婴"))) {
+  } else if (tierName.includes("金丹") || tierName.includes("元婴")) {
     // 金丹期及以上：baseFeedback * 1.0
     feedback = baseFeedback * 1.0;
   } else {
@@ -437,7 +440,7 @@ export const calculateChildFeedback = (child) => {
   }
   
   // 年龄衰减：6-16岁（少年期）对筑基及以上额外打折
-  if (child.age < 16 && child.tierTitle && !child.tierTitle.includes("炼气")) {
+  if (child.age < 16 && !tierName.includes("炼气")) {
     feedback *= 0.5; // 少年期筑基以上反哺减半
   }
   

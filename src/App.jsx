@@ -94,6 +94,7 @@ function App() {
     businesses: [] // 新增：玩家拥有的产业
   });
   const [activeNpcs, setActiveNpcs] = useState(initialNpcs);
+  const [deadNpcs, setDeadNpcs] = useState([]); // 新增：已死亡的NPC列表
   const [children, setChildren] = useState([]);
   const [inventory, setInventory] = useState([]); // 全局背包
   
@@ -164,17 +165,27 @@ function App() {
       }));
     }
 
-    // 2. 修复 NPC 数据 (防止 relationship 缺失)
-    if (activeNpcs.some(n => !n.relationship)) {
+    // 2. 修复 NPC 数据（补全修为经验字段）
+    if (activeNpcs.some(n => !n.relationship || n.currentExp === undefined)) {
       console.log("检测到旧 NPC 数据缺失，正在修复...");
       setActiveNpcs(prev => prev.map(n => {
-        if (!n.relationship) {
-          return {
-            ...n,
-            relationship: { stage: 0, affection: 0, trust: 0, jealousy: 0 }
-          };
+        const fixed = { ...n };
+        
+        // 修复关系数据
+        if (!fixed.relationship) {
+          fixed.relationship = { stage: 0, affection: 0, trust: 0, jealousy: 0 };
         }
-        return n;
+        
+        // 修复修为经验数据
+        if (fixed.currentExp === undefined) {
+          const npcTier = fixed.tier || '炼气初期';
+          const tierConfig = getTierConfig(npcTier);
+          fixed.tier = npcTier;
+          fixed.currentExp = Math.floor(Math.random() * tierConfig.maxExp * 0.3);
+          fixed.maxExp = tierConfig.maxExp;
+        }
+        
+        return fixed;
       }));
     }
     
@@ -427,6 +438,25 @@ function App() {
         return;
       }
       
+      // 计算修为增益 - 根据好感度提供额外加成
+      const affection = targetNpc.relationship?.affection || 0;
+      let baseGain = 20; // 基础修为增益
+      let npcGainMultiplier = 1.0; // NPC获得的倍率
+      
+      // 好感度越高，双修效果越好
+      if (affection >= 80) {
+        npcGainMultiplier = 2.0; // 道侣级别，NPC获得双倍修为
+        baseGain = 30; // 玩家也获得更多
+      } else if (affection >= 60) {
+        npcGainMultiplier = 1.5;
+        baseGain = 25;
+      } else if (affection >= 40) {
+        npcGainMultiplier = 1.2;
+        baseGain = 22;
+      }
+      
+      const npcExpGain = Math.floor(baseGain * npcGainMultiplier);
+      
       // 扣除灵石
       setPlayer(p => ({
         ...p,
@@ -434,8 +464,8 @@ function App() {
           ...p.resources,
           spiritStones: p.resources.spiritStones - cost
         },
-        // 玩家获得大量经验
-        currentExp: (p.currentExp || 0) + 20
+        // 玩家获得修为
+        currentExp: (p.currentExp || 0) + baseGain
       }));
       
       // 更新NPC
@@ -446,8 +476,8 @@ function App() {
           
           let updated = {
             ...n,
-            // NPC也获得经验
-            currentExp: (n.currentExp || 0) + 20,
+            // NPC根据好感度获得不同的修为增益
+            currentExp: (n.currentExp || 0) + npcExpGain,
             relationship: {
               ...oldRel,
               affection: Math.min(100, oldAff + 5) // 双修增加亲密度
@@ -464,9 +494,14 @@ function App() {
       
       showResult(
         '双修',
-        `你与 ${targetNpc.name} 共修大道，灵气在经脉中交融流转，双方修为大增。`,
+        `你与 ${targetNpc.name} 共修大道，灵气在经脉中交融流转。${affection >= 80 ? '心意相通，修为大增！' : affection >= 60 ? '灵犀相映，效果显著。' : '互有增益，略有所得。'}`,
         true,
-        { 好感: 5, 经验: 20, 灵石: -cost },
+        { 
+          好感: 5, 
+          '你的经验': baseGain, 
+          [`${targetNpc.name}的经验`]: npcExpGain,
+          灵石: -cost 
+        },
         true // 不自动关闭，因为是重要事件
       );
       return;
@@ -570,7 +605,7 @@ function App() {
   };
 
   // --- 2. 处理赠礼回调 ---
-  const handleGiftConfirm = (gift) => {
+  const handleGiftConfirm = (item) => {
     const npc = modalState.data;
     
     // 防御性编程：检查npc是否存在
@@ -579,56 +614,72 @@ function App() {
       return;
     }
     
-    // 1. 扣钱
-    setPlayer(p => ({ ...p, resources: { ...p.resources, spiritStones: p.resources.spiritStones - gift.cost } }));
+    // 1. 从背包中移除物品
+    const removedItem = removeItemFromInventory(item.instanceId);
+    if (!removedItem) {
+      showResult("赠礼失败", "物品不存在", false);
+      return;
+    }
     
-    // 2. --- 调用引擎获取反馈 ---
-      const { msg, change } = getGiftReaction(npc, gift);
+    // 2. 根据物品计算好感变化（根据稀有度和类型）
+    const rarityValue = {
+      common: 5,
+      uncommon: 10,
+      rare: 20,
+      epic: 35,
+      legendary: 50
+    };
+    
+    let baseChange = rarityValue[item.rarity] || 5;
+    
+    // 消耗品（丹药）额外加成
+    if (item.type === 'consumable') {
+      baseChange += 5;
+    }
+    
+    // 武器、防具稀有度高的更受欢迎
+    if (item.type === 'weapon' || item.type === 'armor') {
+      baseChange += 3;
+    }
+    
+    const change = Math.min(baseChange, 50); // 最多50好感
+    
+    const msg = `你将 ${item.name} 赠予 ${npc.name}，${npc.gender === '女' ? '她' : '他'}${change > 15 ? '欣喜若狂' : change > 8 ? '非常高兴' : '表示感谢'}！`;
 
-      // 如果对象是佛修且所赠为经典（经书），触发专属事件而不是直接结算好感
-      const isScripture = (gift.name && /心经|经卷|佛经|法本/i.test(gift.name)) || (gift.tags && gift.tags.includes('scripture'));
-      if (npc.identity === '佛修' && isScripture) {
-        const event = createMonkScriptureEvent(npc, gift);
-        setModalState({ type: 'EVENT', data: { npc, event } });
-        // 已扣除费用（上面已处理），等待玩家在事件中选择后由 handleOptionSelect 应用变动
-        return;
-      }
-
-      // 3. ✅ 严格修复版：更新 NPC 数据（普通礼物走原有流程）
-      setActiveNpcs(prev => prev.map(n => {
-        // 必须用 map 里的 n 来判断 id，确保改的是最新状态
-        if (n.id === npc.id) {
-          // 1. 获取旧关系，防止 undefined
-          const oldRel = n.relationship || { affection: 0, trust: 0 };
+    // 3. 更新 NPC 数据
+    setActiveNpcs(prev => prev.map(n => {
+      if (n.id === npc.id) {
+        const oldRel = n.relationship || { affection: 0, trust: 0 };
+      
+        let updated = {
+          ...n,
+          relationship: {
+            ...oldRel,
+            affection: Math.min(100, (oldRel.affection || 0) + change)
+          }
+        };
+        // 生成赠礼日志
+        updated = generateGiftLog(updated, player, player.time.year, player.time.month, item.name, true);
+        updated = markNpcLoggedThisMonth(updated);
         
-          // 2. 更新好感并生成赠礼日志
-          let updated = {
-            ...n,
-            relationship: {
-              ...oldRel,
-              // 安全读取并增加
-              affection: (oldRel.affection || 0) + change
-            }
-          };
-          // 生成赠礼日志
-          updated = generateGiftLog(updated, player, player.time.year, player.time.month, gift.name, change > 0);
-          updated = markNpcLoggedThisMonth(updated);
-          
-          // 🆕 记录记忆：收到礼物
-          MemoryManager.onReceiveGift(updated, gift, change);
-          
-          return updated;
-        }
-        return n;
-      }));
+        // 🆕 记录记忆：收到礼物
+        MemoryManager.onReceiveGift(updated, { name: item.name }, change);
+        
+        return updated;
+      }
+      return n;
+    }));
 
-      // 4. 显示结果
-      showResult(
-        "赠礼",
-        msg,
-        change > 0, // 如果加好感就是成功，减好感就是失败
-        { 灵石: -gift.cost, 好感: change }
-      );
+    // 4. 显示结果
+    showResult(
+      "赠礼",
+      msg,
+      true,
+      { 好感: change }
+    );
+    
+    // 5. 关闭弹窗
+    setModalState({ type: null, data: null });
   };
 
   // --- 3. 处理劝生回调 ---
@@ -684,7 +735,107 @@ function App() {
     }
   };
 
-  // 2. 新增：外出游历逻辑
+  // 2. 新增：下山采购逻辑
+  const handleShopping = () => {
+    // 1. 扣除消耗
+    const cost = 10;
+    if (player.resources.spiritStones < cost) {
+      showResult("灵石不足", `下山采购需要 ${cost} 灵石`, false);
+      return;
+    }
+    
+    setPlayer(p => ({ ...p, resources: { ...p.resources, spiritStones: p.resources.spiritStones - cost } }));
+    
+    // 2. 随机生成3-5个商品
+    const itemCount = 3 + Math.floor(Math.random() * 3);
+    const shopItems = [];
+    
+    // 商品池（根据物品等级）
+    const shopPool = {
+      common: [
+        { id: 'herb_bandage', basePrice: 15 },
+        { id: 'rice_ball', basePrice: 10 }
+      ],
+      uncommon: [
+        { id: 'beast_fang', basePrice: 80 },
+        { id: 'beast_core', basePrice: 120 },
+        { id: 'iron_sword', basePrice: 100 }
+      ],
+      rare: [
+        { id: 'foundation_pill', basePrice: 350 },
+        { id: 'thunder_wood', basePrice: 400 },
+        { id: 'iron_armor', basePrice: 450 }
+      ],
+      epic: [
+        { id: 'core_pill', basePrice: 800 },
+        { id: 'artifact_supreme', basePrice: 1200 },
+        { id: 'marrow_wash', basePrice: 900 }
+      ],
+      legendary: [
+        { id: 'nascent_fruit', basePrice: 2500 },
+        { id: 'heaven_manual', basePrice: 3000 }
+      ]
+    };
+    
+    // 根据玩家境界调整商品品质概率
+    const tierLevel = getTierLevel(player.tier);
+    let rarityWeights = { common: 50, uncommon: 30, rare: 15, epic: 4, legendary: 1 };
+    
+    // 高境界玩家遇到高品质物品概率更高
+    if (tierLevel >= 5) { // 筑基及以上
+      rarityWeights = { common: 20, uncommon: 35, rare: 30, epic: 12, legendary: 3 };
+    } else if (tierLevel >= 10) { // 金丹及以上
+      rarityWeights = { common: 10, uncommon: 20, rare: 35, epic: 25, legendary: 10 };
+    }
+    
+    // 生成商品
+    for (let i = 0; i < itemCount; i++) {
+      const rarity = weightedRandomRarity(rarityWeights);
+      const pool = shopPool[rarity];
+      if (pool && pool.length > 0) {
+        const template = pool[Math.floor(Math.random() * pool.length)];
+        const item = createItemInstance(template.id);
+        if (item) {
+          // 价格波动 ±20%
+          const priceVariation = 0.8 + Math.random() * 0.4;
+          item.price = Math.floor(template.basePrice * priceVariation);
+          shopItems.push(item);
+        }
+      }
+    }
+    
+    // 3. 打开商店弹窗
+    setModalState({
+      type: 'SHOP',
+      data: { items: shopItems }
+    });
+  };
+  
+  // 辅助函数：获取境界等级
+  const getTierLevel = (tierName) => {
+    const tiers = [
+      '凡人', '炼气初期', '炼气中期', '炼气后期', '炼气圆满',
+      '筑基初期', '筑基中期', '筑基后期', '筑基圆满',
+      '金丹初期', '金丹中期', '金丹后期', '金丹圆满',
+      '元婴初期', '元婴中期', '元婴后期', '元婴圆满'
+    ];
+    const index = tiers.indexOf(tierName);
+    return index >= 0 ? index : 0;
+  };
+  
+  // 辅助函数：根据权重随机选择稀有度
+  const weightedRandomRarity = (weights) => {
+    const total = Object.values(weights).reduce((a, b) => a + b, 0);
+    let random = Math.random() * total;
+    
+    for (const [rarity, weight] of Object.entries(weights)) {
+      if (random < weight) return rarity;
+      random -= weight;
+    }
+    return 'common';
+  };
+
+  // 3. 保留原有的外出游历逻辑（用于情缘面板）
   const handleExplore = () => {
     // 1. 扣除消耗
     setPlayer(p => ({ ...p, resources: { ...p.resources, spiritStones: p.resources.spiritStones - 5 } }));
@@ -782,20 +933,9 @@ function App() {
   };
 
   // --- 逻辑 A: 处理开局选择 ---
-  const handlePrologueFinish = (choice) => {
-    let bonus = {};
-    if (choice === 'RELIC') {
-      bonus = { stats: { ...player.stats, aptitude: player.stats.aptitude + 10 }, items: ["神秘古玉"] };
-      addLog("你紧握母亲的古玉，感到一股暖流涌入经脉。(资质+10)");
-    } else if (choice === 'MONEY') {
-      bonus = { resources: { spiritStones: player.resources.spiritStones + 500, money: player.resources.money + 100 } };
-      addLog("你带走了所有积蓄，这将是你翻身的资本。(灵石+500)");
-    } else {
-      bonus = { stats: { ...player.stats, cunning: player.stats.cunning + 10 }, buffs: ["神行"] };
-      addLog("你利用神行符甩开了追兵。(初始闪避率提升)");
-    }
-
-    setPlayer(prev => ({ ...prev, ...bonus }));
+  const handlePrologueFinish = () => {
+    // 直接开始游戏，不再有选择奖励
+    addLog("你的逆天之路由此开启...");
     setGameStage('MAIN');
   };
 
@@ -805,6 +945,7 @@ function App() {
       player,
       children,
       activeNpcs,
+      deadNpcs, // 新增：保存死亡NPC列表
       rival,
       gameStage,
       logs,
@@ -821,6 +962,7 @@ function App() {
       setPlayer(savedData.player);
       setChildren(savedData.children || []);
       setActiveNpcs(savedData.activeNpcs || []);
+      setDeadNpcs(savedData.deadNpcs || []); // 新增：恢复死亡NPC列表
       setRival(savedData.rival);
       setGameStage(savedData.gameStage || 'MAIN');
       setLogs(savedData.logs || []);
@@ -1035,7 +1177,7 @@ function App() {
         // 如果是准备测灵的孩子，且还没有灵根，生成灵根
         if (readyToTest.some(c => c.id === child.id) && !child.spiritRoot) {
           // 生成灵根
-          const aptitude = child.stats.aptitude;
+          const aptitude = child.stats?.aptitude || 50;
           // 这里需要调用generateSpiritRootDetails函数，但是它在mechanics.js中是未导出的
           // 所以我们直接复制该函数的逻辑
           const config = getRootConfigByValue(aptitude);
@@ -1252,6 +1394,15 @@ function App() {
     const npcsAfterLifecycle = lifecycleResult.npcs;
     const lifecycleEvents = lifecycleResult.events;
     
+    // 分离存活和死亡的NPC
+    const aliveNpcs = npcsAfterLifecycle.filter(npc => !npc.isDead);
+    const newlyDeadNpcs = npcsAfterLifecycle.filter(npc => npc.isDead);
+    
+    // 将新死亡的NPC添加到死亡列表
+    if (newlyDeadNpcs.length > 0) {
+      setDeadNpcs(prev => [...prev, ...newlyDeadNpcs]);
+    }
+    
     // 记录生命周期事件日志
     lifecycleEvents.forEach(event => {
       if (event.type === 'NPC_DEATH') {
@@ -1261,13 +1412,13 @@ function App() {
       }
     });
     
-    // 然后为所有 NPC 生成日志
-    const npcsWithLogs = generateMonthlyLogsForAll(npcsAfterLifecycle, player, nextYear, nextMonth);
+    // 然后为所有存活的 NPC 生成日志
+    const npcsWithLogs = generateMonthlyLogsForAll(aliveNpcs, player, nextYear, nextMonth);
     
     setActiveNpcs(npcsWithLogs);
     
-    // --- 新增：生成修仙大陆纪事 ---
-    const worldEvents = generateMonthlyWorldEvents(nextYear, nextMonth, player);
+    // --- 新增：生成修仙大陆纪事（包含NPC相关事件） ---
+    const worldEvents = generateMonthlyWorldEvents(nextYear, nextMonth, player, npcsWithLogs);
     
     // 尝试生成与玩家相关的事件（如子女在宗门的表现）
     const playerRelatedEvent = generatePlayerRelatedEvent(player, finalChildren, nextYear, nextMonth);
@@ -1881,32 +2032,68 @@ function App() {
                 </button>
               </div>
 
-              {/* 插入排序条 */}
-              <SortBar
-                options={NPC_SORT_OPTIONS}
-                currentSort={npcSort}
-                onSortChange={setNpcSort}
-              />
+              {/* 存活的NPC */}
+              <div style={{marginBottom: '20px'}}>
+                <h4 style={{padding: '10px', background: '#f5f5f5', margin: 0}}>
+                  💚 在世情缘 ({activeNpcs.length})
+                </h4>
+                
+                {/* 插入排序条 */}
+                <SortBar
+                  options={NPC_SORT_OPTIONS}
+                  currentSort={npcSort}
+                  onSortChange={setNpcSort}
+                />
 
-              <div style={styles.npcList}>
-                {getSortedNpcs().map(npc => (
-                  <div key={npc.id} style={{position: 'relative'}}>
-                    <NpcCard
-                      npc={{
-                        ...npc,
-                        affection: npc.relationship?.affection || 0
-                      }}
-                      onInteract={handleNpcInteract}
-                    />
-                    <button
-                      onClick={() => handleNpcInteract(npc.id, 'DETAIL')}
-                      style={styles.detailBtn}
-                    >
-                      🔍 详情
-                    </button>
-                  </div>
-                ))}
+                <div style={styles.npcList}>
+                  {getSortedNpcs().map(npc => (
+                    <div key={npc.id} style={{position: 'relative'}}>
+                      <NpcCard
+                        npc={{
+                          ...npc,
+                          affection: npc.relationship?.affection || 0
+                        }}
+                        onInteract={handleNpcInteract}
+                      />
+                      <button
+                        onClick={() => handleNpcInteract(npc.id, 'DETAIL')}
+                        style={styles.detailBtn}
+                      >
+                        🔍 详情
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {/* 死亡的NPC */}
+              {deadNpcs.length > 0 && (
+                <div style={{marginTop: '20px', borderTop: '2px solid #333'}}>
+                  <h4 style={{padding: '10px', background: '#424242', color: '#fff', margin: 0}}>
+                    💀 已故之人 ({deadNpcs.length})
+                  </h4>
+                  <div style={styles.deadNpcList}>
+                    {deadNpcs.map(npc => (
+                      <div key={npc.id} style={styles.deadNpcCard}>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                          <span style={{fontSize: '24px', opacity: 0.5}}>💀</span>
+                          <div style={{flex: 1}}>
+                            <div style={{fontWeight: 'bold', color: '#666'}}>
+                              {npc.name} ({npc.identity})
+                            </div>
+                            <div style={{fontSize: '12px', color: '#999'}}>
+                              {npc.tier} · 享年 {npc.age} 岁
+                            </div>
+                            <div style={{fontSize: '11px', color: '#999', marginTop: '4px', fontStyle: 'italic'}}>
+                              {npc.deathReason || '寿元耗尽'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1939,8 +2126,8 @@ function App() {
                   <button onClick={() => handleDailyAction('WORK')} style={styles.actionButton}>
                     打工 (+15灵石)
                   </button>
-                  <button onClick={handleExplore} style={styles.actionButton}>
-                    外出游历 (30%遇新男主，-5灵石)
+                  <button onClick={handleShopping} style={styles.actionButton}>
+                    下山采购 (购买资源，-10灵石)
                   </button>
 
                   <div style={{marginTop: '20px', borderTop: '1px dashed #ccc', paddingTop: '20px'}}>
@@ -1995,7 +2182,7 @@ function App() {
       {modalState.type === 'GIFT' && (
         <GiftModal
           npc={modalState.data}
-          player={player}
+          inventory={inventory}
           onGift={handleGiftConfirm}
           onClose={closeModal}
         />
@@ -2008,7 +2195,177 @@ function App() {
           onClose={closeModal}
         />
       )}
-
+      
+      {/* 商店弹窗 */}
+      {modalState.type === 'SHOP' && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: '#fff',
+            padding: '25px',
+            borderRadius: '16px',
+            maxWidth: '600px',
+            maxHeight: '80vh',
+            width: '90%',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
+            border: '2px solid #8d6e63',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <h2 style={{marginTop: 0, color: '#5d4037', textAlign: 'center', marginBottom: '10px'}}>
+              🏪 山下商铺
+            </h2>
+            <p style={{color: '#666', textAlign: 'center', fontSize: '13px', marginBottom: '15px'}}>
+              今日商品如下，价格公道，童叟无欺！
+            </p>
+            
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              marginBottom: '15px'
+            }}>
+              {modalState.data.items.length === 0 ? (
+                <div style={{textAlign: 'center', padding: '40px', color: '#999'}}>
+                  今日商品已售罄
+                </div>
+              ) : (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+                  {modalState.data.items.map((item) => {
+                    const canAfford = player.resources.spiritStones >= item.price;
+                    const rarityColors = {
+                      common: '#9e9e9e',
+                      uncommon: '#4caf50',
+                      rare: '#2196f3',
+                      epic: '#9c27b0',
+                      legendary: '#ff9800'
+                    };
+                    
+                    return (
+                      <div
+                        key={item.instanceId}
+                        style={{
+                          padding: '12px',
+                          border: `2px solid ${rarityColors[item.rarity] || '#ddd'}`,
+                          borderRadius: '10px',
+                          backgroundColor: canAfford ? '#fafafa' : '#f5f5f5',
+                          opacity: canAfford ? 1 : 0.6,
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px'}}>
+                          <span style={{fontSize: '15px', fontWeight: 'bold', color: rarityColors[item.rarity]}}>
+                            {item.name}
+                          </span>
+                          <span style={{fontSize: '14px', color: '#f57c00', fontWeight: 'bold'}}>
+                            💰 {item.price} 灵石
+                          </span>
+                        </div>
+                        <div style={{fontSize: '12px', color: '#666', marginBottom: '8px'}}>
+                          {item.desc}
+                        </div>
+                        {item.stats && (
+                          <div style={{fontSize: '11px', color: '#1976d2', display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px'}}>
+                            {item.stats.atk && <span>攻击+{item.stats.atk}</span>}
+                            {item.stats.hp && <span>气血+{item.stats.hp}</span>}
+                            {item.stats.def && <span>防御+{item.stats.def}</span>}
+                            {item.stats.mp && <span>灵力+{item.stats.mp}</span>}
+                          </div>
+                        )}
+                        {item.effect && (
+                          <div style={{fontSize: '11px', color: '#388e3c', marginBottom: '8px'}}>
+                            {item.effect.kind === 'heal' && `恢复${item.effect.amount}气血`}
+                            {item.effect.kind === 'exp' && `修为+${item.effect.amount}`}
+                            {item.effect.kind === 'aptitude' && `资质+${item.effect.amount}`}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (!canAfford) {
+                              showResult('灵石不足', `购买 ${item.name} 需要 ${item.price} 灵石`, false);
+                              return;
+                            }
+                            
+                            // 扣除灵石
+                            setPlayer(p => ({
+                              ...p,
+                              resources: {
+                                ...p.resources,
+                                spiritStones: p.resources.spiritStones - item.price
+                              }
+                            }));
+                            
+                            // 添加到背包
+                            setInventory(prev => [item, ...prev]);
+                            
+                            // 从商店移除该物品
+                            setModalState(prev => ({
+                              ...prev,
+                              data: {
+                                items: prev.data.items.filter(i => i.instanceId !== item.instanceId)
+                              }
+                            }));
+                            
+                            showResult(
+                              '购买成功',
+                              `你购买了 ${item.name}，已存入背包`,
+                              true,
+                              { 灵石: -item.price }
+                            );
+                          }}
+                          disabled={!canAfford}
+                          style={{
+                            width: '100%',
+                            padding: '8px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            backgroundColor: canAfford ? '#8d6e63' : '#ccc',
+                            color: 'white',
+                            cursor: canAfford ? 'pointer' : 'not-allowed',
+                            fontSize: '13px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          购买
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            
+            <div style={{marginTop: '10px', padding: '10px', backgroundColor: '#fff3e0', borderRadius: '8px', fontSize: '12px', color: '#666', textAlign: 'center'}}>
+              💡 你当前拥有 <span style={{fontWeight: 'bold', color: '#f57c00'}}>{player.resources.spiritStones}</span> 灵石
+            </div>
+            
+            <button
+              onClick={closeModal}
+              style={{
+                marginTop: '15px',
+                padding: '10px',
+                border: '1px solid #ccc',
+                borderRadius: '8px',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              离开商铺
+            </button>
+          </div>
+        </div>
+      )}
+      
       {modalState.type === 'RESULT' && (
         <ResultModal
           result={modalState.data}
@@ -2042,6 +2399,18 @@ function App() {
             // 打开子女选择界面
             setChildSelectorModal({ open: true, item });
           }}
+          onBatchGive={(instanceIds) => {
+            // 批量赠送处理
+            if (instanceIds.length === 0) return;
+            
+            // 获取所有要赠送的物品
+            const itemsToGive = instanceIds.map(id => inventory.find(i => i.instanceId === id)).filter(Boolean);
+            
+            if (itemsToGive.length === 0) return;
+            
+            // 打开批量子女选择界面
+            setChildSelectorModal({ open: true, items: itemsToGive, isBatch: true });
+          }}
         />
       )}
 
@@ -2068,13 +2437,33 @@ function App() {
         <ChildSelectorModal
           children={children}
           item={childSelectorModal.item}
+          items={childSelectorModal.items}
+          isBatch={childSelectorModal.isBatch}
           onSelect={(child) => {
-            if (!childSelectorModal.item) return;
-            handleUseConsumable(child.id, childSelectorModal.item.instanceId);
-            setChildSelectorModal({ open: false, item: null });
-            setInventoryModal({ open: false, mode: 'VIEW', slot: null, childId: null });
+            if (childSelectorModal.isBatch && childSelectorModal.items) {
+              // 批量处理
+              let successCount = 0;
+              childSelectorModal.items.forEach(itm => {
+                handleUseConsumable(child.id, itm.instanceId);
+                successCount++;
+              });
+              
+              showResult(
+                '批量分配成功',
+                `已将 ${successCount} 件物品分配给 ${child.name}`,
+                true
+              );
+              
+              setChildSelectorModal({ open: false, item: null, items: null, isBatch: false });
+              setInventoryModal({ open: false, mode: 'VIEW', slot: null, childId: null });
+            } else if (childSelectorModal.item) {
+              // 单个处理
+              handleUseConsumable(child.id, childSelectorModal.item.instanceId);
+              setChildSelectorModal({ open: false, item: null, items: null, isBatch: false });
+              setInventoryModal({ open: false, mode: 'VIEW', slot: null, childId: null });
+            }
           }}
-          onClose={() => setChildSelectorModal({ open: false, item: null })}
+          onClose={() => setChildSelectorModal({ open: false, item: null, items: null, isBatch: false })}
         />
       )}
 
@@ -2524,6 +2913,25 @@ const styles = {
       transform: 'translateY(0)',
       boxShadow: '0 2px 8px rgba(255, 111, 0, 0.2)'
     }
+  },
+  
+  // 死亡NPC列表样式
+  deadNpcList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    padding: '15px',
+    background: '#f5f5f5'
+  },
+  
+  deadNpcCard: {
+    background: 'linear-gradient(135deg, #eeeeee 0%, #e0e0e0 100%)',
+    border: '2px solid #9e9e9e',
+    borderRadius: '12px',
+    padding: '12px',
+    opacity: 0.7,
+    cursor: 'not-allowed',
+    transition: 'all 0.3s'
   }
 };
 

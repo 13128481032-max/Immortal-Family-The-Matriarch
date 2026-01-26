@@ -1,6 +1,6 @@
 // src/game/npcGenerator.js
 import { generateSpiritRoot } from './mechanics.js';
-import { calculateStats } from './cultivationSystem.js';
+import { calculateStats, SECTS, getInitialRankForChild, TIERS } from './cultivationSystem.js';
 import { SKIN_PALETTES, HAIR_COLORS, EYE_COLORS, BASES, EYES, MOUTHS, HAIRS } from '../data/pixelAssets.js';
 
 // 1. 扩充词库：更有修仙味
@@ -93,6 +93,120 @@ const personalities = [
   { label: "狡黠", tag: "🦊", desc: "狡猾机智" },
   { label: "重利", tag: "💰", desc: "唯利是图" }
 ];
+
+/**
+ * 根据NPC的资质、灵根和身份匹配合适的宗门
+ * @param {Object} npcData NPC的基础数据
+ * @returns {Object} 宗门信息 {sect, rank, status}
+ */
+const assignSectToNpc = (npcData) => {
+  const { stats, spiritRoot, identity } = npcData;
+  const aptitude = stats?.aptitude || 50;
+  const elements = spiritRoot?.elements || [];
+  
+  // 1. 特殊身份直接匹配宗门
+  const identityToSectMap = {
+    '宗门天骄': ['SWORD', 'HEAVEN_EMPEROR', 'THUNDER'],
+    '剑修传人': ['SWORD'],
+    '丹道奇才': ['DAN'],
+    '阵法大师': ['NINE_STAR'],
+    '符箓高手': ['NINE_STAR', 'FLOWER'],
+    '佛修': null, // 佛修独立，不属于任何宗门
+    '魔教护法': ['DEMON'],
+    '血海魔君': ['BLOOD'],
+    '幻术高手': ['DEMON', 'GHOST'],
+    '炼尸宗徒': ['GHOST'],
+    '器修天才': ['STONE'],
+    '医修圣手': ['GRASS'],
+    '毒修鬼才': ['GHOST', 'BLOOD'],
+    '音修琴者': ['FLOWER'],
+    '妖族半妖': null, // 妖族不入人族宗门
+    '古族遗民': null, // 古族神秘，不透露宗门
+    '落魄散修': 'NONE',
+    '凡间书生': Math.random() < 0.3 ? 'random' : 'NONE', // 30%进入低级宗门
+    '世家庶子': 'random', // 世家庶子通常会被送入宗门
+    '剑冢守墓人': null // 守墓人不入宗门
+  };
+  
+  let possibleSects = identityToSectMap[identity.label];
+  
+  // 2. 如果身份没有指定宗门，根据资质和灵根分配
+  if (possibleSects === 'random') {
+    // 筛选符合资质要求的宗门
+    possibleSects = SECTS.filter(sect => {
+      if (sect.id === 'NONE') return false;
+      // 资质必须达到宗门最低要求
+      if (aptitude < sect.minApt) return false;
+      
+      // 如果宗门有偏好元素，检查是否匹配
+      if (sect.prefElements && sect.prefElements.length > 0) {
+        const hasMatch = elements.some(el => sect.prefElements.includes(el));
+        if (!hasMatch && aptitude < sect.minApt + 10) return false; // 不匹配则需要更高资质
+      }
+      
+      return true;
+    }).map(s => s.id);
+    
+    // 如果没有合适的宗门，成为散修
+    if (possibleSects.length === 0) {
+      possibleSects = 'NONE';
+    }
+  }
+  
+  // 3. 处理特殊情况：不透露宗门或无宗门
+  if (possibleSects === null) {
+    return {
+      sect: null,
+      sectId: null,
+      rank: null,
+      status: 'mysterious' // 神秘不透露
+    };
+  }
+  
+  if (possibleSects === 'NONE') {
+    return {
+      sect: SECTS.find(s => s.id === 'NONE'),
+      sectId: 'NONE',
+      rank: '散修',
+      status: 'rogue' // 散修
+    };
+  }
+  
+  // 4. 随机选择一个合适的宗门
+  const sectId = Array.isArray(possibleSects) 
+    ? possibleSects[Math.floor(Math.random() * possibleSects.length)]
+    : possibleSects;
+    
+  const sect = SECTS.find(s => s.id === sectId);
+  
+  if (!sect) {
+    return {
+      sect: SECTS.find(s => s.id === 'NONE'),
+      sectId: 'NONE',
+      rank: '散修',
+      status: 'rogue'
+    };
+  }
+  
+  // 5. 根据资质和宗门规则确定职位
+  const rank = getInitialRankForChild(npcData, sect);
+  
+  // 6. 确定状态 (10%概率已经叛出宗门, 5%隐藏身份)
+  let status = 'active'; // active: 在宗, defected: 叛出, hidden: 隐藏身份
+  
+  if (Math.random() < 0.1) {
+    status = 'defected'; // 叛徒
+  } else if (Math.random() < 0.05 && (sect.level === 'RECKLESS' || identity.label.includes('魔'))) {
+    status = 'hidden'; // 隐藏身份的魔修
+  }
+  
+  return {
+    sect,
+    sectId: sect.id,
+    rank,
+    status
+  };
+};
 
 // 辅助函数：随机生成像素风 DNA
 const generateFaceDNA = () => {
@@ -249,17 +363,50 @@ export const generateRandomNpc = (playerTier, gender = '男') => {
   // 7. 计算战斗属性
   const combatStats = calculateStats(playerTier, stats.aptitude, spiritRoot.type);
   
+  // 7.5 初始化修为经验值
+  const tierConfig = TIERS.find(t => t.name === playerTier) || TIERS[1]; // 默认炼气初期
+  const currentExp = Math.floor(Math.random() * tierConfig.maxExp * 0.3); // 随机初始经验 0-30%
+  const maxExp = tierConfig.maxExp;
+  
   // 8. 随机选择身份，并确保身份和介绍匹配
   const selectedIdentity = identities[Math.floor(Math.random() * identities.length)];
+
+  // 9. 根据身份、资质、灵根分配宗门
+  const npcBaseData = {
+    stats,
+    spiritRoot,
+    identity: selectedIdentity
+  };
+  
+  const sectInfo = assignSectToNpc(npcBaseData);
+  
+  // 10. 根据宗门身份生成更详细的描述
+  let fullDesc = selectedIdentity.desc;
+  if (sectInfo.status === 'mysterious') {
+    fullDesc += " 来历神秘，从不透露宗门。";
+  } else if (sectInfo.status === 'rogue') {
+    fullDesc += " 独来独往，无门无派。";
+  } else if (sectInfo.status === 'defected') {
+    fullDesc += ` 曾是【${sectInfo.sect.name}】${sectInfo.rank}，后因故叛出宗门。`;
+  } else if (sectInfo.status === 'hidden') {
+    fullDesc += ` 表面身份是${sectInfo.rank}，实则隐藏着不可告人的秘密。`;
+  } else if (sectInfo.status === 'active' && sectInfo.sect) {
+    fullDesc += ` 现为【${sectInfo.sect.name}】${sectInfo.rank}。`;
+  }
 
   return {
     id,
     name: lastName + firstName,
     age: 18 + Math.floor(Math.random() * 100), // 修仙者年龄跨度大
     identity: selectedIdentity.label,
-    desc: selectedIdentity.desc,
+    desc: fullDesc,
     avatar: faceDNA, // 这里不再存 Emoji，而是存对象
     appearance: appearance, 
+    
+    // 境界与修为
+    tier: playerTier,
+    currentExp: currentExp,
+    maxExp: maxExp,
     
     // 核心属性
     stats: stats,
@@ -268,6 +415,12 @@ export const generateRandomNpc = (playerTier, gender = '男') => {
     cultivationMethod: 'basic_breath', // 初始修炼吐纳法
     combatStats: combatStats,
     personality: personalities[Math.floor(Math.random() * personalities.length)],
+
+    // 宗门信息
+    sect: sectInfo.sect,
+    sectId: sectInfo.sectId,
+    sectRank: sectInfo.rank,
+    sectStatus: sectInfo.status, // active, defected, hidden, mysterious, rogue
 
     // 互动数据
     relationship: {

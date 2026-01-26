@@ -147,3 +147,13 @@ a:hover {
   color: #d4af37;
   text-decoration: underline;
 }
+
+/* 修为进度条闪光动画 */
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}

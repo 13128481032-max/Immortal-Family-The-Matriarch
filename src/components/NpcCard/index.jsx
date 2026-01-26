@@ -15,9 +15,47 @@ const NpcCard = ({ npc, onInteract }) => {
       {/* 头部：头像与名字 */}
       <div style={styles.header}>
         <Avatar dna={npc.avatar} gender={npc.gender} size={60} />
-        <div>
-          <h3 style={{margin: 0}}>{npc.name} <span style={styles.tag}>{npc.identity}</span></h3>
+        <div style={{flex: 1}}>
+          <h3 style={{margin: 0}}>
+            {npc.name} 
+            <span style={styles.tag}>{npc.identity}</span>
+          </h3>
           <small style={{color: '#666'}}>{npc.cultivation}</small>
+          
+          {/* 宗门标签（紧凑显示） */}
+          {npc.sect && npc.sectStatus !== 'mysterious' && npc.sectStatus !== 'rogue' && (
+            <div style={{marginTop: '2px'}}>
+              <span style={{
+                fontSize: '9px',
+                padding: '2px 6px',
+                borderRadius: '8px',
+                color: 'white',
+                background: npc.sectStatus === 'defected' ? '#e53935' :
+                           npc.sectStatus === 'hidden' ? '#9c27b0' :
+                           npc.sect.level === 'TOP' ? '#ffd700' :
+                           npc.sect.level === 'HIGH' ? '#00bcd4' :
+                           npc.sect.level === 'RECKLESS' ? '#d32f2f' :
+                           '#66bb6a',
+                fontWeight: 'bold'
+              }}>
+                {npc.sect.name}
+              </span>
+            </div>
+          )}
+          {npc.sectStatus === 'mysterious' && (
+            <div style={{marginTop: '2px'}}>
+              <span style={{fontSize: '9px', padding: '2px 6px', borderRadius: '8px', color: 'white', background: '#616161', fontWeight: 'bold'}}>
+                神秘
+              </span>
+            </div>
+          )}
+          {npc.sectStatus === 'rogue' && (
+            <div style={{marginTop: '2px'}}>
+              <span style={{fontSize: '9px', padding: '2px 6px', borderRadius: '8px', color: 'white', background: '#8d6e63', fontWeight: 'bold'}}>
+                散修
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

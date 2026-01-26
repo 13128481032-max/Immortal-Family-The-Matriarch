@@ -20,14 +20,15 @@ const Prologue = ({ onFinish, onLoadGame }) => {
     },
     {
       text: "逐出家门。",
-      sub: "深秋雨夜，你被废去一身修为，扔在荒山破庙。曾经的锦衣玉食，如今只剩满身泥泞。"
-    }
+      sub: "深秋雨夜，你被废去一身修为，扔在荒山破庙。曾经的锦衣玉食，如今只剩满身泥泞。"    },
+    {
+      text: "天降奇遇！",
+      sub: "就在你绝望之际，破庙中一道金光闪过。母亲留下的古玉碎裂，一道神秘声音在脑海响起..."
+    },
+    {
+      text: "【子嗣反哺系统】已激活",
+      sub: "『诞育子嗣，血脉相连。每一位子女的修炼成长，都将反哺于你！』\n\n子嗣达到炼气期，每月为你提供修为反哺；境界越高，反哺越多。这是专属于你的逆天机缘！"    }
   ];
-
-  const handleChoice = (choice) => {
-    // choice: 'RELIC' (母亲遗物) | 'MONEY' (私房钱) | 'HIDDEN' (隐忍)
-    onFinish(choice);
-  };
 
   if (step < storyline.length) {
     return (
@@ -59,29 +60,20 @@ const Prologue = ({ onFinish, onLoadGame }) => {
     );
   }
 
+  // 剧情结束后直接开始游戏
   return (
     <>
       <div style={styles.overlay}></div>
       <div style={styles.container}>
-        <h2 style={{color: '#d32f2f', marginBottom: '30px'}}>绝境抉择</h2>
-        <p style={styles.sub}>楚家的人快要追上来了,离开前,你只能带走一样东西:</p>
+        <h2 style={{color: '#d4af37', marginBottom: '30px'}}>新的开始</h2>
+        <p style={styles.sub}>命运的齿轮开始转动，你的逆天之路即将开启...</p>
         
-        <div style={styles.choices}>
-          <button style={styles.btn} onClick={() => handleChoice('RELIC')}>
-            <strong>母亲的遗物 (古玉)</strong>
-            <br/><small>看似普通,或许藏着秘密 (资质+10,开启隐藏血脉)</small>
-          </button>
-          
-          <button style={styles.btn} onClick={() => handleChoice('MONEY')}>
-            <strong>藏好的私房钱</strong>
-            <br/><small>生存才是硬道理 (灵石+500,凡银+100)</small>
-          </button>
-
-          <button style={styles.btn} onClick={() => handleChoice('HIDDEN')}>
-            <strong>逃跑用的神行符</strong>
-            <br/><small>只要活着就有希望 (初始闪避率UP,初始位置安全)</small>
-          </button>
-        </div>
+        <button 
+          style={{...styles.continueBtn, background: '#d4af37', fontSize: '18px', padding: '15px 40px'}}
+          onClick={() => onFinish()}
+        >
+          开始游戏 →
+        </button>
       </div>
     </>
   );

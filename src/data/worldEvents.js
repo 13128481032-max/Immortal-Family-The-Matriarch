@@ -9,7 +9,116 @@
  * - REALM: 秘境开启
  * - DISASTER: 天灾异象
  * - POLITICS: 修仙界政治事件
+ * - NPC_RELATED: 与玩家认识的NPC相关的事件
  */
+
+/**
+ * 生成与特定NPC相关的宗门事件
+ * @param {Object} npc 游戏中的NPC对象
+ * @returns {String|null} 事件描述，如果NPC不适合返回null
+ */
+export const generateNpcRelatedSectEvent = (npc) => {
+  if (!npc || !npc.sect || !npc.sectId || npc.sectId === 'NONE') {
+    return null; // 散修或无宗门信息的NPC不生成宗门事件
+  }
+  
+  const sectName = npc.sect.name;
+  const npcName = npc.name;
+  const rank = npc.sectRank || '弟子';
+  const status = npc.sectStatus || 'active';
+  
+  // 根据NPC状态生成不同的事件
+  const eventTemplates = [];
+  
+  if (status === 'active') {
+    // 在宗的NPC事件
+    eventTemplates.push(
+      `【${sectName}】${rank}${npcName}在宗门大比中脱颖而出，获得长老青睐。`,
+      `【${sectName}】${npcName}成功突破瓶颈，修为更进一步，宗门为其庆贺。`,
+      `【${sectName}】${npcName}外出历练时遇险，幸得同门相助才化险为夷。`,
+      `【${sectName}】${npcName}发现一处灵矿，为宗门立下功劳。`,
+      `【${sectName}】${npcName}被选中参加宗门秘境试炼。`,
+      `【${sectName}】${npcName}在藏经阁顿悟，修炼速度大增。`,
+      `【${sectName}】${npcName}斩杀妖兽，获得宗门嘉奖。`,
+      `【${sectName}】${npcName}炼制出稀有丹药，引起哄抢。`,
+      `【${sectName}】${npcName}与同门切磋，技艺精进。`,
+      `【${sectName}】传闻${npcName}获得上古传承，实力暴涨。`
+    );
+    
+    if (rank === '真传弟子' || rank === '内门弟子') {
+      eventTemplates.push(
+        `【${sectName}】真传弟子${npcName}被长老收为亲传，地位大涨。`,
+        `【${sectName}】${npcName}代表宗门出战，击败敌对宗门高手，扬名立万。`,
+        `【${sectName}】${npcName}闭关三月，成功凝练本命法宝。`,
+        `【${sectName}】宗主亲自指点${npcName}，众弟子艳羡不已。`
+      );
+    }
+    
+    // 魔道宗门特殊事件
+    if (sectName.includes('魔') || sectName.includes('血') || sectName.includes('阴')) {
+      eventTemplates.push(
+        `【${sectName}】${npcName}修炼魔功走火入魔，幸好及时压制。`,
+        `【${sectName}】${npcName}屠戮一村以炼魔功，正道震怒。`,
+        `【江湖通缉】${npcName}(${sectName})作恶多端，被正道悬赏缉拿。`
+      );
+    }
+  } else if (status === 'defected') {
+    // 叛逃者事件
+    eventTemplates.push(
+      `【修仙界震动】${sectName}通缉叛徒${npcName}，悬赏十万灵石。`,
+      `【江湖传闻】曾为【${sectName}】${rank}的${npcName}销声匿迹，不知所踪。`,
+      `【${sectName}】派出追杀令，誓要将叛徒${npcName}缉拿归案。`,
+      `【坊市消息】有人在黑市见到${npcName}，疑似改头换面。`,
+      `【宗门悬赏】${sectName}发布追杀令，${npcName}成为通缉要犯。`,
+      `【江湖快讯】${npcName}叛出${sectName}后，疑似投靠敌对势力。`
+    );
+  } else if (status === 'hidden') {
+    // 隐藏身份者事件
+    eventTemplates.push(
+      `【${sectName}】${npcName}行事愈发诡异，引起同门怀疑。`,
+      `【江湖传闻】有人在暗中调查【${sectName}】${npcName}的真实身份。`
+    );
+  }
+  
+  return eventTemplates.length > 0 
+    ? eventTemplates[Math.floor(Math.random() * eventTemplates.length)]
+    : null;
+};
+
+/**
+ * 生成涉及多个NPC的宗门冲突事件
+ * @param {Array} npcs 游戏中的NPC数组
+ * @returns {String|null} 事件描述
+ */
+export const generateNpcSectConflictEvent = (npcs) => {
+  if (!npcs || npcs.length < 2) return null;
+  
+  // 筛选有宗门的NPC
+  const sectNpcs = npcs.filter(npc => 
+    npc.sect && npc.sectId && npc.sectId !== 'NONE' && npc.sectStatus === 'active'
+  );
+  
+  if (sectNpcs.length < 2) return null;
+  
+  // 随机选两个不同宗门的NPC
+  const npc1 = sectNpcs[Math.floor(Math.random() * sectNpcs.length)];
+  let npc2 = sectNpcs[Math.floor(Math.random() * sectNpcs.length)];
+  let attempts = 0;
+  while (npc2.sectId === npc1.sectId && attempts < 10) {
+    npc2 = sectNpcs[Math.floor(Math.random() * sectNpcs.length)];
+    attempts++;
+  }
+  
+  if (npc1.sectId === npc2.sectId) return null; // 同宗门不生成冲突
+  
+  const conflictTemplates = [
+    `【宗门冲突】【${npc1.sect.name}】${npc1.name}与【${npc2.sect.name}】${npc2.name}在秘境中相遇，爆发激烈战斗。`,
+    `【修仙界关注】${npc1.name}(${npc1.sect.name})与${npc2.name}(${npc2.sect.name})因资源争夺结下梁子。`,
+    `【宗门对立】【${npc1.sect.name}】${npc1.name}击败【${npc2.sect.name}】${npc2.name}，两宗关系愈发紧张。`
+  ];
+  
+  return conflictTemplates[Math.floor(Math.random() * conflictTemplates.length)];
+};
 
 // ==================== 一、宗门动态事件 ====================
 

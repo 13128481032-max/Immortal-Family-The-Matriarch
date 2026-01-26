@@ -4,7 +4,9 @@
 import {
   getAllEventPools,
   getEventPoolByType,
-  randomPick
+  randomPick,
+  generateNpcRelatedSectEvent,
+  generateNpcSectConflictEvent
 } from '../data/worldEvents.js';
 
 /**
@@ -12,9 +14,10 @@ import {
  * @param {number} year - 当前年份
  * @param {number} month - 当前月份
  * @param {Object} player - 玩家对象（可用于根据玩家状态影响事件）
+ * @param {Array} npcs - NPC数组（用于生成NPC相关事件）
  * @returns {Array} 事件数组
  */
-export const generateMonthlyWorldEvents = (year, month, player = null) => {
+export const generateMonthlyWorldEvents = (year, month, player = null, npcs = []) => {
   const events = [];
   const allPools = getAllEventPools();
   
@@ -28,7 +31,51 @@ export const generateMonthlyWorldEvents = (year, month, player = null) => {
     }
   }
   
+  // 30%概率生成与玩家认识的NPC相关的事件
+  if (npcs && npcs.length > 0 && Math.random() < 0.3) {
+    const npcEvent = generateNpcWorldEvent(year, month, npcs);
+    if (npcEvent) {
+      events.push(npcEvent);
+    }
+  }
+  
   return events;
+};
+
+/**
+ * 生成与NPC相关的世界事件
+ */
+const generateNpcWorldEvent = (year, month, npcs) => {
+  // 随机决定生成哪种类型的NPC事件
+  const eventType = Math.random();
+  
+  let message = null;
+  let npcInvolved = null;
+  
+  if (eventType < 0.7) {
+    // 70%概率：单个NPC事件
+    const randomNpc = npcs[Math.floor(Math.random() * npcs.length)];
+    message = generateNpcRelatedSectEvent(randomNpc);
+    npcInvolved = [randomNpc.id];
+  } else {
+    // 30%概率：NPC间冲突事件
+    message = generateNpcSectConflictEvent(npcs);
+    // 冲突事件涉及多个NPC，这里简化处理
+  }
+  
+  if (!message) return null;
+  
+  return {
+    type: 'NPC_RELATED',
+    category: '熟人动向',
+    title: '江湖传闻',
+    message,
+    year,
+    month,
+    importance: 'MEDIUM',
+    timestamp: Date.now(),
+    npcIds: npcInvolved // 记录涉及的NPC ID，便于后续交互
+  };
 };
 
 /**

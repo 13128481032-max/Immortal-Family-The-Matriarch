@@ -95,6 +95,44 @@ const NpcDetailModal = ({ npc, onClose, onOptionSelect, player, children = [], n
                 <h2 style={{margin:'10px 0 5px'}}>{npc.name}</h2>
                 <span style={styles.identityTag}>{npc.identity}</span>
                 {npc.constitution && <span style={styles.rareTag}>{npc.constitution.name}</span>}
+                
+                {/* 宗门信息显示 */}
+                {npc.sect && npc.sectStatus !== 'mysterious' && npc.sectStatus !== 'rogue' && (
+                  <div style={{marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                    <span style={{
+                      ...styles.identityTag,
+                      background: npc.sectStatus === 'defected' ? 'linear-gradient(135deg, #e53935 0%, #c62828 100%)' :
+                                 npc.sectStatus === 'hidden' ? 'linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)' :
+                                 npc.sect.level === 'TOP' ? 'linear-gradient(135deg, #ffd700 0%, #ffb300 100%)' :
+                                 npc.sect.level === 'HIGH' ? 'linear-gradient(135deg, #00bcd4 0%, #0097a7 100%)' :
+                                 npc.sect.level === 'RECKLESS' ? 'linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%)' :
+                                 'linear-gradient(135deg, #66bb6a 0%, #43a047 100%)',
+                      fontSize: '11px'
+                    }}>
+                      {npc.sectStatus === 'defected' ? '⚠️ 叛徒' : 
+                       npc.sectStatus === 'hidden' ? '🎭 隐秘' : '🏛️'} 
+                      【{npc.sect.name}】{npc.sectRank}
+                    </span>
+                  </div>
+                )}
+                {npc.sectStatus === 'mysterious' && (
+                  <span style={{
+                    ...styles.identityTag,
+                    background: 'linear-gradient(135deg, #616161 0%, #424242 100%)',
+                    fontSize: '11px'
+                  }}>
+                    🔮 来历神秘
+                  </span>
+                )}
+                {npc.sectStatus === 'rogue' && (
+                  <span style={{
+                    ...styles.identityTag,
+                    background: 'linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%)',
+                    fontSize: '11px'
+                  }}>
+                    🗡️ 散修
+                  </span>
+                )}
               </div>
 
               <p style={styles.desc}>"{npc.desc || npc.appearance || '暂无描述'}"</p>
@@ -234,15 +272,123 @@ const NpcDetailModal = ({ npc, onClose, onOptionSelect, player, children = [], n
                 </div>
                 {npc.currentExp !== undefined && npc.maxExp && (
                   <div>
-                    <AttributeRow 
-                      label="经验" 
-                      value={npc.currentExp || 0} 
-                      max={npc.maxExp || 100} 
-                      color="#9c27b0" 
-                    />
-                    <div style={{fontSize: '11px', color: '#666', textAlign: 'right'}}>
+                    {/* 修为进度条 */}
+                    <div style={{marginBottom: '4px'}}>
+                      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px'}}>
+                        <span style={{fontSize: '11px', color: '#666'}}>修为进度</span>
+                        <span style={{fontSize: '11px', color: '#666', fontWeight: 'bold'}}>
+                          {Math.floor((npc.currentExp / npc.maxExp) * 100)}%
+                        </span>
+                      </div>
+                      <div style={{
+                        width: '100%',
+                        height: '14px',
+                        background: 'linear-gradient(to right, #f0f0f0, #e0e0e0)',
+                        borderRadius: '7px',
+                        overflow: 'hidden',
+                        position: 'relative',
+                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                      }}>
+                        <div style={{
+                          width: `${Math.min(100, (npc.currentExp / npc.maxExp) * 100)}%`,
+                          height: '100%',
+                          background: 'linear-gradient(90deg, #9c27b0 0%, #d05ce3 100%)',
+                          borderRadius: '7px',
+                          transition: 'width 0.3s ease',
+                          boxShadow: '0 0 10px rgba(156, 39, 176, 0.5)',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}>
+                          {/* 闪光效果 */}
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '-100%',
+                            width: '100%',
+                            height: '100%',
+                            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                            animation: 'shimmer 2s infinite'
+                          }}></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* 经验数值 */}
+                    <div style={{fontSize: '11px', color: '#666', textAlign: 'right', marginTop: '2px'}}>
                       {npc.currentExp || 0} / {npc.maxExp || 100}
                     </div>
+                    
+                    {/* 修炼速度显示 */}
+                    {npc.cultivationSpeed && (
+                      <div style={{
+                        marginTop: '8px',
+                        padding: '6px 10px',
+                        background: 'rgba(156, 39, 176, 0.05)',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(156, 39, 176, 0.1)'
+                      }}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px'}}>
+                          <span style={{fontSize: '11px', color: '#666'}}>修炼速度:</span>
+                          <span style={{fontSize: '11px', fontWeight: 'bold', color: '#9c27b0'}}>
+                            {Math.floor(npc.cultivationSpeed)} 经验/月
+                          </span>
+                        </div>
+                        {(() => {
+                          const remainingExp = npc.maxExp - npc.currentExp;
+                          const monthsToBreakthrough = Math.ceil(remainingExp / npc.cultivationSpeed);
+                          return (
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                              <span style={{fontSize: '11px', color: '#666'}}>预计突破:</span>
+                              <span style={{fontSize: '11px', fontWeight: 'bold', color: monthsToBreakthrough > 12 ? '#ff9800' : '#4caf50'}}>
+                                {monthsToBreakthrough > 12 ? `约${Math.floor(monthsToBreakthrough/12)}年` : `${monthsToBreakthrough}个月`}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                    
+                    {/* 好感度修炼加成提示 */}
+                    {(() => {
+                      const affection = npc.relationship?.affection || 0;
+                      let bonus = 0;
+                      let bonusText = '';
+                      
+                      if (affection >= 80) {
+                        bonus = 50;
+                        bonusText = '情深意重';
+                      } else if (affection >= 60) {
+                        bonus = 30;
+                        bonusText = '深度亲密';
+                      } else if (affection >= 40) {
+                        bonus = 20;
+                        bonusText = '好感相关';
+                      } else if (affection >= 20) {
+                        bonus = 10;
+                        bonusText = '初步关注';
+                      }
+                      
+                      if (bonus > 0) {
+                        return (
+                          <div style={{
+                            marginTop: '8px',
+                            padding: '6px 10px',
+                            background: 'linear-gradient(135deg, rgba(244, 81, 108, 0.1), rgba(240, 98, 146, 0.1))',
+                            borderRadius: '6px',
+                            border: '1px solid rgba(244, 81, 108, 0.2)',
+                            fontSize: '11px',
+                            color: '#f4516c',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                          }}>
+                            <span>💕 {bonusText}加成</span>
+                            <span style={{fontWeight: 'bold'}}>+{bonus}% 修炼速度</span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 )}
               </div>

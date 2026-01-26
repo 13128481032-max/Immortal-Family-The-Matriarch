@@ -86,19 +86,54 @@ export function progressNpcCultivation(npc, player, year, month) {
     return { npc: updated, events };
   }
   
-  // 根据资质和灵根计算修炼速度
+  // 使用与主角相同的修炼速度计算公式（但NPC没有子嗣反哺）
+  // 基础速度：10/月
+  let speed = 10;
+  
+  // 1. 资质影响
   const aptitude = updated.stats?.aptitude || 50;
+  speed *= (aptitude / 50);
+  
+  // 2. 灵根影响
   const rootMultiplier = updated.spiritRoot?.multiplier || 0.5;
+  speed *= rootMultiplier;
   
-  // 基础经验增长：1-5点/月
-  const baseGain = Math.floor(Math.random() * 5) + 1;
-  // 资质加成：资质越高，增长越快
-  const aptBonus = Math.floor(aptitude / 20);
-  // 灵根加成
-  const rootBonus = Math.floor(rootMultiplier * 3);
+  // 3. 功法影响（NPC暂时使用基础功法，系数1.0）
+  // 未来可扩展：根据NPC身份和宗门分配特殊功法
   
-  const expGain = baseGain + aptBonus + rootBonus;
+  // 4. 词条影响（NPC暂时无词条）
+  
+  // 5. 宗门资源加成
+  if (updated.sect && updated.sect.level !== 'NONE' && updated.sectStatus === 'active') {
+    speed *= 1.5;
+  }
+  
+  // 6. 攻略对象加成：根据好感度提供修为加成
+  const affection = updated.relationship?.affection || 0;
+  if (affection >= 20) {
+    // 好感度20-39：初步关注，+10%修炼速度
+    if (affection < 40) {
+      speed *= 1.1;
+    }
+    // 好感度40-59：好感相关，+20%修炼速度
+    else if (affection < 60) {
+      speed *= 1.2;
+    }
+    // 好感度60-79：深度亲密，+30%修炼速度
+    else if (affection < 80) {
+      speed *= 1.3;
+    }
+    // 好感度80+：情深意重，+50%修炼速度（道侣级别）
+    else {
+      speed *= 1.5;
+    }
+  }
+  
+  const expGain = Math.floor(speed);
   updated.currentExp = (updated.currentExp || 0) + expGain;
+  
+  // 记录修炼速度（用于UI显示）
+  updated.cultivationSpeed = speed;
   
   // 检查是否达到突破条件
   if (updated.currentExp >= tierConfig.maxExp) {
@@ -152,18 +187,40 @@ function attemptNpcBreakthrough(npc, player, year, month) {
     updated.currentExp = 0;
     updated.maxExp = nextTierConfig?.maxExp || 100;
     
+    // 境界突破增加寿命
+    if (updated.stats) {
+      let lifespanIncrease = 0;
+      const newTier = tierConfig.nextTier;
+      
+      // 根据突破的境界增加不同的寿命
+      if (newTier.includes('炼气')) {
+        lifespanIncrease = 20; // 炼气期每阶+20年
+      } else if (newTier.includes('筑基')) {
+        lifespanIncrease = 50; // 筑基期每阶+50年
+      } else if (newTier.includes('金丹')) {
+        lifespanIncrease = 200; // 金丹期每阶+200年
+      } else if (newTier.includes('元婴')) {
+        lifespanIncrease = 500; // 元婴期+500年
+      }
+      
+      updated.stats = {
+        ...updated.stats,
+        lifespan: (updated.stats.lifespan || 100) + lifespanIncrease
+      };
+    }
+    
     // 更新战斗属性
     if (updated.combatStats && nextTierConfig) {
       const hpBonus = Math.floor(updated.combatStats.maxHp * 0.5);
       const atkBonus = Math.floor(updated.combatStats.atk * 0.3);
-      const defBonus = Math.floor(updated.combatStats.def * 0.2);
+      const defBonus = Math.floor((updated.combatStats.def || 0) * 0.2);
       
       updated.combatStats = {
         ...updated.combatStats,
         maxHp: updated.combatStats.maxHp + hpBonus,
         hp: updated.combatStats.maxHp + hpBonus,
         atk: updated.combatStats.atk + atkBonus,
-        def: updated.combatStats.def + defBonus
+        def: (updated.combatStats.def || 0) + defBonus
       };
     }
     
@@ -228,13 +285,10 @@ export function processNpcLifecycles(npcs, player, year, month) {
       }
     }
     
-    // 修为推进（每月都进行，但概率性）
-    // 为了避免太快，只有20%概率进行修炼
-    if (Math.random() < 0.2) {
-      const result = progressNpcCultivation(updated, player, year, month);
-      updated = result.npc;
-      allEvents.push(...result.events);
-    }
+    // 修为推进（每月都进行持续修炼）
+    const result = progressNpcCultivation(updated, player, year, month);
+    updated = result.npc;
+    allEvents.push(...result.events);
     
     return updated;
   });

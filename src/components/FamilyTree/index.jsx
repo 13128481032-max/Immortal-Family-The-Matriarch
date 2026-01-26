@@ -73,9 +73,9 @@ const FamilyTree = ({ children, pregnantNpcs = [], onMarry, onChildClick }) => {
               onClick={() => onChildClick(child)} // 👈 添加点击事件
               style={{
                 ...styles.childCard,
-                borderColor: child.stats.aptitude >= 80 ? 'gold' : '#e0e0e0',
+                borderColor: (child.stats?.aptitude || 0) >= 80 ? 'gold' : '#e0e0e0',
                 background: child.sect ? '#fff' : '#f5f5f5',
-                border: child.stats.aptitude >= 80 ? '2px solid gold' : '1px solid #ddd', // 天才加金边
+                border: (child.stats?.aptitude || 0) >= 80 ? '2px solid gold' : '1px solid #ddd', // 天才加金边
                 cursor: 'pointer' // 鼠标变手型
             }}>
               <div style={{marginBottom: '10px'}}>
@@ -88,7 +88,7 @@ const FamilyTree = ({ children, pregnantNpcs = [], onMarry, onChildClick }) => {
               <div style={styles.info}>
                 {/* 名字与境界 */}
                 <div>
-                  <strong style={{color: getTierColor(child.stats.aptitude)}}>{child.name}</strong>
+                  <strong style={{color: getTierColor(child.stats?.aptitude || 0)}}>{child.name}</strong>
                   <span style={{
                     fontSize: '10px',
                     background: child.gender === '男' ? '#4285F4' : '#EA4335',
@@ -136,7 +136,7 @@ const FamilyTree = ({ children, pregnantNpcs = [], onMarry, onChildClick }) => {
 
                 {/* 属性细节 */}
                 <div style={styles.detail}>
-                  资质: {child.stats.aptitude} | 
+                  资质: {child.stats?.aptitude || 0} | 
                   年龄: {Math.floor(child.age)}岁{Math.floor((child.age % 1) * 12)}个月
                 </div>
                 {child.cultivation > 0 && (
