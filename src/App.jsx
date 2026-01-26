@@ -7,7 +7,7 @@ import NpcCard from './components/NpcCard/index.jsx';
 import NpcDetailModal from './components/NpcDetailModal/index.jsx';
 import FamilyTree from './components/FamilyTree/index.jsx';
 import FamilyTreeChart from './components/FamilyTreeChart/index.jsx';
-import ZoomableTree from './components/FamilyTree/ZoomableTree.jsx';
+import FamilyViewWrapper from './components/FamilyTree/FamilyViewWrapper.jsx';
 import GameLog from './components/GameLog/index.jsx';
 // 引入序章组件
 import Prologue from './components/Prologue/index.jsx';
@@ -1520,12 +1520,8 @@ function App() {
           
           {activeTab === 'FAMILY' && (
             <div style={styles.tabContent}>
-              <div style={{textAlign:'center', marginBottom:'15px', color:'#666', fontSize:'12px'}}>
-                 🖱️ 滚轮缩放 • 👆 拖拽移动 • 点击头像查看详情
-              </div>
-              
-              {/* 替换原来的 FamilyTree 为 ZoomableTree */}
-              <ZoomableTree
+              {/* 使用新的家族视图包装器，支持树形图和列表切换 */}
+              <FamilyViewWrapper
                 player={player}
                 children={children} // 传入所有子嗣（包括孙子）
                 pregnantNpcs={activeNpcs.filter(n => n.isPregnant)}
