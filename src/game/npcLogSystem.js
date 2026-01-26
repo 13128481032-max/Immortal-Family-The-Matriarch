@@ -367,6 +367,9 @@ export function markNpcLoggedThisMonth(npc) {
 export function getVisibleLogs(npc, playerAffection = 0) {
   if (!npc || !npc.logs) return [];
   
+  // 需要至少 30 好感度才能查看日志
+  if (playerAffection < 30) return [];
+  
   return npc.logs.filter(log => {
     // 非私密日志直接可见
     if (!log.isSecret) return true;
