@@ -50,7 +50,7 @@ import { getChatText, getGiftReaction, getPersuadeText, createMonkScriptureEvent
 import { initialPlayer } from './data/initialPlayer.js';
 import { initialNpcs } from './data/npcPool.js';
 import { generateChild, processChildrenGrowth, generateSpouse, calculateChildFeedback, attemptBreakthrough, calculateBusinessIncome, exploreRealm } from './game/mechanics.js';
-import { getTierConfig, calculateStats, getRootConfigByValue, MUTANT_ELEMENTS, ELEMENTS, getSectById } from './game/cultivationSystem.js';
+import { getTierConfig, calculateStats, getRootConfigByValue, MUTANT_ELEMENTS, ELEMENTS, getSectById, calculateCultivationSpeed } from './game/cultivationSystem.js';
 import { generateRandomNpc } from './game/npcGenerator.js'; // 引入生成器
 import { calculateCombatPower } from './game/challengeSystem.js'; // 复用战力计算
 import { simulateCombat } from './game/combatEngine.js'; // 引入战斗引擎
@@ -62,6 +62,8 @@ import { getRandomExplorationEvent, getBossEvent, generateRealmEnemy } from './g
 import GuideModal from './components/Modals/GuideModal.jsx'; // 引入指南弹窗组件
 import SectSelectionModal from './components/Modals/SectSelectionModal.jsx';
 import { createItemInstance, isEquipment, getItemTemplate } from './data/itemLibrary.js';
+import { MANUALS } from './data/manualData.js'; // 引入功法数据
+import { changeManual } from './game/manualSystem.js'; // 引入功法更换系统
 
 // 排序配置
 const NPC_SORT_OPTIONS = [
@@ -1129,8 +1131,11 @@ function App() {
       // 获取当前境界配置
       const tierConf = getTierConfig(prevPlayer.tier);
       
-      // 计算新经验
-      let newExp = prevPlayer.currentExp + 5 + totalFeedback; // 5是基础自然增长
+      // 使用统一的修炼速度计算函数（按月计算）
+      const playerSpeed = calculateCultivationSpeed(prevPlayer, true);
+      
+      // 计算新经验：修炼速度 + 子嗣反馈
+      let newExp = prevPlayer.currentExp + playerSpeed + totalFeedback;
       
       // 锁死上限：如果满了，就卡在 maxExp，强制玩家去点突破
       if (newExp >= tierConf.maxExp) {
@@ -1473,10 +1478,59 @@ function App() {
 
   const handleUseConsumable = (childId, instanceId) => {
     const item = inventory.find(i => i.instanceId === instanceId);
-    if (!item || item.type !== 'consumable') return showResult("使用失败", "该物品不可使用", false);
+    if (!item) return showResult("使用失败", "未找到该物品", false);
 
     const target = children.find(c => c.id === childId);
     if (!target) return showResult("使用失败", "未找到子嗣", false);
+
+    // 处理功法类型物品
+    if (item.type === 'manual') {
+      // 功法秘籍：让玩家选择一个功法
+      const manualIds = item.manualIds || [];
+      if (manualIds.length === 0) {
+        return showResult("学习失败", "该秘籍中没有可学习的功法", false);
+      }
+
+      // 随机选择一个功法（或者可以让玩家选择）
+      const randomManualId = manualIds[Math.floor(Math.random() * manualIds.length)];
+      const manual = MANUALS[randomManualId];
+      
+      if (!manual) {
+        return showResult("学习失败", "功法数据异常", false);
+      }
+
+      // 使用功法系统更换功法
+      const result = changeManual(target, manual);
+      
+      // 更新子嗣
+      setChildren(prev => prev.map(c => {
+        if (c.id === childId) {
+          return { ...c, cultivationMethod: manual };
+        }
+        return c;
+      }));
+
+      // 更新选中的子嗣
+      setSelectedChild(prev => {
+        if (prev && prev.id === childId) {
+          return { ...prev, cultivationMethod: manual };
+        }
+        return prev;
+      });
+
+      // 移除物品
+      setInventory(prev => prev.filter(i => i.instanceId !== instanceId));
+      setInventoryModal({ open: false, mode: 'VIEW', slot: null, childId: null });
+
+      addLog(result.message);
+      showResult("学习功法", result.message, true);
+      return;
+    }
+
+    // 处理消耗品
+    if (item.type !== 'consumable') {
+      return showResult("使用失败", "该物品不可使用", false);
+    }
 
     const effect = item.effect || {};
     setChildren(prev => prev.map(c => {

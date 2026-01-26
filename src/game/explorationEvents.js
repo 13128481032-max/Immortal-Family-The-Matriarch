@@ -134,6 +134,45 @@ export const EXPLORATION_EVENTS = [
       { label: '渔翁得利', action: () => ({ type: 'LOOT', items: ['beast_fang'], msg: '你伺机而动，拾得一枚妖兽毒牙。' }) },
       { label: '悄悄溜走', action: () => ({ type: 'LOG', msg: '你贴着岩壁缓步离开，未惊动双方。' }) }
     ]
+  },
+  {
+    id: 'manual_cave',
+    kind: 'LOOT',
+    realm: 'ANY',
+    weight: 1,
+    title: '洞府遗迹',
+    desc: '深入山洞，发现一处前辈修士的洞府，石壁上刻着玄奥的功法口诀。',
+    options: [
+      {
+        label: '参悟功法',
+        action: (ctx) => {
+          // 随机掉落功法，从低到高品质
+          const manualIds = ['basic_manual', 'advanced_manual', 'expert_manual'];
+          const randomManual = manualIds[Math.floor(Math.random() * manualIds.length)];
+          return { type: 'LOOT', items: [randomManual], msg: '你用心参悟，将功法秘籍收入囊中！' };
+        }
+      },
+      { label: '不敢冒险', action: () => ({ type: 'LOG', msg: '你担心洞府有禁制，谨慎离开。' }) }
+    ]
+  },
+  {
+    id: 'manual_library',
+    kind: 'LOOT',
+    realm: 'ANY',
+    weight: 1,
+    title: '古宗藏经阁',
+    desc: '废墟中矗立着一座破败的藏经阁，书架上还遗留着几部功法秘籍。',
+    options: [
+      {
+        label: '搜寻功法',
+        action: (ctx) => {
+          const manualIds = ['basic_manual', 'advanced_manual'];
+          const randomManual = manualIds[Math.floor(Math.random() * manualIds.length)];
+          return { type: 'LOOT', items: [randomManual], msg: '你在废墟中找到了一部完整的功法秘籍！' };
+        }
+      },
+      { label: '迅速离开', action: () => ({ type: 'LOG', msg: '你感到此地诡异，不敢久留。' }) }
+    ]
   }
 ];
 

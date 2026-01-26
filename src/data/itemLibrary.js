@@ -128,6 +128,31 @@ export const ITEM_LIBRARY = {
     rarity: 'legendary',
     desc: '仍在酝酿的神兽之卵，强大的生命力护主。',
     stats: { hp: 1200 }
+  },
+  // 功法类物品
+  basic_manual: {
+    id: 'basic_manual',
+    name: '基础功法秘籍',
+    type: 'manual',
+    rarity: 'common',
+    desc: '黄阶功法秘籍，包含吐纳法、行云诀等基础功法。',
+    manualIds: ['basic_breath', 'cloud_breath'] // 可选的功法ID列表
+  },
+  advanced_manual: {
+    id: 'advanced_manual',
+    name: '进阶功法秘籍',
+    type: 'manual',
+    rarity: 'rare',
+    desc: '玄阶功法秘籍，包含青云剑诀、流水心经等进阶功法。',
+    manualIds: ['azure_sword_art', 'water_flow', 'flame_sun', 'earth_mountain'] // 可选的功法ID列表
+  },
+  expert_manual: {
+    id: 'expert_manual',
+    name: '高级功法秘籍',
+    type: 'manual',
+    rarity: 'epic',
+    desc: '地阶功法秘籍，包含绝世功法，极为稀有。',
+    manualIds: ['yin_yang_dual', 'five_elements_unity'] // 可选的功法ID列表
   }
 };
 

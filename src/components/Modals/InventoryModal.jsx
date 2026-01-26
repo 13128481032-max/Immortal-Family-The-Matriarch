@@ -18,7 +18,8 @@ const InventoryModal = ({ items = [], mode = 'VIEW', slot = null, childId = null
     'consumable': '消耗品',
     'weapon': '武器',
     'armor': '防具',
-    'accessory': '饰品'
+    'accessory': '饰品',
+    'manual': '功法秘籍'
   };
 
   // 装备槽位翻译
@@ -34,6 +35,9 @@ const InventoryModal = ({ items = [], mode = 'VIEW', slot = null, childId = null
       if (eff.kind === 'exp') return `修为 +${eff.amount}`;
       if (eff.kind === 'aptitude') return `资质 +${eff.amount}`;
       if (eff.kind === 'heal') return `恢复 +${eff.amount}`;
+    }
+    if (item.type === 'manual' && item.manualIds) {
+      return `包含 ${item.manualIds.length} 种功法`;
     }
     const bonus = item.stats || {};
     const parts = [];
@@ -73,6 +77,9 @@ const InventoryModal = ({ items = [], mode = 'VIEW', slot = null, childId = null
                 )}
                 {mode === 'VIEW' && item.type === 'consumable' && childId && (
                   <button style={styles.btnPrimary} onClick={() => onUse && onUse(item.instanceId)}>使用</button>
+                )}
+                {mode === 'VIEW' && item.type === 'manual' && childId && (
+                  <button style={styles.btnPrimary} onClick={() => onUse && onUse(item.instanceId)}>学习功法</button>
                 )}
                 {mode === 'VIEW' && !childId && children && children.length > 0 && (
                   <button style={styles.btnSecondary} onClick={() => onGiveToChild && onGiveToChild(item.instanceId)}>分配给子女</button>

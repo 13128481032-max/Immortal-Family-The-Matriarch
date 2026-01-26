@@ -173,6 +173,20 @@ export const processChildrenGrowth = (children, playerResources) => {
   const newChildren = children.map(child => {
     let newChild = { ...child };
     newChild.age += 1/12; // 修改：一个月对应一个月，年龄增加1/12岁
+    
+    // --- 初始化寿元（如果没有的话）---
+    if (!newChild.lifespan) {
+      // 根据灵根和境界设定初始寿元
+      const rootMultiplier = newChild.spiritRoot?.multiplier || 1;
+      const baseLif = 100;
+      newChild.lifespan = Math.floor(baseLif * (1 + rootMultiplier)); // 灵根越好寿元越长
+      newChild.maxLifespan = newChild.lifespan;
+    }
+    
+    // --- 每月消耗寿元 ---
+    if (newChild.age >= 0) {
+      newChild.lifespan = Math.max(0, (newChild.lifespan || newChild.maxLifespan || 100) - (1/12));
+    }
 
     // --- 事件 A: 12个月抓周 (抽取词条) ---
     if (Math.floor(newChild.age * 12) === 12 && !newChild.trait) { // 12个月且还没抓周

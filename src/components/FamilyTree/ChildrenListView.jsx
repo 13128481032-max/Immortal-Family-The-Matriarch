@@ -247,7 +247,7 @@ const ChildrenListView = ({ children, pregnantNpcs = [], onChildClick }) => {
 
                   <div style={styles.infoRow}>
                     <span style={styles.infoItem}>
-                      年龄: {child.age}岁
+                      年龄: {Math.floor(child.age)}岁
                     </span>
                     <span style={styles.infoItem}>
                       {child.tierTitle || '凡人'}
