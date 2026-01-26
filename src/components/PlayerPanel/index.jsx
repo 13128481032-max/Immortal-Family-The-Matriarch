@@ -1,10 +1,24 @@
 import React from 'react';
-import { getRootConfigByValue } from '../../game/cultivationSystem.js';
+import { getRootConfigByValue, calculateCultivationSpeed } from '../../game/cultivationSystem.js';
+import { getManualSpeedMultiplier } from '../../data/manualData.js';
 import Avatar from '../Common/Avatar.jsx';
 
 const PlayerPanel = ({ player, onOpenInventory }) => {
   // 获取灵根配置
   const rootConfig = getRootConfigByValue(player.stats.aptitude);
+  
+  // 计算修炼速度
+  const cultivationSpeed = calculateCultivationSpeed(player, false);
+  
+  // 计算各项加成
+  const aptitude = player.stats.aptitude || 50;
+  const aptitudeMultiplier = (aptitude / 50).toFixed(2);
+  const rootMultiplier = player.spiritRoot?.multiplier || 1;
+  const traitMultiplier = player.trait?.effect || 1;
+  const sectMultiplier = (player.sect && player.sect.level !== "NONE") ? 1.5 : 1;
+  const manualMultiplier = player.cultivationMethod && player.spiritRoot 
+    ? getManualSpeedMultiplier(player.cultivationMethod, player.spiritRoot)
+    : 1;
   
   return (
     <div style={styles.container}>
@@ -73,6 +87,38 @@ const PlayerPanel = ({ player, onOpenInventory }) => {
                   width: `${(player.currentExp / player.maxExp) * 100}%`,
                   background: '#4CAF50'
                 }}></div>
+              </div>
+            </div>
+            
+            {/* 修炼速度说明 */}
+            <div style={styles.speedInfo}>
+              <div style={styles.speedHeader}>
+                <span style={{fontWeight: 'bold', color: '#4CAF50'}}>⚡ 修炼速度: {cultivationSpeed}/回合</span>
+              </div>
+              <div style={styles.speedFormula}>
+                <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>
+                  计算公式: 基础(10) × 资质 × 灵根 × 功法 × 词条 × 宗门
+                </div>
+                <div style={styles.speedBreakdown}>
+                  <span style={styles.speedItem}>
+                    <span style={{color: '#888'}}>资质:</span> ×{aptitudeMultiplier}
+                  </span>
+                  <span style={styles.speedItem}>
+                    <span style={{color: '#888'}}>灵根:</span> ×{rootMultiplier}
+                  </span>
+                  <span style={styles.speedItem}>
+                    <span style={{color: '#888'}}>功法:</span> ×{manualMultiplier.toFixed(2)}
+                  </span>
+                  <span style={styles.speedItem}>
+                    <span style={{color: '#888'}}>词条:</span> ×{traitMultiplier}
+                  </span>
+                  <span style={styles.speedItem}>
+                    <span style={{color: '#888'}}>宗门:</span> ×{sectMultiplier}
+                  </span>
+                </div>
+                <div style={{fontSize: '10px', color: '#999', marginTop: '4px', fontStyle: 'italic'}}>
+                  = 10 × {aptitudeMultiplier} × {rootMultiplier} × {manualMultiplier.toFixed(2)} × {traitMultiplier} × {sectMultiplier} = {cultivationSpeed}
+                </div>
               </div>
             </div>
           </div>
@@ -284,6 +330,35 @@ const styles = {
     fontSize: '14px',
     transition: 'all 0.3s',
     boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
+  },
+  speedInfo: {
+    marginTop: '12px',
+    padding: '10px',
+    backgroundColor: '#fff',
+    borderRadius: '6px',
+    border: '1px solid #e0e0e0'
+  },
+  speedHeader: {
+    marginBottom: '8px',
+    paddingBottom: '6px',
+    borderBottom: '1px dashed #e0e0e0'
+  },
+  speedFormula: {
+    fontSize: '12px'
+  },
+  speedBreakdown: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+    marginTop: '6px',
+    marginBottom: '4px'
+  },
+  speedItem: {
+    fontSize: '11px',
+    padding: '2px 6px',
+    backgroundColor: '#f5f5f5',
+    borderRadius: '3px',
+    border: '1px solid #e0e0e0'
   }
 };
 
