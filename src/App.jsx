@@ -9,6 +9,15 @@ import FamilyTree from './components/FamilyTree/index.jsx';
 import FamilyTreeChart from './components/FamilyTreeChart/index.jsx';
 import FamilyViewWrapper from './components/FamilyTree/FamilyViewWrapper.jsx';
 import GameLog from './components/GameLog/index.jsx';
+// 引入日志系统
+import { 
+  generateMonthlyLogsForAll, 
+  generateChatLog, 
+  generateGiftLog,
+  generateSparLog,
+  generateDualCultivationLog,
+  markNpcLoggedThisMonth
+} from './game/npcLogSystem.js';
 // 引入序章组件
 import Prologue from './components/Prologue/index.jsx';
 // 引入新面板
@@ -27,6 +36,7 @@ import SortBar from './components/Common/SortBar.jsx';
 import EventModal from './components/Modals/EventModal.jsx'; // 引入事件弹窗组件
 import InventoryModal from './components/Modals/InventoryModal.jsx';
 import ChildSelectorModal from './components/Modals/ChildSelectorModal.jsx';
+import NpcLogModal from './components/Modals/NpcLogModal.jsx'; // NPC 日志模态框
 // 引入文本引擎
 import { getChatText, getGiftReaction, getPersuadeText, createMonkScriptureEvent, getRandomInteractionEvent, getUnifiedInteractionEvent } from './game/textEngine.js';
 // 引入数据和逻辑
@@ -92,6 +102,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('FAMILY'); // 默认显示家族树
   const [selectedNpc, setSelectedNpc] = useState(null);
   const [selectedChild, setSelectedChild] = useState(null); // 当前选中的孩子
+  const [npcLogModal, setNpcLogModal] = useState({ open: false, npc: null }); // NPC 日志查看
   const [isAuto, setIsAuto] = useState(false); // 新增：自动播放开关
   const [showBizPanel, setShowBizPanel] = useState(false); // 新增：产业面板显示状态
   const [showChallengePanel, setShowChallengePanel] = useState(false); // 新增：探险面板显示状态
@@ -347,18 +358,25 @@ function App() {
         if (n.id === npcId) {
           // 佛修不通过闲聊获得好感
           if (n.identity === '佛修') {
-            return n;
+            // 佛修也记录日志，但不增加好感
+            let updated = generateChatLog(n, player, player.time.year, player.time.month);
+            updated = markNpcLoggedThisMonth(updated);
+            return updated;
           }
           const oldRel = n.relationship || {};
           const oldAff = oldRel.affection || 0;
           
-          return {
+          // 更新好感并生成日志
+          let updated = {
             ...n,
             relationship: {
               ...oldRel,
               affection: oldAff + 2
             }
           };
+          updated = generateChatLog(updated, player, player.time.year, player.time.month);
+          updated = markNpcLoggedThisMonth(updated);
+          return updated;
         }
         return n;
       }));
@@ -410,14 +428,19 @@ function App() {
           // 1. 获取旧关系，防止 undefined
           const oldRel = n.relationship || { affection: 0, trust: 0 };
         
-          return {
+          // 2. 更新好感并生成赠礼日志
+          let updated = {
             ...n,
             relationship: {
               ...oldRel,
-              // 2. 安全读取并增加
+              // 安全读取并增加
               affection: (oldRel.affection || 0) + change
             }
           };
+          // 生成赠礼日志
+          updated = generateGiftLog(updated, player, player.time.year, player.time.month, gift.name, change > 0);
+          updated = markNpcLoggedThisMonth(updated);
+          return updated;
         }
         return n;
       }));
@@ -1008,6 +1031,13 @@ function App() {
     
     newLogs.forEach(msg => {
       if (shouldLog(msg)) addLog(msg);
+    });
+
+    // --- 新增：为所有 NPC 生成本月日志 ---
+    setActiveNpcs(prev => {
+      const nextYear = player.time.month === 12 ? player.time.year + 1 : player.time.year;
+      const nextMonth = player.time.month === 12 ? 1 : player.time.month + 1;
+      return generateMonthlyLogsForAll(prev, player, nextYear, nextMonth);
     });
   }, [children, player, activeNpcs, rival, testQueue, isAuto]);
 
@@ -1788,6 +1818,16 @@ function App() {
           player={player}
           children={children}
           npcs={activeNpcs}
+          onViewLog={(npc) => setNpcLogModal({ open: true, npc })}
+        />
+      )}
+
+      {/* NPC 日志查看弹窗 */}
+      {npcLogModal.open && npcLogModal.npc && (
+        <NpcLogModal
+          npc={npcLogModal.npc}
+          playerAffection={npcLogModal.npc.relationship?.affection || 0}
+          onClose={() => setNpcLogModal({ open: false, npc: null })}
         />
       )}
 
