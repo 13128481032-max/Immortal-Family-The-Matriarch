@@ -18,6 +18,13 @@ import {
   generateDualCultivationLog,
   markNpcLoggedThisMonth
 } from './game/npcLogSystem.js';
+// 引入生命周期系统
+import { 
+  processNpcLifecycles, 
+  checkInteractionAllowed,
+  getRelationshipStatus,
+  getRelationshipStatusDisplay
+} from './game/npcLifecycle.js';
 // 引入序章组件
 import Prologue from './components/Prologue/index.jsx';
 // 引入新面板
@@ -296,6 +303,130 @@ function App() {
     if (actionType === 'PROPOSE') {
       // 打开劝生弹窗
       setModalState({ type: 'NEGOTIATE', data: targetNpc });
+      return;
+    }
+
+    if (actionType === 'SPAR') {
+      // 切磋：友好切磋，不会死亡，增加好感和经验
+      const check = checkInteractionAllowed(targetNpc, 'SPAR');
+      if (!check.allowed) {
+        showResult('无法切磋', check.reason, false);
+        return;
+      }
+      
+      // 使用战斗引擎模拟切磋
+      const playerWithStats = {
+        ...player,
+        combatStats: player.combatStats || { maxHp: 100, maxMp: 50, atk: 10, def: 5, hp: 100, mp: 50 }
+      };
+      
+      const npcWithStats = {
+        ...targetNpc,
+        combatStats: targetNpc.combatStats || { maxHp: 100, maxMp: 50, atk: 10, def: 5, hp: 100, mp: 50 }
+      };
+      
+      const battleResult = simulateCombat(playerWithStats, npcWithStats);
+      const playerWon = battleResult.winner === 'player';
+      
+      // 更新NPC状态和生成日志
+      setActiveNpcs(prev => prev.map(n => {
+        if (n.id === npcId) {
+          const oldRel = n.relationship || {};
+          const oldAff = oldRel.affection || 0;
+          
+          // 切磋增加好感（胜负都增加，但程度不同）
+          const affectionGain = playerWon ? 3 : 5; // 输了反而增加更多好感（心服口服）
+          
+          let updated = {
+            ...n,
+            relationship: {
+              ...oldRel,
+              affection: Math.min(100, oldAff + affectionGain)
+            }
+          };
+          
+          // 生成切磋日志
+          updated = generateSparLog(updated, player, player.time.year, player.time.month, !playerWon);
+          updated = markNpcLoggedThisMonth(updated);
+          return updated;
+        }
+        return n;
+      }));
+      
+      // 玩家获得经验
+      setPlayer(p => ({
+        ...p,
+        currentExp: (p.currentExp || 0) + (playerWon ? 3 : 5) // 切磋获得经验
+      }));
+      
+      showResult(
+        playerWon ? '切磋胜利' : '切磋落败',
+        playerWon 
+          ? `你在切磋中战胜了 ${targetNpc.name}，${targetNpc.gender === '女' ? '她' : '他'}对你心服口服。`
+          : `你在切磋中败给了 ${targetNpc.name}，但你从中学到了很多。`,
+        true,
+        { 好感: playerWon ? 3 : 5, 经验: playerWon ? 3 : 5 }
+      );
+      return;
+    }
+
+    if (actionType === 'DUAL_CULTIVATION') {
+      // 双修：需要亲密关系，大幅提升双方修为
+      const check = checkInteractionAllowed(targetNpc, 'DUAL_CULTIVATION');
+      if (!check.allowed) {
+        showResult('无法双修', check.reason, false);
+        return;
+      }
+      
+      // 双修消耗灵石
+      const cost = 50;
+      if (player.resources.spiritStones < cost) {
+        showResult('灵石不足', `双修需要消耗 ${cost} 灵石来布置阵法`, false);
+        return;
+      }
+      
+      // 扣除灵石
+      setPlayer(p => ({
+        ...p,
+        resources: {
+          ...p.resources,
+          spiritStones: p.resources.spiritStones - cost
+        },
+        // 玩家获得大量经验
+        currentExp: (p.currentExp || 0) + 20
+      }));
+      
+      // 更新NPC
+      setActiveNpcs(prev => prev.map(n => {
+        if (n.id === npcId) {
+          const oldRel = n.relationship || {};
+          const oldAff = oldRel.affection || 0;
+          
+          let updated = {
+            ...n,
+            // NPC也获得经验
+            currentExp: (n.currentExp || 0) + 20,
+            relationship: {
+              ...oldRel,
+              affection: Math.min(100, oldAff + 5) // 双修增加亲密度
+            }
+          };
+          
+          // 生成双修日志（私密）
+          updated = generateDualCultivationLog(updated, player, player.time.year, player.time.month);
+          updated = markNpcLoggedThisMonth(updated);
+          return updated;
+        }
+        return n;
+      }));
+      
+      showResult(
+        '双修',
+        `你与 ${targetNpc.name} 共修大道，灵气在经脉中交融流转，双方修为大增。`,
+        true,
+        { 好感: 5, 经验: 20, 灵石: -cost },
+        true // 不自动关闭，因为是重要事件
+      );
       return;
     }
 
@@ -1034,11 +1165,27 @@ function App() {
     });
 
     // --- 新增：为所有 NPC 生成本月日志 ---
-    setActiveNpcs(prev => {
-      const nextYear = player.time.month === 12 ? player.time.year + 1 : player.time.year;
-      const nextMonth = player.time.month === 12 ? 1 : player.time.month + 1;
-      return generateMonthlyLogsForAll(prev, player, nextYear, nextMonth);
+    const nextYear = player.time.month === 12 ? player.time.year + 1 : player.time.year;
+    const nextMonth = player.time.month === 12 ? 1 : player.time.month + 1;
+    
+    // 先处理 NPC 生命周期（年龄、寿元、修为推进）
+    const lifecycleResult = processNpcLifecycles(updatedNpcs, player, nextYear, nextMonth);
+    const npcsAfterLifecycle = lifecycleResult.npcs;
+    const lifecycleEvents = lifecycleResult.events;
+    
+    // 记录生命周期事件日志
+    lifecycleEvents.forEach(event => {
+      if (event.type === 'NPC_DEATH') {
+        newLogs.push(`💀 ${event.message}`);
+      } else if (event.type === 'NPC_BREAKTHROUGH') {
+        newLogs.push(`⚡ ${event.message}`);
+      }
     });
+    
+    // 然后为所有 NPC 生成日志
+    const npcsWithLogs = generateMonthlyLogsForAll(npcsAfterLifecycle, player, nextYear, nextMonth);
+    
+    setActiveNpcs(npcsWithLogs);
   }, [children, player, activeNpcs, rival, testQueue, isAuto]);
 
   // 回调：玩家为子嗣选择宗门并分配职位
