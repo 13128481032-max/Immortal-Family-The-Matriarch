@@ -5,7 +5,7 @@ import TraitTag from '../Common/TraitTag.jsx';
 import Avatar from '../Common/Avatar.jsx';
 import ChatInterface from '../ChatInterface'; // 引入聊天组件
 
-const NpcDetailModal = ({ npc, onClose, onOptionSelect, player, children = [], npcs = [] }) => {
+const NpcDetailModal = ({ npc, onClose, onOptionSelect, player, children = [], npcs = [], onViewLog }) => {
   // 当前随机到的剧情事件
   const [currentEvent, setCurrentEvent] = useState(null);
   // 视图模式：'INFO' 或 'CHAT'
@@ -170,6 +170,37 @@ const NpcDetailModal = ({ npc, onClose, onOptionSelect, player, children = [], n
                 <span style={styles.tag}>未知</span>
               )}
             </div>
+
+            {/* 查看日志按钮 */}
+            {onViewLog && (
+              <button 
+                onClick={() => onViewLog(npc)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  marginTop: '15px',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.4)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
+                }}
+              >
+                📖 查看{npc.name}的日志
+              </button>
+            )}
           </div>
           ) : (
             // 聊天视图
