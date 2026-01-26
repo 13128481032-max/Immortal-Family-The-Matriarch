@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 // 引入新组件
 import TopStatusBar from './components/TopStatusBar/index.jsx';
 import BottomNav from './components/BottomNav/index.jsx';
@@ -16,8 +16,12 @@ import {
   generateGiftLog,
   generateSparLog,
   generateDualCultivationLog,
-  markNpcLoggedThisMonth
+  markNpcLoggedThisMonth,
+  generatePregnancyDecisionLog,
+  generateMaleBirthLog
 } from './game/npcLogSystem.js';
+// 引入记忆系统
+import MemoryManager from './game/memoryManager.js';
 // 引入生命周期系统
 import { 
   processNpcLifecycles, 
@@ -64,6 +68,7 @@ import SectSelectionModal from './components/Modals/SectSelectionModal.jsx';
 import { createItemInstance, isEquipment, getItemTemplate } from './data/itemLibrary.js';
 import { MANUALS } from './data/manualData.js'; // 引入功法数据
 import { changeManual } from './game/manualSystem.js'; // 引入功法更换系统
+import { generateMonthlyWorldEvents, generatePlayerRelatedEvent } from './game/worldEventsSystem.js'; // 引入世界事件系统
 
 // 排序配置
 const NPC_SORT_OPTIONS = [
@@ -172,6 +177,27 @@ function App() {
         return n;
       }));
     }
+    
+    // 🆕 初始化所有 NPC 的记忆系统
+    if (activeNpcs.some(n => !n.memories)) {
+      console.log("初始化 NPC 记忆系统...");
+      setActiveNpcs(prev => {
+        const initialized = prev.map(n => {
+          MemoryManager.initializeAllNpcs([n]);
+          
+          // 为已有子女的 NPC 补录记忆
+          const npcChildren = children.filter(c => 
+            c.fatherName === n.name || c.motherName === n.name
+          );
+          if (npcChildren.length > 0) {
+            MemoryManager.backfillChildrenMemories(n, npcChildren);
+          }
+          
+          return n;
+        });
+        return initialized;
+      });
+    }
 
     // 3. 修复旧子嗣数据的装备槽
     if (children.some(c => !c.equipment)) {
@@ -240,10 +266,19 @@ function App() {
   });
 
   // --- 辅助函数 ---
-  const addLog = (message) => {
+  const addLog = (message, category = '个人', type = null, title = null) => {
     const turn = (player.time.year - 3572) * 12 + player.time.month;
-    setLogs((prev) => [{ turn, message }, ...prev]);
+    setLogs((prev) => [{ turn, message, category, type, title }, ...prev]);
   };
+
+  // 计算子嗣反馈总和（用于显示在玩家面板）
+  const totalChildFeedback = useMemo(() => {
+    let total = 0;
+    children.forEach(child => {
+      total += calculateChildFeedback(child);
+    });
+    return total;
+  }, [children]);
 
   // 辅助：关闭所有弹窗
   const closeModal = () => setModalState({ type: null, data: null });
@@ -303,7 +338,12 @@ function App() {
     }
 
     if (actionType === 'PROPOSE') {
-      // 打开劝生弹窗
+      // 打开劝生弹窗前检查条件
+      const check = checkInteractionAllowed(targetNpc, 'PERSUADE');
+      if (!check.allowed) {
+        showResult('无法劝生', check.reason, false);
+        return;
+      }
       setModalState({ type: 'NEGOTIATE', data: targetNpc });
       return;
     }
@@ -573,6 +613,10 @@ function App() {
           // 生成赠礼日志
           updated = generateGiftLog(updated, player, player.time.year, player.time.month, gift.name, change > 0);
           updated = markNpcLoggedThisMonth(updated);
+          
+          // 🆕 记录记忆：收到礼物
+          MemoryManager.onReceiveGift(updated, gift, change);
+          
           return updated;
         }
         return n;
@@ -609,7 +653,17 @@ function App() {
     const storyText = getPersuadeText(npc, strategy, isSuccess);
 
     if (isSuccess) {
-       setActiveNpcs(prev => prev.map(n => n.id === npc.id ? { ...n, isPregnant: true, pregnancyProgress: 0 } : n));
+       // 生成男性怀孕决定日志
+       const updatedNpc = generatePregnancyDecisionLog(npc, player, player.time.year, player.time.month);
+       
+       // 🆕 记录记忆：怀孕开始
+       MemoryManager.onPregnancyStart(updatedNpc);
+       
+       setActiveNpcs(prev => prev.map(n => n.id === npc.id ? { 
+         ...updatedNpc, 
+         isPregnant: true, 
+         pregnancyProgress: 0 
+       } : n));
        showResult("劝生成功", storyText, true, null, false); // 不自动关闭，让玩家看完感人的话
     } else {
        showResult("劝生失败", storyText, false, null, false);
@@ -912,8 +966,8 @@ function App() {
       return c;
     }));
 
-    // 移出队列
-    setTestQueue(prev => prev.filter(c => c.id !== child.id));
+    // 不在这里移出队列，由 onClose 统一处理
+    // setTestQueue(prev => prev.filter(c => c.id !== child.id));
   };
 
   // --- 核心时间推进逻辑 (修改为支持自动模式) ---
@@ -938,8 +992,20 @@ function App() {
           const child = generateChild(player, npc, player.time.year);
           newBabies.push(child);
           newLogs.push(`【诞子】${npc.name}为你诞下一子：${child.name}（${child.gender}，天赋${child.tier}）`);
+          
+          // 生成男性分娩日志（重大事件，私密）
+          let updatedNpc = generateMaleBirthLog(npc, player, player.time.year, player.time.month, child.name);
+          
+          // 🆕 记录记忆：生子里程碑
+          const birthDifficulty = Math.random() > 0.7 ? "难产" : "顺利";
+          const hasSacrifice = Math.random() > 0.85; // 15% 概率损耗修为
+          MemoryManager.onChildBirth(updatedNpc, child, {
+            difficulty: birthDifficulty,
+            sacrifice: hasSacrifice
+          });
+          
           // 重置NPC状态
-          return { ...npc, isPregnant: false, pregnancyProgress: 0 };
+          return { ...updatedNpc, isPregnant: false, pregnancyProgress: 0 };
         }
         return { ...npc, pregnancyProgress: newProgress };
       }
@@ -1199,6 +1265,20 @@ function App() {
     const npcsWithLogs = generateMonthlyLogsForAll(npcsAfterLifecycle, player, nextYear, nextMonth);
     
     setActiveNpcs(npcsWithLogs);
+    
+    // --- 新增：生成修仙大陆纪事 ---
+    const worldEvents = generateMonthlyWorldEvents(nextYear, nextMonth, player);
+    
+    // 尝试生成与玩家相关的事件（如子女在宗门的表现）
+    const playerRelatedEvent = generatePlayerRelatedEvent(player, finalChildren, nextYear, nextMonth);
+    if (playerRelatedEvent) {
+      worldEvents.push(playerRelatedEvent);
+    }
+    
+    // 将世界事件添加到日志，但不在 newLogs 中，直接添加到 logs 状态
+    worldEvents.forEach(event => {
+      addLog(event.message, event.category, event.type, event.title);
+    });
   }, [children, player, activeNpcs, rival, testQueue, isAuto]);
 
   // 回调：玩家为子嗣选择宗门并分配职位
@@ -1208,13 +1288,22 @@ function App() {
     // 检查互斥：若已有其他子嗣在互斥宗门，则拒绝并提示
     const conflict = children.find(c => c.sect && sectObj.exclusiveWith && sectObj.exclusiveWith.includes(c.sect.id));
     if (conflict) {
-      showResult('入门失败', `${conflict.name} 已在互斥宗门中，无法同时收录两者。`, false);
+      showResult('入门失败', `${conflict.name} 已在【${conflict.sect.name}】，与【${sectObj.name}】互为敌对宗门，无法同时拜入。`, false);
       return;
     }
 
     setChildren(prev => prev.map(c => {
       if (c.id === childId) {
         const updated = { ...c, sect: sectObj, rank };
+        
+        // 🆕 为父母 NPC 记录子女拜师事件
+        const parentNpc = activeNpcs.find(n => 
+          n.name === c.fatherName || n.name === c.motherName
+        );
+        if (parentNpc) {
+          MemoryManager.onChildJoinSect(parentNpc, c, sectObj.name);
+        }
+        
         return recalcCombatStatsWithEquip(updated);
       }
       return c;
@@ -1278,6 +1367,15 @@ function App() {
       if (c.id === childId) {
         // 生成对应境界的强力配偶，确保是异性
         const spouse = generateSpouse(c.tierTitle || '凡人', c.gender);
+        
+        // 🆕 为父母 NPC 记录子女成婚里程碑
+        const parentNpc = activeNpcs.find(n => 
+          n.name === c.fatherName || n.name === c.motherName
+        );
+        if (parentNpc) {
+          MemoryManager.onChildMarriage(parentNpc, c, spouse.name);
+        }
+        
         return { ...c, spouse: spouse };
       }
       return c;
@@ -1886,6 +1984,7 @@ function App() {
           {activeTab === 'PLAYER' && (
             <PlayerPanel 
               player={player} 
+              childFeedback={totalChildFeedback}
               onOpenInventory={() => setInventoryModal({ open: true, mode: 'VIEW', slot: null, childId: null })}
             />
           )}
@@ -2180,6 +2279,7 @@ const styles = {
   mainContent: {
     flex: 1,
     padding: '15px', // 更大的内边距
+    paddingBottom: '85px', // 为底部导航栏留出空间（70px高度 + 15px额外空间）
     overflowY: 'auto'
   },
   tabContent: {

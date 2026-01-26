@@ -242,20 +242,106 @@ export const MANUALS = {
     desc: '需五行灵根具备方可修炼，五灵根者的救赎之法。',
     rarity: 'legendary',
     source: '五行秘境'
+  },
+
+  // ==================== 新宗门功法 ====================
+  emperor_scripture: {
+    id: 'emperor_scripture',
+    name: '天帝经',
+    tier: 'HEAVEN',
+    element: 'NONE',
+    desc: '天帝宗至高功法，无视属性，修炼速度极快，只传真传弟子。',
+    rarity: 'legendary',
+    source: '天帝宗'
+  },
+
+  deep_ocean_scripture: {
+    id: 'deep_ocean_scripture',
+    name: '沧海无量诀',
+    tier: 'EARTH',
+    element: '水',
+    desc: '东海龙宫镇派功法，水系修炼者的圣典。',
+    rarity: 'epic',
+    source: '东海龙宫'
+  },
+
+  nine_star_formation: {
+    id: 'nine_star_formation',
+    name: '九星天罡诀',
+    tier: 'BLACK',
+    element: '金',
+    desc: '九星门核心功法，融合星辰之力与阵法奥义。',
+    rarity: 'rare',
+    source: '九星门'
+  },
+
+  grass_valley_healing: {
+    id: 'grass_valley_healing',
+    name: '百草回春诀',
+    tier: 'YELLOW',
+    element: '木',
+    desc: '百草谷入门心法，擅长炼药和治疗。',
+    rarity: 'common',
+    source: '百草谷'
+  },
+
+  stone_refining: {
+    id: 'stone_refining',
+    name: '巨灵炼器诀',
+    tier: 'YELLOW',
+    element: '土',
+    desc: '巨石门传承，专注炼器与采矿。',
+    rarity: 'common',
+    source: '巨石门'
+  },
+
+  ghost_cultivation: {
+    id: 'ghost_cultivation',
+    name: '阴煞鬼诀',
+    tier: 'EARTH',
+    element: '冰',
+    desc: '阴煞宗魔道功法，修炼鬼道之术，阴寒刺骨。',
+    rarity: 'epic',
+    source: '阴煞宗'
+  },
+
+  blood_river: {
+    id: 'blood_river',
+    name: '血河神功',
+    tier: 'BLACK',
+    element: 'NONE',
+    desc: '血河派功法，以血炼身，速度极快但风险极高。',
+    rarity: 'rare',
+    source: '血河派'
   }
 };
 
 // 宗门功法配置：加入宗门后自动学会的功法
 export const SECT_MANUALS = {
-  '青云剑宗': 'azure_sword_art',
+  // 顶级宗门
+  '凌霄宗': 'azure_sword_art',
+  '天帝宗': 'emperor_scripture',
+  
+  // 高级宗门
   '丹鼎阁': 'fire_control',
-  '合欢宗': 'yin_yang_harmony',
-  '天魔教': 'heavenly_demon',
-  '百草谷': 'spring_birth',
-  '东海龙宫': 'ocean_heart',
-  '巨石门': 'mountain_body',
+  '东海龙宫': 'deep_ocean_scripture',
   '天雷宗': 'thunder_guide',
-  '逍遥派': 'wind_freedom'
+  
+  // 中级宗门
+  '百花谷': 'spring_birth',
+  '九星门': 'nine_star_formation',
+  '逍遥派': 'wind_freedom',
+  '合欢宗': 'yin_yang_harmony',
+  
+  // 低级宗门
+  '金刚门': 'mountain_body',
+  '百草谷': 'grass_valley_healing',
+  '巨石门': 'stone_refining',
+  
+  // 魔道宗门
+  '天魔教': 'heavenly_demon',
+  '阴煞宗': 'ghost_cultivation',
+  '血河派': 'blood_river'
 };
 
 /**

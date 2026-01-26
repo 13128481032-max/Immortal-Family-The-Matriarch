@@ -65,7 +65,9 @@ export const REALMS = [
 // 简单的战力计算公式
 // 战力 = 修为XP * 0.1 + 资质 * 10 + 宗门加成
 export const calculateCombatPower = (entity) => {
-  let cp = Math.floor(entity.currentExp * 0.1) + (entity.stats?.aptitude || 10) * 10;
+  // 兼容不同的经验字段：子嗣用cultivation，玩家/NPC用currentExp
+  const exp = entity.cultivation || entity.currentExp || 0;
+  let cp = Math.floor(exp * 0.1) + (entity.stats?.aptitude || 10) * 10;
   
   // 宗门职位加成
   if (entity.rank === '内门弟子') cp *= 1.2;

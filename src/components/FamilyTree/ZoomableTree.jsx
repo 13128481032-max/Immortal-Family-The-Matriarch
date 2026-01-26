@@ -24,7 +24,11 @@ const TreeNode = ({ node, allChildren, onNodeClick }) => {
           <>
             <div style={styles.tier}>{node.tierTitle || '凡人'}</div>
             {node.spouse && <div style={styles.spouseTag}>❤ 已婚</div>}
-            {node.isPregnant && <div style={styles.pregnantTag}>🥚 孕育中</div>}
+            {node.isPregnant && (
+              <div style={styles.pregnantTag}>
+                🥚 孕育中{node.gender === '男' && <span style={{fontSize: '9px'}}>(男修)</span>}
+              </div>
+            )}
           </>
         )}
       </div>

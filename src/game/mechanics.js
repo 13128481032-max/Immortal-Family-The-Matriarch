@@ -101,12 +101,12 @@ export const generateChild = (mother, father, currentYear) => {
     inheritedBody = { name: "天赐道体", desc: "天道宠儿，万法亲和", rarity: "UR" }; // 基因突变
   }
 
-  // 4. 根据资质生成灵根
-  const spiritRoot = generateSpiritRootDetails(finalApt);
+  // 4. 根据资质生成灵根（保存资质值，但不生成具体灵根，等6岁测灵时再生成）
+  // const spiritRoot = generateSpiritRootDetails(finalApt);
 
   // 5. 初始战斗属性 (凡人) —— 暂无装备
   const emptyEquip = { weapon: null, armor: null, accessory: null };
-  const combatStats = calculateStats("凡人", finalApt, spiritRoot.type, emptyEquip);
+  const combatStats = calculateStats("凡人", finalApt, null, emptyEquip);
 
   return {
     id: `child_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
@@ -125,7 +125,7 @@ export const generateChild = (mother, father, currentYear) => {
       intelligence: Math.floor((mother.stats.cunning + father.stats.intelligence)/2)
     },
     constitution: inheritedBody,
-    spiritRoot: spiritRoot,
+    spiritRoot: null, // 出生时未知灵根，6岁测灵时才生成
     cultivationMethod: 'basic_breath', // 初始修炼吐纳法
     equipment: emptyEquip,
     combatStats: combatStats,
@@ -239,29 +239,89 @@ export const processChildrenGrowth = (children, playerResources) => {
       // 2. 为每个宗门计算契合度评分（基于灵根元素与资质差距）
       const scored = candidateSects.map(s => {
         let score = 0;
-        // 元素匹配：若宗门偏好包含子嗣任一元素，加分
+        
+        // === 灵根元素匹配（最重要） ===
         if (Array.isArray(newChild.spiritRoot?.elements)) {
           newChild.spiritRoot.elements.forEach(el => {
-            if (s.prefElements && s.prefElements.includes(el)) score += 30;
-            // 变异灵根在部分宗门更吃香
-            if (newChild.spiritRoot.type === '变异灵根' && s.id === 'DEMON') score += 40;
+            // 完全匹配宗门偏好元素，大幅加分
+            if (s.prefElements && s.prefElements.includes(el)) {
+              score += 50;
+              
+              // 单灵根或天灵根完全匹配，额外奖励
+              if (newChild.spiritRoot.elements.length === 1) {
+                score += 30;
+              }
+            }
           });
+          
+          // 特殊灵根类型加成
+          if (newChild.spiritRoot.type === '天灵根') {
+            // 天灵根优先推荐顶级宗门
+            if (s.level === 'TOP') score += 50;
+          } else if (newChild.spiritRoot.type === '变异灵根') {
+            // 变异灵根在特定宗门更吃香
+            if (s.id === 'DEMON') score += 60;
+            if (s.id === 'THUNDER') score += 50;
+            if (s.id === 'GHOST' && newChild.spiritRoot.elements.includes('冰')) score += 50;
+            if (s.id === 'WIND' && newChild.spiritRoot.elements.includes('风')) score += 50;
+            if (s.id === 'HEAVEN_EMPEROR') score += 40; // 天帝宗也喜欢变异灵根
+          } else if (newChild.spiritRoot.type === '单灵根') {
+            // 单灵根在高级宗门有优势
+            if (s.level === 'HIGH' || s.level === 'TOP') score += 30;
+          } else if (newChild.spiritRoot.type === '双灵根') {
+            // 双灵根在中高级宗门平衡
+            if (s.level === 'MID' || s.level === 'HIGH') score += 20;
+          }
         }
-        // 资质接近度
-        const aptGap = Math.max(0, s.minApt - (newChild.stats?.aptitude || 0));
-        score += Math.max(0, 50 - aptGap); // 资质越高越容易被高阶宗门看中
-
-        // 规模/等级偏好：顶级宗门更难进，降低基础分但仍可能通过高资质弥补
-        if (s.level === 'TOP') score -= 10;
-        if (s.level === 'RECKLESS') score += 10; // 激进宗门偏向特殊灵根
+        
+        // === 资质匹配度 ===
+        const aptitude = newChild.stats?.aptitude || 0;
+        const aptGap = s.minApt - aptitude;
+        
+        if (aptGap <= 0) {
+          // 资质超过门槛
+          const excess = aptitude - s.minApt;
+          score += Math.min(40, excess); // 最多加40分
+          
+          // 资质远超门槛，顶级宗门更有吸引力
+          if (excess >= 20 && s.level === 'TOP') score += 20;
+        } else {
+          // 资质不足（理论上已被过滤，但保险起见）
+          score -= aptGap * 2;
+        }
+        
+        // === 宗门等级调整 ===
+        if (s.level === 'TOP') {
+          // 顶级宗门选拔严格，稍微降低基础分
+          score -= 5;
+        } else if (s.level === 'RECKLESS') {
+          // 魔道宗门对特殊体质更感兴趣
+          score += 15;
+        } else if (s.level === 'LOW') {
+          // 低级宗门门槛低，但吸引力也低
+          score -= 10;
+        }
+        
+        // === 容貌加成（部分宗门） ===
+        if (s.id === 'FLOWER' || s.id === 'HARMONY') {
+          // 百花谷和合欢宗看重容貌
+          const looks = newChild.looks || 50;
+          if (looks >= 80) score += 30;
+          else if (looks >= 60) score += 15;
+        }
 
         return { sect: s, score };
       });
 
-      // 3. 根据得分排序并取前三（保证包含散修选项）
+      // 3. 根据得分排序并取前四（保证包含散修选项）
       scored.sort((a, b) => b.score - a.score);
-      const topSects = scored.slice(0, 3).map(s => s.sect);
-      if (!topSects.find(s => s.id === 'NONE')) topSects.push(SECTS.find(s => s.id === 'NONE'));
+      const topSects = scored.slice(0, 4).map(s => s.sect);
+      
+      // 确保散修选项始终存在
+      if (!topSects.find(s => s.id === 'NONE')) {
+        topSects.pop(); // 移除最后一个
+        topSects.push(SECTS.find(s => s.id === 'NONE'));
+      }
 
       // 为每个候选宗门附加预计初始职位与资源摘要，用于在 UI 中展示推荐
       const selectableSects = topSects.map(s => ({

@@ -1,14 +1,16 @@
 // Prompt 构建层
 // 根据 NPC 属性动态生成角色扮演提示词
+import { extractMemories, detectContextKeywords } from '../game/memorySystem.js';
 
 /**
  * 构建 System Prompt（人设提示词）
  * @param {Object} npc - NPC 对象
  * @param {Object} player - 玩家对象
  * @param {Object} gameState - 游戏状态（包含子女、关系历史等）
+ * @param {string} userMessage - 用户当前消息（用于关键词检测）
  * @returns {string} System Prompt
  */
-export const buildSystemPrompt = (npc, player, gameState = {}) => {
+export const buildSystemPrompt = (npc, player, gameState = {}, userMessage = "") => {
   // 根据好感度判断关系
   const affection = npc.relationship?.affection || 0;
   let relation = "陌生";
@@ -80,7 +82,7 @@ export const buildSystemPrompt = (npc, player, gameState = {}) => {
     relationshipContext += `\n你正在孕育你们的孩子（已有${progress}个月身孕）。`;
   }
   
-  // 5. 检查重要事件历史
+  // 5. 检查重要事件历史（保留兼容旧系统）
   if (gameState.eventHistory && gameState.eventHistory.length > 0) {
     const recentEvents = gameState.eventHistory
       .filter(e => e.npcId === npc.id)
@@ -92,6 +94,36 @@ export const buildSystemPrompt = (npc, player, gameState = {}) => {
       relationshipContext += `\n\n【最近经历】\n${recentEvents}`;
     }
   }
+  
+  // ==================== 记忆宫殿注入 ====================
+  // 6. 提取记忆（新系统）
+  let memoryContext = "";
+  if (npc.memories) {
+    // 检测用户消息中的关键词
+    const keywords = userMessage ? detectContextKeywords(userMessage) : [];
+    
+    // 提取记忆
+    memoryContext = extractMemories(npc, {
+      includeMilestones: true,     // 始终包含里程碑
+      includeRecent: true,         // 包含近期事件
+      maxRecent: 5,               // 最多5条近期事件
+      contextKeywords: keywords   // 关键词触发
+    });
+    
+    // 如果检测到敏感关键词，添加特殊指令
+    if (keywords.some(kw => ["孩子", "子女", "生子", "怀孕"].includes(kw))) {
+      memoryContext += "\n\n⚠️ 玩家提到了与子女相关的话题，请在回复中自然地流露出为人父母的情感。";
+    }
+    
+    if (keywords.some(kw => ["疼", "痛", "苦", "难产"].includes(kw))) {
+      memoryContext += "\n\n⚠️ 玩家提到了痛苦相关的话题，如果你有相关经历（如生产之痛），请在回复中回忆起那段经历。";
+    }
+    
+    if (keywords.some(kw => ["后悔", "值得"].includes(kw))) {
+      memoryContext += "\n\n⚠️ 玩家在询问你的感受和态度，请结合你们的过往经历真诚地回应。";
+    }
+  }
+
   
   // 构建人设提示词
   return `【角色扮演指令】
@@ -109,6 +141,7 @@ export const buildSystemPrompt = (npc, player, gameState = {}) => {
 玩家境界：${player.tierTitle || "凡人"}
 你对玩家的态度：${relation}（好感度：${affection}/100）
 ${relationshipContext ? '\n【你们的关系】' + relationshipContext : ''}
+${memoryContext ? '\n' + memoryContext : ''}
 
 【对话风格要求】
 1. 必须严格保持"${personality}"的说话语气和行为方式
@@ -151,10 +184,11 @@ ${relationshipContext ? '\n【你们的关系】' + relationshipContext : ''}
  * @param {Object} player 
  * @param {string} recentEvent - 最近发生的事件描述
  * @param {Object} gameState - 游戏状态
+ * @param {string} userMessage - 用户当前消息
  * @returns {string}
  */
-export const buildContextualPrompt = (npc, player, recentEvent, gameState = {}) => {
-  const basePrompt = buildSystemPrompt(npc, player, gameState);
+export const buildContextualPrompt = (npc, player, recentEvent, gameState = {}, userMessage = "") => {
+  const basePrompt = buildSystemPrompt(npc, player, gameState, userMessage);
   
   if (recentEvent) {
     return `${basePrompt}
@@ -173,10 +207,11 @@ ${recentEvent}
  * @param {Object} player 
  * @param {Array} previousTopics - 之前讨论过的话题
  * @param {Object} gameState - 游戏状态
+ * @param {string} userMessage - 用户当前消息
  * @returns {string}
  */
-export const buildMemoryPrompt = (npc, player, previousTopics = [], gameState = {}) => {
-  const basePrompt = buildSystemPrompt(npc, player, gameState);
+export const buildMemoryPrompt = (npc, player, previousTopics = [], gameState = {}, userMessage = "") => {
+  const basePrompt = buildSystemPrompt(npc, player, gameState, userMessage);
   
   if (previousTopics.length > 0) {
     const topicsText = previousTopics.map((t, i) => `${i + 1}. ${t}`).join('\n');

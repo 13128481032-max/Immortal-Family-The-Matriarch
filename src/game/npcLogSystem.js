@@ -8,6 +8,9 @@ import {
   sparWinTemplates,
   sparLoseTemplates,
   dualCultivationTemplates,
+  malePregnancyDecisionTemplates,
+  malePregnancyMonthlyTemplates,
+  maleBirthTemplates,
   breakthroughSuccessTemplates,
   breakthroughFailTemplates,
   marriageTemplates,
@@ -154,6 +157,49 @@ export function generateDualCultivationLog(npc, player, year, month) {
   return addNpcLog(npc, year, month, content, LOG_TYPE.INTERACTION, true);
 }
 
+/**
+ * 生成男性怀孕决定日志（劝生成功后的第一条日志）
+ */
+export function generatePregnancyDecisionLog(npc, player, year, month) {
+  const template = randomPick(malePregnancyDecisionTemplates);
+  const content = fillTemplate(template, npc, player);
+  
+  // 怀孕决定日志标记为私密，为重大状态变更
+  return addNpcLog(npc, year, month, content, LOG_TYPE.STATE_CHANGE, true);
+}
+
+/**
+ * 生成孕期月度日志
+ */
+export function generatePregnancyMonthlyLog(npc, player, year, month, pregnancyProgress) {
+  // 根据孕期阶段选择模板
+  let templates;
+  if (pregnancyProgress <= 3) {
+    templates = malePregnancyMonthlyTemplates.early;
+  } else if (pregnancyProgress <= 6) {
+    templates = malePregnancyMonthlyTemplates.mid;
+  } else {
+    templates = malePregnancyMonthlyTemplates.late;
+  }
+  
+  const template = randomPick(templates);
+  const content = fillTemplate(template, npc, player);
+  
+  // 孕期日志标记为私密，为状态变更
+  return addNpcLog(npc, year, month, content, LOG_TYPE.STATE_CHANGE, true);
+}
+
+/**
+ * 生成男性分娩日志
+ */
+export function generateMaleBirthLog(npc, player, year, month, childName) {
+  const template = randomPick(maleBirthTemplates);
+  const content = fillTemplate(template, npc, player, { childName });
+  
+  // 分娩日志标记为私密，为重大状态变更
+  return addNpcLog(npc, year, month, content, LOG_TYPE.STATE_CHANGE, true);
+}
+
 // ==================== 二、状态变更日志生成 ====================
 
 /**
@@ -185,16 +231,20 @@ export function generateMarriageLog(npc, player, year, month, spouseName) {
 
 /**
  * 生成生子日志
+ * 根据NPC性别选择不同的模板（男性使用特殊的生育日志）
  */
 export function generateChildbornLog(npc, player, year, month, childName) {
-  const template = randomPick(childbornTemplates);
+  // 男性使用专门的男性生子模板
+  const templates = npc.gender === '男' ? maleBirthTemplates : childbornTemplates;
+  const template = randomPick(templates);
   const parentRole = npc.gender === '女' ? '母亲' : '父亲';
   const content = fillTemplate(template, npc, player, { 
     childName: childName || '我的孩子',
     parentRole
   });
   
-  return addNpcLog(npc, year, month, content, LOG_TYPE.STATE_CHANGE);
+  // 男性生子日志标记为私密
+  return addNpcLog(npc, year, month, content, LOG_TYPE.STATE_CHANGE, npc.gender === '男');
 }
 
 /**
@@ -227,6 +277,11 @@ export function generateInjuryLog(npc, player, year, month, helperName = null) {
  */
 export function generateDailyLog(npc, player, year, month) {
   if (!npc) return npc;
+  
+  // 检查是否处于孕期，如果是则生成孕期日志
+  if (npc.isPregnant && npc.pregnancyProgress > 0) {
+    return generatePregnancyMonthlyLog(npc, player, year, month, npc.pregnancyProgress);
+  }
   
   const affection = npc.relationship?.affection || 0;
   const identity = npc.identity || '散修';

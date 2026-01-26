@@ -186,7 +186,9 @@ const ChildrenListView = ({ children, pregnantNpcs = [], onChildClick }) => {
                 <div style={styles.embryoIcon}>🥚</div>
                 <div style={styles.embryoInfo}>
                   <div style={styles.embryoName}>孕育中...</div>
-                  <div style={styles.embryoDetail}>父: {npc.name}</div>
+                  <div style={styles.embryoDetail}>
+                    孕父: {npc.name} {npc.gender === '男' && <span style={{fontSize: '10px', color: '#ff6b6b'}}>(男修孕育)</span>}
+                  </div>
                   <div style={styles.progressBar}>
                     <div 
                       style={{
@@ -195,7 +197,7 @@ const ChildrenListView = ({ children, pregnantNpcs = [], onChildClick }) => {
                       }}
                     ></div>
                   </div>
-                  <div style={styles.embryoProgress}>{npc.pregnancyProgress || 0}/10月</div>
+                  <div style={styles.embryoProgress}>{npc.pregnancyProgress || 0}/9月</div>
                 </div>
               </div>
             ))}

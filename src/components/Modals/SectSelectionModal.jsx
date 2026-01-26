@@ -1,23 +1,50 @@
 import React from 'react';
-import { getSectById } from '../../game/cultivationSystem.js';
+import { getSectById, SECTS } from '../../game/cultivationSystem.js';
 
 const SectSelectionModal = ({ event, onClose, onAssign }) => {
   if (!event) return null;
   const { child, selectableSects = [], title, message } = event;
 
+  // 辅助函数：将宗门ID数组转换为中文名称
+  const getExclusiveNames = (ids) => {
+    if (!ids || ids.length === 0) return '';
+    return ids.map(id => {
+      const sect = SECTS.find(s => s.id === id);
+      return sect ? sect.name : id;
+    }).join('、');
+  };
+
   const calcCompatibility = (s) => {
     const sect = s.sect || s;
     let score = 0;
+    
+    // 灵根元素匹配
     if (Array.isArray(child.spiritRoot?.elements)) {
       child.spiritRoot.elements.forEach(el => {
-        if (sect.prefElements && sect.prefElements.includes(el)) score += 40;
-        if (child.spiritRoot.type === '变异灵根' && sect.id === 'DEMON') score += 30;
+        if (sect.prefElements && sect.prefElements.includes(el)) {
+          score += 50;
+          // 单灵根或天灵根完全匹配额外加分
+          if (child.spiritRoot.elements.length === 1) score += 30;
+        }
       });
+      
+      // 特殊灵根类型加成
+      if (child.spiritRoot.type === '天灵根' && sect.level === 'TOP') score += 50;
+      if (child.spiritRoot.type === '变异灵根') {
+        if (sect.id === 'DEMON') score += 60;
+        if (sect.id === 'THUNDER') score += 50;
+        if (sect.id === 'GHOST' && child.spiritRoot.elements.includes('冰')) score += 50;
+        if (sect.id === 'WIND' && child.spiritRoot.elements.includes('风')) score += 50;
+        if (sect.id === 'HEAVEN_EMPEROR') score += 40;
+      }
     }
+    
+    // 资质加成
     const apt = child.stats?.aptitude || 50;
     const aptBonus = Math.max(0, apt - (sect.minApt || 0));
-    score += Math.min(50, aptBonus);
-    return score;
+    score += Math.min(40, aptBonus);
+    
+    return Math.round(score);
   };
 
   const handleChoose = (s) => {
@@ -50,14 +77,15 @@ const SectSelectionModal = ({ event, onClose, onAssign }) => {
               const sect = s.sect || s;
               const predRank = s.predictedRank;
               const resources = s.resources || [];
-              const exclusive = (s.exclusiveWith || sect.exclusiveWith || []).join(', ');
+              const exclusiveIds = s.exclusiveWith || sect.exclusiveWith || [];
+              const exclusiveNames = getExclusiveNames(exclusiveIds);
               return (
                 <div key={sect.id} style={styles.sectRow}>
                   <div>
                     <div style={{fontWeight: 'bold'}}>{sect.name}</div>
                     <div style={{fontSize:12, color:'#666'}}>{sect.desc}</div>
                     <div style={{fontSize:12, color:'#444', marginTop:6}}>资源: {resources.join(', ') || '无'}</div>
-                    {exclusive ? <div style={{fontSize:12, color:'#a00'}}>互斥: {exclusive}</div> : null}
+                    {exclusiveNames ? <div style={{fontSize:12, color:'#a00'}}>互斥宗门: {exclusiveNames}</div> : null}
                   </div>
                   <div style={{textAlign:'right'}}>
                     <div style={{marginBottom:6}}>契合度: {calcCompatibility(s)}</div>

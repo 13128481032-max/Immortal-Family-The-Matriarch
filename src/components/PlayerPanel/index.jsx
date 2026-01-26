@@ -3,12 +3,15 @@ import { getRootConfigByValue, calculateCultivationSpeed } from '../../game/cult
 import { getManualSpeedMultiplier } from '../../data/manualData.js';
 import Avatar from '../Common/Avatar.jsx';
 
-const PlayerPanel = ({ player, onOpenInventory }) => {
+const PlayerPanel = ({ player, childFeedback = 0, onOpenInventory }) => {
   // 获取灵根配置
   const rootConfig = getRootConfigByValue(player.stats.aptitude);
   
-  // 计算修炼速度
-  const cultivationSpeed = calculateCultivationSpeed(player, false);
+  // 计算修炼速度（按月）
+  const cultivationSpeed = calculateCultivationSpeed(player, true);
+  
+  // 总修炼速度 = 自身修炼速度 + 子嗣反馈
+  const totalSpeed = cultivationSpeed + childFeedback;
   
   // 计算各项加成
   const aptitude = player.stats.aptitude || 50;
@@ -93,11 +96,16 @@ const PlayerPanel = ({ player, onOpenInventory }) => {
             {/* 修炼速度说明 */}
             <div style={styles.speedInfo}>
               <div style={styles.speedHeader}>
-                <span style={{fontWeight: 'bold', color: '#4CAF50'}}>⚡ 修炼速度: {cultivationSpeed}/回合</span>
+                <span style={{fontWeight: 'bold', color: '#4CAF50'}}>⚡ 修炼速度: {totalSpeed}/月</span>
+                {childFeedback > 0 && (
+                  <span style={{fontSize: '12px', color: '#666', marginLeft: '8px'}}>
+                    (自身 {cultivationSpeed} + 子嗣反哺 {childFeedback})
+                  </span>
+                )}
               </div>
               <div style={styles.speedFormula}>
                 <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>
-                  计算公式: 基础(10) × 资质 × 灵根 × 功法 × 词条 × 宗门
+                  自身修炼: 基础(10/月) × 资质 × 灵根 × 功法 × 词条 × 宗门
                 </div>
                 <div style={styles.speedBreakdown}>
                   <span style={styles.speedItem}>
@@ -119,6 +127,11 @@ const PlayerPanel = ({ player, onOpenInventory }) => {
                 <div style={{fontSize: '10px', color: '#999', marginTop: '4px', fontStyle: 'italic'}}>
                   = 10 × {aptitudeMultiplier} × {rootMultiplier} × {manualMultiplier.toFixed(2)} × {traitMultiplier} × {sectMultiplier} = {cultivationSpeed}
                 </div>
+                {childFeedback > 0 && (
+                  <div style={{fontSize: '11px', color: '#4CAF50', marginTop: '6px', paddingTop: '6px', borderTop: '1px dashed #ddd'}}>
+                    👶 子嗣反哺: +{childFeedback}/月
+                  </div>
+                )}
               </div>
             </div>
           </div>

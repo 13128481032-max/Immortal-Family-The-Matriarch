@@ -8,8 +8,14 @@ const SpiritRootTestModal = ({ child, onClose, onFinish }) => {
     // 模拟2秒动画
     setTimeout(() => {
       setStage('REVEAL');
-      onFinish(child); // 通知父组件更新孩子状态(比如解锁准确资质)
+      // 不在这里调用 onFinish，等用户看完结果后点击按钮时再调用
     }, 2000);
+  };
+
+  const handleConfirm = () => {
+    // 用户确认看完结果后，通知父组件更新状态并关闭弹窗
+    onFinish(child);
+    onClose();
   };
 
   // 根据元素获取颜色
@@ -79,7 +85,7 @@ const SpiritRootTestModal = ({ child, onClose, onFinish }) => {
               <p>初始灵力: <strong>{child.combatStats.mp}</strong></p>
             </div>
 
-            <button onClick={onClose} style={styles.confirmBtn}>收入族谱</button>
+            <button onClick={handleConfirm} style={styles.confirmBtn}>收入族谱</button>
           </div>
         )}
       </div>

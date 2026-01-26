@@ -294,7 +294,7 @@ const NpcDetailModal = ({ npc, onClose, onOptionSelect, player, children = [], n
               </button>
             )}
           </div>
-          ) : (
+          ) : viewMode === 'CHAT' ? (
             // 聊天视图
             <div style={{width: '100%', padding: '20px'}}>
               {(() => {
@@ -330,7 +330,7 @@ const NpcDetailModal = ({ npc, onClose, onOptionSelect, player, children = [], n
                 );
               })()}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
@@ -367,17 +367,21 @@ const styles = {
   },
   closeBtn: { 
     position: 'absolute', 
-    top: '15px', 
-    right: '20px', 
+    top: '10px', 
+    right: '10px', 
     border: 'none', 
-    background: 'transparent', 
+    background: 'rgba(141, 110, 99, 0.2)', 
     fontSize: '28px', 
     cursor: 'pointer', 
-    color: '#8d6e63', // 古色文字
-    transition: 'color 0.3s ease',
-    ':hover': {
-      color: '#6d4c41' // 鼠标悬停时颜色加深
-    }
+    color: '#8d6e63',
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
+    zIndex: 10
   },
   content: { 
     display: 'flex', 

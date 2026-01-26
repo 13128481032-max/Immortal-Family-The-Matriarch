@@ -167,46 +167,137 @@ export const TRAITS = [
 
 // 3. 宗门设定
 export const SECTS = [
+  // === 顶级宗门 (minApt: 80+) ===
   {
     id: 'SWORD', name: "凌霄宗", level: "TOP", minApt: 80, tuition: 500,
     prefElements: ['金'], buff: 1.5, risk: 0.02,
     resourceTypes: ['剑法秘籍','灵器宝石'],
     initialRankProb: { '真传弟子': 0.15, '内门弟子': 0.35, '外门弟子': 0.5 },
-    exclusiveWith: ['DEMON'],
+    exclusiveWith: ['DEMON','GHOST'],
     desc: "天下第一剑宗，偏好金灵根、高悟性。"
   },
+  {
+    id: 'HEAVEN_EMPEROR', name: "天帝宗", level: "TOP", minApt: 85, tuition: 600,
+    prefElements: ['雷','火'], buff: 1.6, risk: 0.03,
+    resourceTypes: ['帝经传承','天材地宝'],
+    initialRankProb: { '真传弟子': 0.2, '内门弟子': 0.4, '外门弟子': 0.4 },
+    exclusiveWith: ['DEMON','GHOST'],
+    desc: "修仙界最强正道宗门，只收天灵根或变异灵根。"
+  },
+  
+  // === 高级宗门 (minApt: 60-79) ===
   {
     id: 'DAN', name: "丹鼎阁", level: "HIGH", minApt: 60, tuition: 300,
     prefElements: ['火','木'], buff: 1.25, risk: 0.03,
     resourceTypes: ['丹药','炼丹材料'],
     initialRankProb: { '真传弟子': 0.1, '内门弟子': 0.4, '外门弟子': 0.5 },
     exclusiveWith: [],
-    desc: "炼丹圣地，提供丹药与稳健增益。"
+    desc: "炼丹圣地，提供丹药与稳健增益。偏好火木灵根。"
   },
+  {
+    id: 'OCEAN_PALACE', name: "东海龙宫", level: "HIGH", minApt: 65, tuition: 350,
+    prefElements: ['水'], buff: 1.3, risk: 0.02,
+    resourceTypes: ['水系宝珠','海族秘法'],
+    initialRankProb: { '真传弟子': 0.12, '内门弟子': 0.38, '外门弟子': 0.5 },
+    exclusiveWith: [],
+    desc: "水下龙族建立的宗门，只收水灵根弟子。"
+  },
+  {
+    id: 'THUNDER', name: "天雷宗", level: "HIGH", minApt: 70, tuition: 400,
+    prefElements: ['雷'], buff: 1.4, risk: 0.04,
+    resourceTypes: ['雷霆精华','天劫秘法'],
+    initialRankProb: { '真传弟子': 0.15, '内门弟子': 0.35, '外门弟子': 0.5 },
+    exclusiveWith: [],
+    desc: "专修雷法，偏好变异雷灵根，攻击第一。"
+  },
+  
+  // === 中级宗门 (minApt: 40-59) ===
   {
     id: 'FLOWER', name: "百花谷", level: "MID", minApt: 40, tuition: 100,
     prefElements: ['木','水'], buff: 1.15, risk: 0.01,
     resourceTypes: ['灵草','仙术仪式'],
     initialRankProb: { '真传弟子': 0.05, '内门弟子': 0.25, '外门弟子': 0.7 },
     exclusiveWith: [],
-    desc: "只收容貌端正者，擅长辅助与阵法。"
+    desc: "只收容貌端正者，擅长辅助与阵法。偏好木水灵根。"
   },
+  {
+    id: 'NINE_STAR', name: "九星门", level: "MID", minApt: 45, tuition: 120,
+    prefElements: ['金','土'], buff: 1.18, risk: 0.02,
+    resourceTypes: ['星盘秘术','阵法宝图'],
+    initialRankProb: { '真传弟子': 0.06, '内门弟子': 0.24, '外门弟子': 0.7 },
+    exclusiveWith: [],
+    desc: "专研星辰阵法与占卜之术，偏好金土灵根。"
+  },
+  {
+    id: 'WIND', name: "逍遥派", level: "MID", minApt: 50, tuition: 150,
+    prefElements: ['风'], buff: 1.2, risk: 0.015,
+    resourceTypes: ['身法秘籍','遁术心法'],
+    initialRankProb: { '真传弟子': 0.08, '内门弟子': 0.27, '外门弟子': 0.65 },
+    exclusiveWith: [],
+    desc: "崇尚自由，身法天下第一，偏好风灵根。"
+  },
+  {
+    id: 'HARMONY', name: "合欢宗", level: "MID", minApt: 35, tuition: 80,
+    prefElements: ['木','水'], buff: 1.12, risk: 0.01,
+    resourceTypes: ['双修秘法','媚术心经'],
+    initialRankProb: { '真传弟子': 0.04, '内门弟子': 0.21, '外门弟子': 0.75 },
+    exclusiveWith: [],
+    desc: "双修法门，不拘灵根，但需容貌姣好。"
+  },
+  
+  // === 低级宗门 (minApt: 20-39) ===
   {
     id: 'IRON', name: "金刚门", level: "LOW", minApt: 20, tuition: 50,
     prefElements: ['土'], buff: 1.1, risk: 0.005,
     resourceTypes: ['武学训练','炼体术'],
     initialRankProb: { '真传弟子': 0.02, '内门弟子': 0.15, '外门弟子': 0.83 },
     exclusiveWith: [],
-    desc: "炼体苦修，偏向肉体与防御。"
+    desc: "炼体苦修，偏向肉体与防御。适合土灵根。"
   },
   {
+    id: 'GRASS', name: "百草谷", level: "LOW", minApt: 25, tuition: 60,
+    prefElements: ['木'], buff: 1.08, risk: 0.005,
+    resourceTypes: ['草药种植','医术典籍'],
+    initialRankProb: { '真传弟子': 0.03, '内门弟子': 0.17, '外门弟子': 0.8 },
+    exclusiveWith: [],
+    desc: "医道宗门，擅长炼药与治疗。偏好木灵根。"
+  },
+  {
+    id: 'STONE', name: "巨石门", level: "LOW", minApt: 20, tuition: 40,
+    prefElements: ['土','金'], buff: 1.05, risk: 0.003,
+    resourceTypes: ['采矿术','锻造心法'],
+    initialRankProb: { '真传弟子': 0.01, '内门弟子': 0.12, '外门弟子': 0.87 },
+    exclusiveWith: [],
+    desc: "以炼器和采矿闻名，偏好土金灵根。"
+  },
+  
+  // === 魔道宗门 (激进型) ===
+  {
     id: 'DEMON', name: "天魔教", level: "RECKLESS", minApt: 30, tuition: 0,
-    prefElements: ['雷'], buff: 2.0, risk: 0.10,
+    prefElements: ['雷','火'], buff: 2.0, risk: 0.10,
     resourceTypes: ['禁术魔功','速成心法'],
     initialRankProb: { '真传弟子': 0.08, '内门弟子': 0.22, '外门弟子': 0.7 },
-    exclusiveWith: ['SWORD'],
+    exclusiveWith: ['SWORD','HEAVEN_EMPEROR'],
     desc: "走火入魔风险高，但速度极快，偏好变异灵根。"
   },
+  {
+    id: 'GHOST', name: "阴煞宗", level: "RECKLESS", minApt: 35, tuition: 0,
+    prefElements: ['冰'], buff: 1.8, risk: 0.08,
+    resourceTypes: ['鬼修秘典','阴魂炼化'],
+    initialRankProb: { '真传弟子': 0.1, '内门弟子': 0.25, '外门弟子': 0.65 },
+    exclusiveWith: ['SWORD','HEAVEN_EMPEROR'],
+    desc: "修炼鬼道之法，偏好冰灵根，与正道为敌。"
+  },
+  {
+    id: 'BLOOD', name: "血河派", level: "RECKLESS", minApt: 25, tuition: 0,
+    prefElements: ['水','火'], buff: 1.7, risk: 0.12,
+    resourceTypes: ['血炼之术','生机掠夺'],
+    initialRankProb: { '真传弟子': 0.05, '内门弟子': 0.2, '外门弟子': 0.75 },
+    exclusiveWith: [],
+    desc: "以血为道，吸食生机，修炼极快但易走火入魔。"
+  },
+  
+  // === 散修 ===
   {
     id: 'NONE', name: "散修", level: "NONE", minApt: 0, tuition: 0,
     prefElements: [], buff: 0.8, risk: 0.0,
@@ -277,9 +368,8 @@ export const RANKS = ["杂役弟子", "外门弟子", "内门弟子", "真传弟
  * @returns {number} 修炼速度
  */
 export const calculateCultivationSpeed = (character, isMonthly = false) => {
-  // 基础速度
-  let speed = 10;
-  if (isMonthly) speed = speed / 12; // 按月计算降低速度
+  // 基础速度：按年10点经验，按月则除以12
+  let speed = isMonthly ? 10 : 120;
   
   // 1. 资质影响
   const aptitude = character.stats?.aptitude || 50;
@@ -318,29 +408,49 @@ export const calculateCultivationSpeed = (character, isMonthly = false) => {
  * @returns {number} 反哺的修为值
  */
 export const calculateChildFeedback = (child) => {
-  if (child.age < 16) return 0; // 未成年不反哺
+  if (child.age < 6) return 0; // 6岁以下未开始修炼，不反哺
+  
+  // 凡人不反馈
+  if (child.tier === "凡人" || child.tierTitle === "凡人") return 0;
   
   const tierConfig = getTierConfig(child.tierTitle || child.tier || "凡人");
   if (!tierConfig) return 0;
   
   let baseFeedback = tierConfig.feedback || 0;
+  if (baseFeedback === 0) return 0;
   
-  // --- ⚖️ 平衡性修改核心 ---
-  // 凡人/炼气期：收益 * 0.1 (几乎没有)
-  // 筑基期：收益 * 0.5
-  // 金丹期：收益 * 1.0 (正常)
-  let tierDampening = 0.1;
-  if (child.tierTitle && child.tierTitle.includes("筑基")) tierDampening = 0.5;
-  if (child.tierTitle && (child.tierTitle.includes("金丹") || child.tierTitle.includes("元婴"))) tierDampening = 1.0;
+  // --- ⚖️ 境界衰减 ---
+  // 炼气期基础反馈太低，直接给固定值
+  let feedback = 0;
+  if (child.tierTitle && child.tierTitle.includes("炼气")) {
+    // 炼气期：基础2点（少年期1点）
+    feedback = child.age < 16 ? 1 : 2;
+  } else if (child.tierTitle && child.tierTitle.includes("筑基")) {
+    // 筑基期：baseFeedback * 0.7
+    feedback = baseFeedback * 0.7;
+  } else if (child.tierTitle && (child.tierTitle.includes("金丹") || child.tierTitle.includes("元婴"))) {
+    // 金丹期及以上：baseFeedback * 1.0
+    feedback = baseFeedback * 1.0;
+  } else {
+    // 其他境界默认处理
+    feedback = baseFeedback * 0.5;
+  }
+  
+  // 年龄衰减：6-16岁（少年期）对筑基及以上额外打折
+  if (child.age < 16 && child.tierTitle && !child.tierTitle.includes("炼气")) {
+    feedback *= 0.5; // 少年期筑基以上反哺减半
+  }
   
   // 资质修正 (资质50为基准)
   const aptitudeMod = (child.stats?.aptitude || 50) / 50;
+  feedback *= aptitudeMod;
   
   // 宗门职位修正
   let rankMod = 1.0;
   if (child.rank === "内门弟子") rankMod = 1.2;
   if (child.rank === "真传弟子") rankMod = 1.5;
   if (child.rank === "长老") rankMod = 2.0;
+  feedback *= rankMod;
   
   // 功法加成（反哺也受功法影响）
   let manualMod = 1.0;
@@ -350,7 +460,8 @@ export const calculateChildFeedback = (child) => {
       child.spiritRoot
     );
   }
+  feedback *= manualMod;
   
-  // 最终公式
-  return Math.floor(baseFeedback * aptitudeMod * rankMod * tierDampening * manualMod);
+  // 向上取整，确保至少有点反馈
+  return Math.max(0, Math.floor(feedback));
 };

@@ -54,12 +54,14 @@ const FamilyTree = ({ children, pregnantNpcs = [], onMarry, onChildClick }) => {
               <div style={styles.icon}>🥚</div>
               <div style={styles.info}>
                 <strong style={{color: '#d81b60'}}>孕育中...</strong>
-                <div style={styles.detail}>父: {npc.name}</div>
+                <div style={styles.detail}>
+                  孕父: {npc.name} {npc.gender === '男' && <span style={{fontSize: '10px', color: '#ff6b6b'}}>(男修孕育)</span>}
+                </div>
                 {/* 显示进度条 */}
                 <div style={styles.progressBg}>
-                   <div style={{...styles.progressFill, width: `${(npc.pregnancyProgress || 0) * 10}%`}}></div>
+                   <div style={{...styles.progressFill, width: `${(npc.pregnancyProgress || 0) * 11.1}%`}}></div>
                 </div>
-                <div style={styles.detail}>进度: {npc.pregnancyProgress || 0}/10月</div>
+                <div style={styles.detail}>进度: {npc.pregnancyProgress || 0}/9月</div>
               </div>
             </div>
           ))}

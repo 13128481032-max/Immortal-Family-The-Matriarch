@@ -236,23 +236,23 @@ export const getPersuadeText = (npc, strategy, success) => {
   if (success) {
     // 成功文案
     if (strategy.id === "PROFIT") { // 诱之以利
-      return `${npc.name} 看着你列出的资源清单，呼吸急促。最终他咬牙道：“人为财死……若能助我筑基，生个孩子又何妨！”`;
+      return `${npc.name} 看着你列出的资源清单，呼吸急促。最终他咬牙道："人为财死……若能助我筑基，为你孕育子嗣又何妨！虽为男儿之身，但修真界自有秘法，我愿意。"`;
     }
     if (strategy.id === "EMOTION") { // 动之以情
-      if (trait === "高冷") return `${npc.name} 冰封的心似乎裂开了一道缝隙，他低下头，声音沙哑：“从未有人如此待我……我依你。”`;
-      return `${npc.name} 眼眶微红，紧紧握住你的手：“愿得一人心，白首不相离。我愿为你留下血脉。”`;
+      if (trait === "高冷") return `${npc.name} 冰封的心似乎裂开了一道缝隙，他低下头，声音沙哑："从未有人如此待我……为你孕育血脉，便是我的回应。虽为男子，但修真之人，何惧世俗之见？"`;
+      return `${npc.name} 眼眶微红，紧紧握住你的手："愿得一人心，白首不相离。修真界虽罕见男子孕育，但为了你，为了我们的未来，我愿意承受这份特殊的使命。"`;
     }
     if (strategy.id === "REASON") { // 晓之以理
-      return `${npc.name} 沉思良久，点头道：“道友所言极是。阴阳调和乃天道至理，传承血脉亦是修行的一环。”`;
+      return `${npc.name} 沉思良久，点头道："道友所言极是。阴阳调和乃天道至理，传承血脉亦是修行的一环。虽男子孕育罕见，但上古典籍早有记载，我愿为你一试。"`;
     }
   } else {
     // 失败文案
     if (trait === "高冷") return `${npc.name} 眼神如刀：“吾辈修士，当斩断尘缘，一心向道。道友请自重！”`;
     if (trait === "重利" && strategy.id === "EMOTION") return `${npc.name} 不耐烦地打断你：“感情能当灵石花吗？别跟我谈这些虚的。”`;
-    if (trait === "傲娇") return `${npc.name} 满脸通红地跳起来：“谁、谁要跟你生孩子啊！不知羞耻！”`;
+    if (trait === "傲娇") return `${npc.name} 满脸通红地跳起来："谁、谁要为你怀孕啊！不知羞耻！"`;
     if (strategy.id === "PROFIT") return `${npc.name} 感到受到了侮辱：“你把我当成什么人了？勾栏里的男宠吗？”`;
     
-    return `${npc.name} 婉拒了你的请求：“此事关系重大，在下还需要时间考虑。”`;
+    return `${npc.name} 婉拒了你的请求："此事关系重大，让我……再考虑考虑。"`;
   }
   
   return success ? "他同意了。" : "他拒绝了。";
@@ -324,6 +324,18 @@ const coldTypeRomance = [
     title: "共渡心魔",
     text: (name) => `${name}走火入魔，识海中杀意翻涌。是你的声音将${name}拉回，${name}睁开眼，第一次露出脆弱的神色："若有一日我真的失控……动手杀了我。但在此之前，让我……再多看你一眼。"`,
     affectionBonus: 10
+  },
+  {
+    title: "孕育决心",
+    text: (name) => `${name}抚摸着自己尚且平坦的腹部，眼神复杂："从未想过以男儿之身孕育生命...但既已答应了你，我便不会退缩。只是...若宗门中人知晓，恐怕会笑话我吧。"你握住他的手，${name}抬眸看你，眼中是前所未有的温柔："但能为你，值得。"`,
+    affectionBonus: 12,
+    requirePregnant: true
+  },
+  {
+    title: "孕中坚持",
+    text: (name) => `${name}强撑着修炼，腹部的隆起让他的动作显得有些笨拙。汗水滑落额角，${name}固执地不肯停下："区区怀胎之苦...岂能让我倒下。我说过要陪你登临大道，这点考验算什么。"见你心疼地上前扶住他，${name}罕见地靠在你肩上："...有你在，我不累。"`,
+    affectionBonus: 13,
+    requirePregnant: true
   }
 ];
 
@@ -355,6 +367,18 @@ const yandereTypeRomance = [
     title: "囚禁威胁",
     text: (name) => `${name}将你逼在墙角，双手撑在你两侧，气息灼热："你想去哪里？离开我？"${name}的笑容有些扭曲，"若你敢走……我就打断你的腿，这样你就只能永远留在我身边了。"`,
     affectionBonus: 5
+  },
+  {
+    title: "病态依恋",
+    text: (name) => `${name}抚摸着已经显怀的腹部，眼神迷离而危险："这个孩子...是我和你的羁绊，是把你永远绑在我身边的证明。现在你跑不掉了吧？你永远...都是我的。"语气中透着病态的占有欲，却又带着脆弱的不安。`,
+    affectionBonus: 10,
+    requirePregnant: true
+  },
+  {
+    title: "孕中执念",
+    text: (name) => `${name}盯着镜中隆起的腹部，自嘲地笑了："堂堂男儿，竟为人怀胎...要是被那些仇家知道了，定会笑掉大牙。"但转瞬间，${name}眼神变得疯狂而坚定："可这是你我的孩子。谁敢嘲笑...我就杀了谁全家。"`,
+    affectionBonus: 11,
+    requirePregnant: true
   }
 ];
 
@@ -386,6 +410,18 @@ const gentleTypeRomance = [
     title: "受伤代价",
     text: (name) => `看到你受伤，向来温和的${name}眼中闪过一丝戾气。${name}轻柔地为你包扎伤口，却冷冷道："伤你的人，我已记下。你安心养伤，其余的……交给我。"`,
     affectionBonus: 9
+  },
+  {
+    title: "孕育守护",
+    text: (name) => `${name}轻轻抚摸着微微隆起的腹部，眼神温柔得能滴出水来。感受到你关切的目光，他柔声道："别担心...虽然男子怀胎世所罕见，但能孕育我们的孩子，是我的荣幸。你的守护让我安心，有你在，我什么都不怕。"`,
+    affectionBonus: 12,
+    requirePregnant: true
+  },
+  {
+    title: "胎动安抚",
+    text: (name) => `深夜，${name}忽然握住你的手，轻轻放在他腹部："孩子在动...感觉到了吗？"你惊喜地感受到那微弱的律动，${name}眼中闪过一丝泪光："我每天都在想，这个小生命会长成什么样子。一定很像你吧...温柔、善良，让人想要用生命去守护。"`,
+    affectionBonus: 14,
+    requirePregnant: true
   }
 ];
 
@@ -416,8 +452,18 @@ const flirtyTypeRomance = [
   {
     title: "夜访",
     text: (name) => `${name}翻窗而入，落地无声。见你惊讶，${name}笑着解开披风："正门太慢，我想你了。怎么，不欢迎？那我……现在就走？"说着作势要离开，眼中却满是戏谑。`,
-    affectionBonus: 8
-  }
+    affectionBonus: 8  },
+  {
+    title: "孕中魅惑",
+    text: (name) => `${name}手抚着已显怀的腹部，媚眼如丝地看着你："都说男子怀胎千难万难，可我却甘之如饴...每当感受到胎动，就想起那晚的温存。你说，这孩子会不会像我一样...懂得如何让你心动？"说罢轻笑一声，那风情万种的模样让人移不开眼。`,
+    affectionBonus: 13,
+    requirePregnant: true
+  },
+  {
+    title: "孕中撒娇",
+    text: (name) => `${name}侧卧在榻上，一手托腮，一手轻抚隆起的腹部，慵懒地对你说："这身子越来越重了，连起身都费劲...道友不来扶我一把吗？"见你走近，他突然拉住你的手贴在腹部："感受到了吗？小家伙也在想你呢。啧，为了你们父子，我可是豁出去了这副身段..."眼波流转间，竟有几分真情流露。`,
+    affectionBonus: 12,
+    requirePregnant: true  }
 ];
 
 
@@ -544,7 +590,21 @@ const getRandomRomanceEvent = (type, npc) => {
       break;
   }
   
-  const event = pool[Math.floor(Math.random() * pool.length)];
+  // 过滤掉需要怀孕状态但NPC未怀孕的剧情
+  const availableEvents = pool.filter(event => {
+    // 如果剧情要求怀孕状态，但NPC未怀孕，则过滤掉
+    if (event.requirePregnant && !npc.isPregnant) {
+      return false;
+    }
+    return true;
+  });
+  
+  // 如果过滤后没有可用剧情，返回null（将触发普通闲聊）
+  if (availableEvents.length === 0) {
+    return null;
+  }
+  
+  const event = availableEvents[Math.floor(Math.random() * availableEvents.length)];
   return {
     title: event.title,
     text: event.text(npc.name),

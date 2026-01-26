@@ -50,7 +50,17 @@ const ChatInterface = ({ npc, player, apiKey, apiUrl, gameState = {} }) => {
     if (!input.trim() || isLoading) return;
 
     const userMsg = { role: "user", content: input.trim() };
-    const newHistory = [...messages, userMsg];
+    const userInput = input.trim(); // 保存用户输入用于关键词检测
+    
+    // 重新构建 System Prompt（带上用户消息进行关键词检测）
+    const updatedSystemPrompt = {
+      role: "system",
+      content: buildSystemPrompt(npc, player, gameState, userInput)
+    };
+    
+    // 更新消息历史，替换旧的 system prompt
+    const historyWithoutSystem = messages.filter(m => m.role !== 'system');
+    const newHistory = [updatedSystemPrompt, ...historyWithoutSystem, userMsg];
     
     setMessages(newHistory);
     setInput("");
