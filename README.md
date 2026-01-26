@@ -4,12 +4,38 @@ A React-based cultivation game inspired by Chinese xianxia novels.
 
 ## 🎮 Game Features
 
-### 🤖 AI Dialogue System (NEW! v1.0.0)
+### 🧠 AI Memory Palace System (v1.0.1 - NEW!)
+- **🏛️ Layered Memory Storage**: NPCs remember everything important
+  - 💎 Milestones: Permanent memories (childbirth, marriage, life-death moments)
+  - 📝 Recent Events: Short-term memory (last 20 interactions)
+  - 📜 Long-term Summary: Compressed memories (auto-generated)
+- **🎯 Intelligent Context Injection**: 
+  - Keyword detection triggers relevant memories
+  - Dynamic prompt construction based on conversation context
+  - Emotional impact levels (Unforgettable, Profound, Significant)
+- **💬 Enhanced Dialogue Quality**:
+  - Before: "I don't regret it." (generic)
+  - After: "Watching our child grow up, the pain of childbirth was all worth it." (specific & emotional)
+- **🔄 Auto-Integration**: 
+  - Automatically records memories during key game events
+  - Backfills memories for existing save files
+  - Zero additional code required
+- **🔧 Backend-Only**: Runs in the background to enhance AI dialogue (no additional UI)
+
+See [记忆系统快速开始](docs/记忆系统快速开始.md) for quick start guide.
+
+### 🤖 AI Dialogue System (v1.1.0)
 - **💬 Intelligent NPC Conversations**: Every NPC has a unique "soul" powered by LLM
   - Dynamic personality-based roleplay (Cold, Gentle, Yandere, etc.)
   - Affection-based attitude adjustments
   - Ancient Chinese/Xianxia linguistic style
   - Chat history memory system
+- **🎮 Game State Integration**: AI now knows your relationship status
+  - 👶 Recognizes your shared children (names, ages, cultivation levels)
+  - 💕 Knows if you're married/partners
+  - 🥚 Aware of pregnancy status and progress
+  - 📜 Remembers important relationship milestones
+  - 🎭 References children naturally in conversations
 - **🔮 Easy Setup**: 
   - Support for DeepSeek, OpenAI, Tongyi Qianwen, and more
   - Low cost (~¥0.0003 per conversation with DeepSeek)
@@ -19,7 +45,7 @@ A React-based cultivation game inspired by Chinese xianxia novels.
   - Auto-saved chat history per NPC
   - Seamless integration with NPC detail pages
 
-See [AI对话系统使用指南](docs/AI对话系统使用指南.md) for detailed setup.
+See [AI对话系统使用指南](docs/AI对话系统使用指南.md) and [AI对话游戏状态集成](docs/AI对话游戏状态集成.md) for detailed setup.
 
 ### 🎭 Story System v2.0
 - **🌹 Romance Events**: 20 romantic storylines based on NPC personality types
