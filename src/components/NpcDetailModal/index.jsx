@@ -4,6 +4,11 @@ import { getTraitByValue } from '../../game/traitSystem.js';
 import TraitTag from '../Common/TraitTag.jsx';
 import Avatar from '../Common/Avatar.jsx';
 import ChatInterface from '../ChatInterface'; // 引入聊天组件
+import { 
+  calculateRemainingLifespan, 
+  getRelationshipStatus, 
+  getRelationshipStatusDisplay 
+} from '../../game/npcLifecycle.js'; // 引入生命周期系统
 
 const NpcDetailModal = ({ npc, onClose, onOptionSelect, player, children = [], npcs = [], onViewLog }) => {
   // 当前随机到的剧情事件
@@ -154,7 +159,94 @@ const NpcDetailModal = ({ npc, onClose, onOptionSelect, player, children = [], n
               <h4>❤️ 情感状态</h4>
               <AttributeRow label="好感" value={npc.relationship?.affection || 0} max={100} color="#f50057" />
               <AttributeRow label="信任" value={npc.relationship?.trust || 0} max={100} color="#00e5ff" />
+              
+              {/* 关系状态显示 */}
+              {(() => {
+                const affection = npc.relationship?.affection || 0;
+                const status = getRelationshipStatus(affection);
+                const display = getRelationshipStatusDisplay(status);
+                return (
+                  <div style={{marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}>
+                    <span style={{fontSize: '12px', color: '#666'}}>关系:</span>
+                    <span style={{
+                      padding: '4px 12px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      color: 'white',
+                      backgroundColor: display.color
+                    }}>
+                      {display.icon} {display.text}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
+
+            {/* 生命状态 */}
+            <div style={styles.attrBox}>
+              <h4>⏳ 生命状态</h4>
+              <div style={{fontSize: '12px', color: '#666', lineHeight: '1.6'}}>
+                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
+                  <span>当前年龄:</span>
+                  <span style={{fontWeight: 'bold'}}>{npc.age || 18} 岁</span>
+                </div>
+                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
+                  <span>基础寿元:</span>
+                  <span style={{fontWeight: 'bold'}}>{npc.stats?.lifespan || 100} 年</span>
+                </div>
+                <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                  <span>剩余寿元:</span>
+                  <span style={{
+                    fontWeight: 'bold',
+                    color: (() => {
+                      const remaining = calculateRemainingLifespan(npc);
+                      if (remaining < 10) return '#f44336';
+                      if (remaining < 30) return '#ff9800';
+                      return '#4caf50';
+                    })()
+                  }}>
+                    {calculateRemainingLifespan(npc)} 年
+                  </span>
+                </div>
+                {calculateRemainingLifespan(npc) < 10 && (
+                  <div style={{
+                    marginTop: '8px',
+                    padding: '8px',
+                    background: 'rgba(244, 67, 54, 0.1)',
+                    borderRadius: '4px',
+                    color: '#f44336',
+                    fontSize: '11px'
+                  }}>
+                    ⚠️ 寿元将尽，请尽快助其突破延寿！
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 修为进度 */}
+            {npc.tier && (
+              <div style={styles.attrBox}>
+                <h4>⚡ 修为进度</h4>
+                <div style={{fontSize: '12px', marginBottom: '8px'}}>
+                  <span style={{color: '#666'}}>当前境界: </span>
+                  <span style={{fontWeight: 'bold', color: '#9c27b0'}}>{npc.tier || '凡人'}</span>
+                </div>
+                {npc.currentExp !== undefined && npc.maxExp && (
+                  <div>
+                    <AttributeRow 
+                      label="经验" 
+                      value={npc.currentExp || 0} 
+                      max={npc.maxExp || 100} 
+                      color="#9c27b0" 
+                    />
+                    <div style={{fontSize: '11px', color: '#666', textAlign: 'right'}}>
+                      {npc.currentExp || 0} / {npc.maxExp || 100}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div style={styles.personalityBox}>
               <span>性格标签：</span>
