@@ -46,15 +46,53 @@ const NpcCard = ({ npc, onInteract }) => {
           💬 闲聊
         </button>
         <button onClick={() => onInteract(npc.id, 'GIFT')} style={styles.btn}>
-          🎁 赠礼 (-10灵石)
+          🎁 赠礼
         </button>
         
-        {/* 只有好感度大于80才解锁"劝生" */}
+        {/* 切磋按钮 - 需要中立以上关系 */}
+        <button 
+          onClick={() => onInteract(npc.id, 'SPAR')} 
+          disabled={(npc.relationship?.affection || 0) < 0}
+          style={{
+            ...styles.btn, 
+            opacity: (npc.relationship?.affection || 0) < 0 ? 0.5 : 1,
+            backgroundColor: '#ff9800',
+            color: 'white'
+          }}
+          title="友好切磋，提升修为"
+        >
+          ⚔️ 切磋
+        </button>
+        
+        {/* 双修按钮 - 需要亲密关系（80+） */}
+        {!npc.isChild && (
+          <button 
+            onClick={() => onInteract(npc.id, 'DUAL_CULTIVATION')} 
+            disabled={(npc.relationship?.affection || 0) < 80}
+            style={{
+              ...styles.btn, 
+              opacity: (npc.relationship?.affection || 0) < 80 ? 0.5 : 1,
+              backgroundColor: '#9c27b0',
+              color: 'white'
+            }}
+            title="双修大道，共享经验（需要80+好感）"
+          >
+            🧘 双修
+          </button>
+        )}
+        
+        {/* 劝生按钮 - 需要亲密关系（80+） */}
         {!npc.isChild && (
           <button 
             onClick={() => onInteract(npc.id, 'PROPOSE')} 
             disabled={(npc.relationship?.affection || 0) < 80}
-            style={{...styles.btn, opacity: (npc.relationship?.affection || 0) < 80 ? 0.5 : 1, backgroundColor: '#d81b60', color: 'white'}}
+            style={{
+              ...styles.btn, 
+              opacity: (npc.relationship?.affection || 0) < 80 ? 0.5 : 1, 
+              backgroundColor: '#d81b60', 
+              color: 'white'
+            }}
+            title="劝其为你诞子（需要80+好感）"
           >
             👶 劝生
           </button>
@@ -81,7 +119,7 @@ const styles = {
   statRow: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', fontSize: '14px' },
   progressBar: { flex: 1, height: '10px', background: '#eee', borderRadius: '5px', overflow: 'hidden' },
   progressFill: { height: '100%', transition: 'width 0.3s ease' },
-  actions: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' },
+  actions: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' },
   btn: { padding: '8px', border: '1px solid #ccc', borderRadius: '4px', background: 'white', cursor: 'pointer', fontSize: '12px' }
 };
 
