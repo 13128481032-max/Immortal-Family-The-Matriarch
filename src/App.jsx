@@ -958,7 +958,11 @@ function App() {
     let finalChildren = [...grownChildren];
     
     // 4. 处理灵根生成和测试队列
-    const readyToTest = finalChildren.filter(c => Math.floor(c.age * 12) === 72 && !c.isTested);
+    // 修改：使用范围判断而不是严格相等，确保6岁到6岁半之间都能触发
+    const readyToTest = finalChildren.filter(c => {
+      const ageInMonths = Math.floor(c.age * 12);
+      return ageInMonths >= 72 && ageInMonths < 78 && !c.isTested && !c.spiritRoot;
+    });
     if (readyToTest.length > 0) {
       // 为每个准备测灵的孩子生成灵根
       finalChildren = finalChildren.map(child => {
@@ -999,7 +1003,11 @@ function App() {
       
       // 加入测试队列
       const testQueueChildren = finalChildren.filter(c => readyToTest.some(r => r.id === c.id));
-      setTestQueue(prev => [...prev, ...testQueueChildren]);
+      if (testQueueChildren.length > 0) {
+        setTestQueue(prev => [...prev, ...testQueueChildren]);
+        // 如果是自动模式，有测灵事件时暂停
+        if (isAuto) setIsAuto(false);
+      }
     }
     
     // 5. 添加新出生的孩子到最终列表
@@ -1943,7 +1951,16 @@ function App() {
         <SpiritRootTestModal
           child={testQueue[0]} // 每次只测第一个
           onFinish={handleTestFinish}
-          onClose={() => setTestQueue(prev => prev.slice(1))} // 关闭弹窗时移除队列中的第一个元素
+          onClose={() => {
+            // 关闭弹窗时也要标记为已测试，防止重复触发
+            const childToMark = testQueue[0];
+            if (childToMark) {
+              setChildren(prev => prev.map(c => 
+                c.id === childToMark.id ? { ...c, isTested: true } : c
+              ));
+            }
+            setTestQueue(prev => prev.slice(1));
+          }}
         />
       )}
 
