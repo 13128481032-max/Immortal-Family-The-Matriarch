@@ -224,8 +224,8 @@ export function checkAssassinationEvent(player) {
     return null;
   }
   
-  // 威胁度超过80%有50%概率触发刺杀
-  if (rival.threatLevel >= 80 && Math.random() < 0.5) {
+  // 威胁度达到100%（满值）才会触发刺杀
+  if (rival.threatLevel >= 100) {
     // 触发刺杀事件
     const survivalRate = 0.3 + (player.stats.cunning / 200); // 最多60%生存率
     const survived = Math.random() < survivalRate;
