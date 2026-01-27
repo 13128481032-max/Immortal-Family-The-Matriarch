@@ -598,6 +598,18 @@ function App() {
         true // 不自动关闭，因为是重要事件
       );
       
+      // 🆕 推送新闻：双修事件（高好感度时有概率）
+      if (affection >= 70 && Math.random() < 0.3) {
+        pushToNewsBuffer(
+          player.newsBuffer,
+          'DUAL_CULTIVATION',
+          {
+            actor: player.name,
+            target: targetNpc.name
+          }
+        );
+      }
+      
       // 检测是否被其他NPC目击（双修被目击概率很低但醋意很高）
       handleWitnessCheck(targetNpc, 'DUAL_CULTIVATION');
       return;
@@ -748,6 +760,19 @@ function App() {
           updated = generatePleasePlanLog(updated, player, player.time.year, player.time.month);
         }
         
+        // 🆕 推送新闻：吃醋事件（醋意较高时有概率）
+        if (newJealousy >= 60 && Math.random() < 0.25) {
+          pushToNewsBuffer(
+            player.newsBuffer,
+            'NPC_JEALOUSY',
+            {
+              actor: npc.name,
+              target: player.name,
+              rival: targetNpc.name
+            }
+          );
+        }
+        
         return updated;
       }));
       
@@ -840,6 +865,18 @@ function App() {
     
     // 检测是否被其他NPC目击
     handleWitnessCheck(npc, 'GIFT');
+    
+    // 🆕 推送新闻：高好感度送礼事件
+    if (npc.relationship?.affection >= 60 && Math.random() < 0.3) {
+      pushToNewsBuffer(
+        player.newsBuffer,
+        'NPC_PURSUIT',
+        {
+          actor: player.name,
+          target: npc.name
+        }
+      );
+    }
     
     // 5. 关闭弹窗
     setModalState({ type: null, data: null });
@@ -1694,8 +1731,24 @@ function App() {
         
         // 判断是否应该发送家书
         if (shouldSendLetter(npc, monthsSinceLastMessage)) {
-          const letterMsg = createLetterMessage(npc, player, { year: nextAge, month: nextMonth }, true);
-          messageManager.addMessage(letterMsg);
+          // 异步生成家书
+          createLetterMessage(
+            npc, 
+            player, 
+            { year: nextAge, month: nextMonth }, 
+            true,
+            {
+              apiKey: localStorage.getItem('game_api_key') || '',
+              apiUrl: localStorage.getItem('game_api_url') || 'https://api.deepseek.com/chat/completions',
+              apiModel: localStorage.getItem('game_api_model') || 'deepseek-chat',
+              useAIForLetter: localStorage.getItem('useAIForLetter') !== 'false'
+            }
+          ).then(letterMsg => {
+            messageManager.addMessage(letterMsg);
+            setMessages(messageManager.getAllMessages());
+          }).catch(err => {
+            console.error('生成家书失败:', err);
+          });
           
           // 更新上次检查时间
           setLastMessageCheck(prev => ({
@@ -1705,7 +1758,7 @@ function App() {
         }
       });
       
-      // 更新消息列表
+      // 更新消息列表（在外层更新一次即可）
       setMessages(messageManager.getAllMessages());
     }
     
@@ -1734,6 +1787,19 @@ function App() {
             detail: event.newTier
           }
         );
+        
+        // 🆕 高好感度NPC突破时，额外推送亲密新闻
+        const npc = aliveNpcs.find(n => n.name === event.npcName);
+        if (npc && npc.relationship?.affection >= 70 && Math.random() < 0.4) {
+          pushToNewsBuffer(
+            player.newsBuffer || [],
+            'NPC_AFFECTION_HIGH',
+            {
+              actor: player.name,
+              target: npc.name
+            }
+          );
+        }
       } else if (event.type === 'NPC_BREAKTHROUGH_FAIL') {
         // 📰 添加到新闻缓存
         pushToNewsBuffer(
@@ -1932,21 +1998,30 @@ function App() {
         }
         
         // 生成离别消息（子女前往宗门）
-        const departureMsg = createLetterMessage(
+        createLetterMessage(
           { 
             id: c.id, 
             name: c.name, 
             gender: c.gender,
             sect: sectObj.name,
-            cultivation: { stage: c.tierTitle },
+            tier: c.tierTitle,
             affection: 100, // 子女对父母的好感度默认很高
           },
           player,
           { year: Math.floor(player.age), month: player.time.month },
-          true
-        );
-        messageManager.addMessage(departureMsg);
-        setMessages(messageManager.getAllMessages());
+          true,
+          {
+            apiKey: localStorage.getItem('game_api_key') || '',
+            apiUrl: localStorage.getItem('game_api_url') || 'https://api.deepseek.com/chat/completions',
+            apiModel: localStorage.getItem('game_api_model') || 'deepseek-chat',
+            useAIForLetter: localStorage.getItem('useAIForLetter') !== 'false'
+          }
+        ).then(departureMsg => {
+          messageManager.addMessage(departureMsg);
+          setMessages(messageManager.getAllMessages());
+        }).catch(err => {
+          console.error('生成离别消息失败:', err);
+        });
         
         // 📰 添加到新闻缓存
         pushToNewsBuffer(
@@ -3135,8 +3210,8 @@ function App() {
             <div style={styles.spinner}>⏳</div> // 自动时显示沙漏动画
           ) : (
             <>
-              <span style={{fontSize:'20px'}}>🌙</span>
-              <span style={{fontSize:'10px'}}>下月</span>
+              <span style={{fontSize:'18px'}}>🌙</span>
+              <span style={{fontSize:'9px'}}>下月</span>
             </>
           )}
         </button>
@@ -3352,7 +3427,7 @@ const styles = {
   mainContent: {
     flex: 1,
     padding: '15px', // 更大的内边距
-    paddingBottom: '85px', // 为底部导航栏留出空间（70px高度 + 15px额外空间）
+    paddingBottom: '70px', // 为底部导航栏留出空间（56px高度 + 14px额外空间）
     overflowY: 'auto'
   },
   tabContent: {
@@ -3413,24 +3488,24 @@ const styles = {
   // 新增容器：把两个按钮包起来
   fabContainer: {
     position: 'absolute',
-    bottom: '90px',
-    right: '25px',
+    bottom: '70px',
+    right: '20px',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '12px',
+    gap: '10px',
     zIndex: 90
   },
 
   // 自动播放小开关
   autoBtn: {
-    padding: '8px 16px',
-    borderRadius: '20px',
+    padding: '6px 12px',
+    borderRadius: '18px',
     border: '2px solid #d7ccc8', // 古色边框
-    fontSize: '13px',
+    fontSize: '11px',
     fontWeight: 'bold',
     cursor: 'pointer',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)', // 柔和阴影
+    boxShadow: '0 2px 6px rgba(0,0,0,0.1)', // 柔和阴影
     transition: 'all 0.3s ease',
     backgroundColor: '#f5f0e8', // 古色背景
     color: '#5d4037' // 古色文字
@@ -3439,16 +3514,16 @@ const styles = {
   // 邸报按钮 (左下角)
   gazetteBtn: {
     position: 'absolute',
-    bottom: '90px',
-    left: '25px',
-    width: '60px',
-    height: '60px',
+    bottom: '70px',
+    left: '20px',
+    width: '50px',
+    height: '50px',
     borderRadius: '50%',
     background: 'linear-gradient(135deg, #fff9e6 0%, #f5f0e8 100%)',
-    border: '3px solid #8d6e63',
-    fontSize: '28px',
+    border: '2px solid #8d6e63',
+    fontSize: '24px',
     cursor: 'pointer',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+    boxShadow: '0 3px 12px rgba(0,0,0,0.2)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -3456,23 +3531,23 @@ const styles = {
     zIndex: 90,
     ':hover': {
       transform: 'scale(1.1)',
-      boxShadow: '0 6px 20px rgba(0,0,0,0.25)'
+      boxShadow: '0 5px 18px rgba(0,0,0,0.25)'
     }
   },
 
   // 传书馆按钮 (左下角，邸报上方)
   messageCenterBtn: {
     position: 'absolute',
-    bottom: '160px', // 在邸报按钮上方
-    left: '25px',
-    width: '60px',
-    height: '60px',
+    bottom: '130px', // 在邸报按钮上方
+    left: '20px',
+    width: '50px',
+    height: '50px',
     borderRadius: '50%',
     background: 'linear-gradient(135deg, #faf8f3 0%, #f0ebe0 100%)',
-    border: '3px solid #5c3317',
-    fontSize: '28px',
+    border: '2px solid #5c3317',
+    fontSize: '24px',
     cursor: 'pointer',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+    boxShadow: '0 3px 12px rgba(0,0,0,0.2)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -3480,7 +3555,7 @@ const styles = {
     zIndex: 90,
     ':hover': {
       transform: 'scale(1.1)',
-      boxShadow: '0 6px 20px rgba(0,0,0,0.25)'
+      boxShadow: '0 5px 18px rgba(0,0,0,0.25)'
     }
   },
 
@@ -3524,13 +3599,13 @@ const styles = {
 
   // 修改主按钮样式
   fabBtn: {
-    width: '65px',
-    height: '65px',
+    width: '56px',
+    height: '56px',
     borderRadius: '50%',
     backgroundColor: 'linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%)', // 渐变背景
     color: '#fff',
-    border: '4px solid #f5f0e8', // 古色边框
-    boxShadow: '0 4px 15px rgba(0,0,0,0.2)', // 柔和阴影
+    border: '3px solid #f5f0e8', // 古色边框
+    boxShadow: '0 3px 12px rgba(0,0,0,0.2)', // 柔和阴影
     cursor: 'pointer',
     display: 'flex',
     flexDirection: 'column',
@@ -3539,7 +3614,7 @@ const styles = {
     transition: 'all 0.3s ease',
     ':hover': {
       transform: 'scale(1.1)',
-      boxShadow: '0 6px 20px rgba(0,0,0,0.25)'
+      boxShadow: '0 5px 18px rgba(0,0,0,0.25)'
     }
   },
 
