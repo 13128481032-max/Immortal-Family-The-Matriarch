@@ -33,7 +33,7 @@ const BottomNav = ({ activeTab, onTabChange }) => {
 
 const styles = {
   container: {
-    height: '70px',
+    height: '56px',
     background: 'linear-gradient(135deg, #3e2723 0%, #2c1810 100%)', // 深色渐变背景，提高对比度
     borderTop: '2px solid #5d4037', // 深色边框
     display: 'flex',
@@ -54,16 +54,16 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     cursor: 'pointer',
-    padding: '8px 4px',
-    borderRadius: '12px', // 圆角
+    padding: '6px 3px',
+    borderRadius: '10px', // 圆角
     transition: 'all 0.3s ease',
     ':hover': {
       background: 'rgba(255, 255, 255, 0.1)', // 悬停背景
       transform: 'translateY(-2px)'
     }
   },
-  icon: { fontSize: '22px', marginBottom: '3px' },
-  label: { fontSize: '11px', color: '#fff', fontFamily: 'Microsoft YaHei, SimSun, serif' } // 白色文字
+  icon: { fontSize: '18px', marginBottom: '2px' },
+  label: { fontSize: '10px', color: '#fff', fontFamily: 'Microsoft YaHei, SimSun, serif' } // 白色文字
 };
 
 export default BottomNav;
