@@ -274,25 +274,16 @@ function formatEventForAI(event) {
 }
 
 /**
- * 主生成函数：根据是否有API自动选择生成方式
+ * 主生成函数：邸报始终使用本地模板
  */
-export async function generateGazette(newsBuffer, player, npcs, issue, settings) {
+export function generateGazette(newsBuffer, player, npcs, issue, settings) {
   // 检查是否启用邸报
   if (!settings.enableGazette) {
     return null;
   }
 
-  // 检查是否有API Key且启用AI
-  const hasAPI = settings.apiKey && settings.apiKey.trim().length > 0;
-  const useAI = hasAPI && settings.useAIForGazette !== false;
-
-  if (useAI) {
-    // 使用AI生成（如果失败会自动降级到本地模板）
-    return await generateAIGazette(newsBuffer, player, npcs, issue, settings);
-  } else {
-    // 使用本地模板
-    return generateLocalGazette(newsBuffer, player, npcs, issue);
-  }
+  // 邸报始终使用本地模板生成
+  return generateLocalGazette(newsBuffer, player, npcs, issue);
 }
 
 /**

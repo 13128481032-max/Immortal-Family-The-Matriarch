@@ -3,7 +3,7 @@
  * 整合所有文字剧情类信息：家书、遗言、报平安等
  * 采用非阻塞式后台生成，通过红点驱动玩家主动查看
  */
-
+import { sendMessageToAI } from '../services/aiService.js';
 // 消息类型常量
 export const MESSAGE_TYPES = {
   LETTER: 'LETTER',           // 日常家书
@@ -282,7 +282,73 @@ export const obituaryTemplates = {
 };
 
 /**
- * 生成家书内容
+ * 使用AI生成家书内容
+ * @param {Object} npc - NPC对象
+ * @param {Object} player - 玩家对象
+ * @param {Object} gameTime - 游戏时间
+ * @param {string} relation - 关系类型
+ * @param {Object} settings - AI配置
+ * @returns {Promise<string>}
+ */
+export async function generateLetterContentWithAI(npc, player, gameTime, relation = 'default', settings) {
+  try {
+    // 构建角色背景信息
+    let relationDesc = '';
+    let tone = '';
+    
+    switch(relation) {
+      case 'child':
+        relationDesc = `你是${player.name}的${npc.gender === 'female' ? '女儿' : '儿子'}${npc.name}，现在在${npc.sect || '宗门'}修行，境界${npc.tier || '炼气期'}。`;
+        tone = '语气要孝顺、尊敬，略带思念之情。';
+        break;
+      case 'spouse':
+        relationDesc = `你是${player.name}的道侣${npc.name}，境界${npc.tier || '炼气期'}，目前在外游历。`;
+        tone = '语气要温柔、思念，充满夫妻情深。';
+        break;
+      case 'friend':
+        relationDesc = `你是${player.name}的道友${npc.name}，境界${npc.tier || '炼气期'}。你们是修行路上的挚友。`;
+        tone = '语气要真诚、豪爽，体现道友情谊。';
+        break;
+      default:
+        relationDesc = `你是${npc.name}，境界${npc.tier || '炼气期'}，与${player.name}相识已久。`;
+        tone = '语气要礼貌、友善。';
+    }
+
+    const messages = [{
+      role: 'system',
+      content: `你是修真世界的一位修士，正在给朋友写一封家书。${relationDesc}\n\n你的性格特点：${npc.trait?.name || '平和稳重'}。\n\n写作要求：
+1. 使用古风文言文风格，但要浅显易懂
+2. ${tone}
+3. 字数控制在100-150字
+4. 要提及近期修炼进展或见闻
+5. 表达对收信人的关心或思念
+6. 落款格式："您的XX ${npc.name} 敬上\\n\\n${gameTime.year}年${gameTime.month}月"`
+    }, {
+      role: 'user',
+      content: `请以${npc.name}的身份，给${player.name}写一封家书。当前时间是${gameTime.year}年${gameTime.month}月。`
+    }];
+
+    const content = await sendMessageToAI(
+      messages,
+      settings.apiKey,
+      settings.apiUrl || 'https://api.deepseek.com/chat/completions',
+      {
+        model: settings.apiModel || 'deepseek-chat',
+        temperature: 0.9,
+        maxTokens: 300
+      }
+    );
+
+    return content;
+  } catch (error) {
+    console.error('AI生成家书失败，使用模板:', error);
+    // 失败时降级到模板
+    return generateLetterContent(npc, player, gameTime, relation);
+  }
+}
+
+/**
+ * 生成家书内容（本地模板）
  * @param {Object} npc - NPC对象
  * @param {Object} player - 玩家对象
  * @param {Object} gameTime - 游戏时间
@@ -383,14 +449,15 @@ export function createObituaryMessage(npc, player, gameTime) {
 }
 
 /**
- * 创建家书消息（可以先占位，后续填充内容）
+ * 创建家书消息（支持AI生成）
  * @param {Object} npc - NPC对象
  * @param {Object} player - 玩家对象
  * @param {Object} gameTime - 游戏时间
  * @param {boolean} immediate - 是否立即生成内容
- * @returns {Object}
+ * @param {Object} settings - 设置对象（包含AI配置）
+ * @returns {Promise<Object>|Object}
  */
-export function createLetterMessage(npc, player, gameTime, immediate = true) {
+export async function createLetterMessage(npc, player, gameTime, immediate = true, settings = {}) {
   const relation = determineRelation(npc, player);
 
   let title = '来信';
@@ -398,12 +465,30 @@ export function createLetterMessage(npc, player, gameTime, immediate = true) {
   else if (relation === 'spouse') title = '道侣传书';
   else if (relation === 'friend') title = '好友来信';
 
+  let content = '';
+  
+  if (immediate) {
+    // 检查是否使用AI生成
+    const useAI = settings.useAIForLetter && settings.apiKey && settings.apiKey.trim().length > 0;
+    
+    if (useAI) {
+      try {
+        content = await generateLetterContentWithAI(npc, player, gameTime, relation, settings);
+      } catch (error) {
+        console.error('AI生成失败，使用模板:', error);
+        content = generateLetterContent(npc, player, gameTime, relation);
+      }
+    } else {
+      content = generateLetterContent(npc, player, gameTime, relation);
+    }
+  }
+
   const message = createMessage({
     type: MESSAGE_TYPES.LETTER,
     senderId: npc.id,
     senderName: npc.name,
     title: `${npc.name}的${title}`,
-    content: immediate ? generateLetterContent(npc, player, gameTime, relation) : '',
+    content,
     timestamp: { ...gameTime },
     extras: {
       npcId: npc.id,
