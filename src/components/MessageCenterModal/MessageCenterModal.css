@@ -1,0 +1,463 @@
+/* 传书馆弹窗样式 */
+
+/* 遮罩层 */
+.message-center-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+/* 主弹窗 */
+.message-center-modal {
+  background: linear-gradient(135deg, #f5f1e8 0%, #e8dcc8 100%);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 1000px;
+  height: 80vh;
+  max-height: 700px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+/* 标题栏 */
+.message-center-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 2px solid rgba(139, 69, 19, 0.2);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), transparent);
+}
+
+.message-center-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #5c3317;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #8b4513;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: rgba(139, 69, 19, 0.1);
+  transform: rotate(90deg);
+}
+
+/* 分类标签 */
+.message-filters {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.15);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border: 1px solid rgba(139, 69, 19, 0.3);
+  background: rgba(255, 255, 255, 0.6);
+  color: #5c3317;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.filter-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(139, 69, 19, 0.5);
+}
+
+.filter-btn.active {
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  color: white;
+  border-color: #8b4513;
+  box-shadow: 0 2px 8px rgba(139, 69, 19, 0.3);
+}
+
+/* 内容区域 */
+.message-center-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 消息列表 */
+.message-list {
+  width: 300px;
+  overflow-y: auto;
+  border-right: 2px solid rgba(139, 69, 19, 0.2);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.message-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message-list::-webkit-scrollbar-thumb {
+  background: rgba(139, 69, 19, 0.3);
+  border-radius: 3px;
+}
+
+/* 空消息提示 */
+.empty-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+}
+
+.empty-message p:first-child {
+  font-size: 48px;
+  margin: 0;
+}
+
+.empty-message p:last-child {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+}
+
+/* 消息项 */
+.message-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.message-item:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.message-item.selected {
+  background: rgba(139, 69, 19, 0.15);
+  border-left: 4px solid #8b4513;
+}
+
+.message-item.unread {
+  background: rgba(255, 248, 220, 0.6);
+  font-weight: 500;
+}
+
+.message-item.obituary {
+  border-left: 3px solid #666;
+}
+
+/* 未读标记 */
+.unread-dot {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  background: #ff4444;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* 头像 */
+.message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f0e6d2 0%, #d4c5a9 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  border: 2px solid rgba(139, 69, 19, 0.2);
+}
+
+/* 消息信息 */
+.message-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.message-sender {
+  font-size: 14px;
+  color: #5c3317;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.message-type-label {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: rgba(139, 69, 19, 0.15);
+  border-radius: 4px;
+  font-weight: 400;
+}
+
+.message-title {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.message-time {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 阅读区域 */
+.message-reader {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 信纸背景 - 家书 */
+.message-background-letter {
+  background: 
+    linear-gradient(90deg, rgba(139, 69, 19, 0.1) 1px, transparent 1px),
+    linear-gradient(rgba(139, 69, 19, 0.1) 1px, transparent 1px),
+    linear-gradient(135deg, #faf8f3 0%, #f0ebe0 100%);
+  background-size: 20px 20px, 20px 20px, 100% 100%;
+}
+
+/* 信纸背景 - 绝笔 */
+.message-background-obituary {
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(100, 100, 100, 0.05) 0%, transparent 50%),
+    linear-gradient(135deg, #e8e8e8 0%, #d0d0d0 100%);
+  position: relative;
+}
+
+.message-background-obituary::before {
+  content: '🕯️';
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 32px;
+  opacity: 0.3;
+}
+
+/* 占位提示 */
+.reader-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+}
+
+.reader-placeholder p:first-child {
+  font-size: 64px;
+  margin: 0;
+}
+
+.reader-placeholder p:last-child {
+  margin: 16px 0 0 0;
+  font-size: 16px;
+}
+
+/* 阅读内容 */
+.reader-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.reader-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.reader-content::-webkit-scrollbar-thumb {
+  background: rgba(139, 69, 19, 0.3);
+  border-radius: 3px;
+}
+
+/* 信件标题 */
+.reader-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(139, 69, 19, 0.2);
+}
+
+.reader-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 22px;
+  color: #5c3317;
+  font-weight: 600;
+}
+
+.reader-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #999;
+}
+
+/* 信件正文 */
+.reader-body {
+  flex: 1;
+  margin-bottom: 24px;
+}
+
+.message-content {
+  font-size: 16px;
+  line-height: 2;
+  color: #333;
+  white-space: pre-wrap;
+  font-family: 'KaiTi', 'STKaiti', 'SimSun', serif;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.message-background-obituary .message-content {
+  color: #555;
+}
+
+.content-loading {
+  font-size: 14px;
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* 操作按钮 */
+.reader-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid rgba(139, 69, 19, 0.15);
+}
+
+.action-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn:active {
+  transform: translateY(0);
+}
+
+.action-btn.secondary {
+  background: linear-gradient(135deg, #666 0%, #888 100%);
+}
+
+.action-btn.danger {
+  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .message-center-modal {
+    width: 95%;
+    height: 90vh;
+  }
+
+  .message-center-content {
+    flex-direction: column;
+  }
+
+  .message-list {
+    width: 100%;
+    height: 40%;
+    border-right: none;
+    border-bottom: 2px solid rgba(139, 69, 19, 0.2);
+  }
+
+  .message-reader {
+    height: 60%;
+  }
+
+  .reader-content {
+    padding: 20px;
+  }
+
+  .message-content {
+    font-size: 14px;
+    line-height: 1.8;
+  }
+}

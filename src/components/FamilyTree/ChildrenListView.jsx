@@ -225,7 +225,9 @@ const ChildrenListView = ({ children, pregnantNpcs = [], onChildClick }) => {
               >
                 {/* 左侧头像 */}
                 <div style={styles.avatarSection}>
-                  {child.age < 15 ? (
+                  {child.age === 0 ? (
+                    <div style={styles.babyIcon}>🥚</div>
+                  ) : child.age < 15 ? (
                     <div style={styles.babyIcon}>👶</div>
                   ) : (
                     <Avatar dna={child.avatar} gender={child.gender} size={60} />
@@ -315,8 +317,10 @@ const styles = {
     borderRadius: '12px',
     border: '2px solid #8d6e63',
     maxHeight: '600px',
+    height: '100%', // 确保占满父容器
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    overflow: 'hidden' // 防止容器本身滚动
   },
   header: {
     marginBottom: '15px'
@@ -426,9 +430,11 @@ const styles = {
   listContainer: {
     flex: 1,
     overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch', // iOS 平滑滚动
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px'
+    gap: '10px',
+    minHeight: 0 // 确保flex子元素可以滚动
   },
   childCard: {
     display: 'flex',
@@ -565,7 +571,7 @@ const styles = {
   }
 };
 
-// 添加CSS来处理性别徽章的颜色
+// 添加CSS来处理性别徽章的颜色和移动端优化
 const styleSheet = document.createElement('style');
 styleSheet.textContent = `
   [data-gender="男"] {
@@ -578,6 +584,15 @@ styleSheet.textContent = `
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     border-color: #8d6e63;
+  }
+  
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    /* 确保容器高度适配移动端 */
+    .listContainer {
+      max-height: calc(100vh - 300px) !important;
+      -webkit-overflow-scrolling: touch;
+    }
   }
 `;
 document.head.appendChild(styleSheet);

@@ -50,7 +50,11 @@ const FamilyTree = ({ children, pregnantNpcs = [], onMarry, onChildClick }) => {
           
           {/* 1. 先渲染正在孕育中的胚胎 */}
           {pregnantNpcs.map(npc => (
-            <div key={`embryo-${npc.id}`} style={styles.embryoCard}>
+            <div 
+              key={`embryo-${npc.id}`} 
+              style={{...styles.embryoCard, cursor: 'pointer'}}
+              onClick={() => onChildClick({ isEmbryo: true, npc: npc })}
+            >
               <div style={styles.icon}>🥚</div>
               <div style={styles.info}>
                 <strong style={{color: '#d81b60'}}>孕育中...</strong>
@@ -79,7 +83,9 @@ const FamilyTree = ({ children, pregnantNpcs = [], onMarry, onChildClick }) => {
                 cursor: 'pointer' // 鼠标变手型
             }}>
               <div style={{marginBottom: '10px'}}>
-                {child.age < 15 ? (
+                {child.age === 0 ? (
+                  <div style={{fontSize: '28px'}}>🥚</div>
+                ) : child.age < 15 ? (
                   <div style={{fontSize: '28px'}}>👶</div>
                 ) : (
                   <Avatar dna={child.avatar} gender={child.gender} size={50} />

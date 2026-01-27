@@ -12,7 +12,7 @@ const Dashboard = ({ player }) => {
       </div>
 
       {/* 时间信息 [cite: 139] - 游戏按月推进 */}
-      <p>📅 云澜历 {player.time.year}年 {player.time.month}月 ({player.time.season})</p>
+      <p>📅 云澜历 {Math.floor(player.age)}年 {player.time.month}月 ({player.time.season})</p>
 
       {/* 核心三维属性 */}
       <div style={styles.statsGrid}>

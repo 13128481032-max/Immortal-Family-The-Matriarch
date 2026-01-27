@@ -47,7 +47,9 @@ const ChildDetailModal = ({ child, onClose, onAction }) => {
             {/* 头部：头像和基本信息 */}
             <div style={{display:'flex', gap:'20px', alignItems:'center', marginBottom:'20px', paddingBottom:'15px', borderBottom:'1px dashed #e0e0e0'}}>
               <div style={{marginBottom: '15px'}}>
-                {child.age < 15 ? (
+                {child.age === 0 ? (
+                  <div style={{fontSize: '48px'}}>🥚</div>
+                ) : child.age < 15 ? (
                   <div style={{fontSize: '48px'}}>👶</div>
                 ) : (
                   <Avatar dna={child.avatar} gender={child.gender} size={100} />

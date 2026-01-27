@@ -12,12 +12,31 @@ const SystemPanel = ({ player, onSave, onLoad, onReset, onOpenGuide }) => {
   const [apiModel, setApiModel] = useState('');
   const [isTestingAPI, setIsTestingAPI] = useState(false);
   const [apiStatus, setApiStatus] = useState(null);
+  
+  // 邸报配置状态
+  const [enableGazette, setEnableGazette] = useState(true);
+  const [useAIForGazette, setUseAIForGazette] = useState(true);
 
   // 初始化检查存档
   useEffect(() => {
     checkSave();
     loadAPIConfig();
+    loadGazetteConfig();
   }, []);
+
+  const loadGazetteConfig = () => {
+    const enabled = localStorage.getItem('enableGazette');
+    const useAI = localStorage.getItem('useAIForGazette');
+    
+    setEnableGazette(enabled !== 'false'); // 默认开启
+    setUseAIForGazette(useAI !== 'false'); // 默认使用AI
+  };
+
+  const saveGazetteConfig = () => {
+    localStorage.setItem('enableGazette', enableGazette.toString());
+    localStorage.setItem('useAIForGazette', useAIForGazette.toString());
+    alert('邸报配置已保存！');
+  };
 
   const loadAPIConfig = () => {
     const savedKey = localStorage.getItem('game_api_key') || '';
@@ -176,6 +195,53 @@ const SystemPanel = ({ player, onSave, onLoad, onReset, onOpenGuide }) => {
         </div>
       </div>
       
+      {/* 邸报配置卡片 */}
+      <div style={styles.card}>
+        <h4>📰 修真界邸报</h4>
+        <p style={styles.info}>
+          每季度自动生成一份修真界八卦报纸，记录你和NPC的大事件。<br/>
+          <small style={{color: '#999'}}>支持AI生成（更生动）或本地模板（离线可用）</small>
+        </p>
+        
+        <div style={styles.formGroup}>
+          <label style={styles.checkboxLabel}>
+            <input 
+              type="checkbox"
+              checked={enableGazette}
+              onChange={(e) => setEnableGazette(e.target.checked)}
+              style={styles.checkbox}
+            />
+            <span>启用修真界邸报</span>
+          </label>
+          <small style={styles.hint}>
+            关闭后将不再生成邸报，也不会记录新闻事件
+          </small>
+        </div>
+
+        <div style={styles.formGroup}>
+          <label style={styles.checkboxLabel}>
+            <input 
+              type="checkbox"
+              checked={useAIForGazette}
+              onChange={(e) => setUseAIForGazette(e.target.checked)}
+              disabled={!enableGazette}
+              style={styles.checkbox}
+            />
+            <span>使用AI生成邸报</span>
+          </label>
+          <small style={styles.hint}>
+            需要配置API Key。关闭后使用本地模板（更快但内容固定）
+          </small>
+        </div>
+
+        <button 
+          onClick={saveGazetteConfig} 
+          style={styles.saveBtn}
+        >
+          💾 保存配置
+        </button>
+      </div>
+      
       <div style={styles.card}>
         <h4>📁 存档管理</h4>
         <div style={styles.info}>
@@ -233,6 +299,8 @@ const styles = {
   resetBtn: { width: '100%', padding: '10px', cursor: 'pointer', borderRadius: '5px', border: 'none', background: '#d32f2f', color: 'white' },
   formGroup: { marginBottom: '15px' },
   label: { display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: 'bold', color: '#333' },
+  checkboxLabel: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#333', cursor: 'pointer' },
+  checkbox: { width: '18px', height: '18px', cursor: 'pointer' },
   input: { width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ddd', fontSize: '14px', boxSizing: 'border-box' },
   hint: { display: 'block', marginTop: '5px', fontSize: '11px', color: '#999', lineHeight: '1.4' },
   statusBox: { padding: '10px', borderRadius: '5px', marginBottom: '15px', fontSize: '13px', fontWeight: 'bold' }

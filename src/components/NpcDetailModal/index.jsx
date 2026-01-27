@@ -219,6 +219,56 @@ const NpcDetailModal = ({ npc, onClose, onOptionSelect, player, children = [], n
                   </div>
                 );
               })()}
+              
+              {/* 醋意值显示 */}
+              {(() => {
+                const jealousy = npc.jealousy || 0;
+                const getJealousyColor = (value) => {
+                  if (value >= 81) return '#d32f2f'; // 修罗场 - 深红
+                  if (value >= 61) return '#f44336'; // 大醋 - 红色
+                  if (value >= 41) return '#ff9800'; // 中醋 - 橙色
+                  if (value >= 21) return '#ffc107'; // 微醋 - 黄色
+                  return '#4caf50'; // 无醋 - 绿色
+                };
+                
+                const getJealousyLabel = (value) => {
+                  if (value >= 81) return '修罗场';
+                  if (value >= 61) return '大醋';
+                  if (value >= 41) return '中醋';
+                  if (value >= 21) return '微醋';
+                  return '平静';
+                };
+                
+                return (
+                  <div style={{marginTop: '8px'}}>
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px'}}>
+                      <span style={{fontSize: '12px', color: '#666'}}>醋意:</span>
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        color: getJealousyColor(jealousy)
+                      }}>
+                        {getJealousyLabel(jealousy)} ({jealousy})
+                      </span>
+                    </div>
+                    <div style={{
+                      width: '100%',
+                      height: '8px',
+                      background: '#e0e0e0',
+                      borderRadius: '4px',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        width: `${jealousy}%`,
+                        height: '100%',
+                        background: `linear-gradient(90deg, ${getJealousyColor(jealousy)}, ${getJealousyColor(jealousy)}dd)`,
+                        borderRadius: '4px',
+                        transition: 'width 0.3s ease, background 0.3s ease'
+                      }}></div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* 生命状态 */}
@@ -227,7 +277,7 @@ const NpcDetailModal = ({ npc, onClose, onOptionSelect, player, children = [], n
               <div style={{fontSize: '12px', color: '#666', lineHeight: '1.6'}}>
                 <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
                   <span>当前年龄:</span>
-                  <span style={{fontWeight: 'bold'}}>{npc.age || 18} 岁</span>
+                  <span style={{fontWeight: 'bold'}}>{Math.floor(npc.age || 18)} 岁</span>
                 </div>
                 <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
                   <span>基础寿元:</span>

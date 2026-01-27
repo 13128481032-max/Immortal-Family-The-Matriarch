@@ -3,7 +3,7 @@ import { getRootConfigByValue, calculateCultivationSpeed } from '../../game/cult
 import { getManualSpeedMultiplier } from '../../data/manualData.js';
 import Avatar from '../Common/Avatar.jsx';
 
-const PlayerPanel = ({ player, childFeedback = 0, onOpenInventory }) => {
+const PlayerPanel = ({ player, childFeedback = 0, onOpenInventory, onAllocateSkillPoint }) => {
   // 获取灵根配置
   const rootConfig = getRootConfigByValue(player.stats.aptitude);
   
@@ -38,7 +38,7 @@ const PlayerPanel = ({ player, childFeedback = 0, onOpenInventory }) => {
             <h2>{player.name}</h2>
             <div style={styles.tierBadge}>{player.tier}</div>
             <div style={styles.infoRow}>
-              <span>年龄:</span> <span>{player.age}岁</span>
+              <span>年龄:</span> <span>{Math.floor(player.age)}岁</span>
             </div>
           </div>
         </div>
@@ -198,17 +198,40 @@ const PlayerPanel = ({ player, childFeedback = 0, onOpenInventory }) => {
                 <span>灵石:</span> <span style={{fontWeight:'bold'}}>{player.resources.spiritStones}</span>
               </div>
               <div style={styles.resourceItem}>
-                <span>银两:</span> <span style={{fontWeight:'bold'}}>{player.resources.money}</span>
+                <span>技能点:</span> 
+                <span style={{fontWeight:'bold', color: '#FF9800'}}>{player.skillPoints || 0}</span>
               </div>
             </div>
-            <div style={{marginTop: '10px', textAlign: 'center'}}>
-              <button 
-                onClick={onOpenInventory}
-                style={styles.inventoryBtn}
-              >
-                📦 打开背包
-              </button>
-            </div>
+            
+            {/* 技能点分配 */}
+            {(player.skillPoints || 0) > 0 && (
+              <div style={{marginTop: '10px', padding: '10px', background: '#FFF3E0', borderRadius: '8px', border: '1px solid #FFB74D'}}>
+                <div style={{fontSize: '12px', color: '#E65100', marginBottom: '8px'}}>
+                  💡 可分配技能点: {player.skillPoints}
+                </div>
+                <div style={{display: 'flex', gap: '8px'}}>
+                  <button 
+                    onClick={() => onAllocateSkillPoint && onAllocateSkillPoint('aptitude')}
+                    style={{...styles.allocateBtn, background: '#9C27B0'}}
+                  >
+                    +资质
+                  </button>
+                  <button 
+                    onClick={() => onAllocateSkillPoint && onAllocateSkillPoint('combatPower')}
+                    style={{...styles.allocateBtn, background: '#F44336'}}
+                  >
+                    +战力
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div style={styles.section}>
+            <h4>📦 背包</h4>
+            <button onClick={onOpenInventory} style={styles.inventoryBtn}>
+              查看背包
+            </button>
           </div>
         </div>
       </div>
@@ -218,106 +241,137 @@ const PlayerPanel = ({ player, childFeedback = 0, onOpenInventory }) => {
 
 const styles = {
   container: {
-    marginTop: '20px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    borderRadius: '16px',
     padding: '20px',
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-    fontFamily: 'Microsoft YaHei, sans-serif'
+    color: 'white',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+    marginBottom: '20px'
   },
   title: {
     margin: '0 0 20px 0',
-    color: '#3e2723',
+    fontSize: '24px',
     textAlign: 'center',
-    borderBottom: '1px dashed #e0e0e0',
-    paddingBottom: '10px'
+    textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
   },
   content: {
     display: 'flex',
     gap: '20px'
   },
   leftSection: {
-    width: '200px',
+    flex: '0 0 auto',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center'
+    alignItems: 'center',
+    gap: '15px'
+  },
+  rightSection: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '15px'
   },
   avatarContainer: {
-    marginBottom: '10px'
+    background: 'rgba(255,255,255,0.1)',
+    borderRadius: '50%',
+    padding: '10px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
   },
   basicInfo: {
     textAlign: 'center'
   },
   tierBadge: {
+    background: 'rgba(255,255,255,0.2)',
+    padding: '6px 16px',
+    borderRadius: '20px',
+    fontSize: '14px',
+    marginTop: '8px',
     display: 'inline-block',
-    backgroundColor: '#3e2723',
-    color: 'white',
-    padding: '2px 8px',
-    borderRadius: '10px',
-    fontSize: '12px',
-    margin: '5px 0'
+    border: '1px solid rgba(255,255,255,0.3)'
   },
   infoRow: {
+    marginTop: '8px',
+    fontSize: '14px',
     display: 'flex',
     justifyContent: 'center',
-    gap: '5px',
-    fontSize: '14px',
-    margin: '5px 0'
-  },
-  rightSection: {
-    flex: 1
+    gap: '8px'
   },
   section: {
-    marginBottom: '20px',
+    background: 'rgba(255,255,255,0.1)',
+    borderRadius: '12px',
     padding: '15px',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '8px'
+    backdropFilter: 'blur(10px)'
   },
   barContainer: {
     marginBottom: '10px'
   },
   barBg: {
-    height: '8px',
-    backgroundColor: '#e0e0e0',
-    borderRadius: '4px',
+    background: 'rgba(0,0,0,0.3)',
+    borderRadius: '10px',
+    height: '20px',
+    marginTop: '5px',
     overflow: 'hidden',
-    marginTop: '5px'
+    position: 'relative'
   },
   barFill: {
     height: '100%',
-    transition: 'width 0.3s ease-in-out'
+    borderRadius: '10px',
+    transition: 'width 0.5s ease',
+    position: 'relative',
+    overflow: 'hidden'
+  },
+  speedInfo: {
+    marginTop: '10px',
+    padding: '10px',
+    background: 'rgba(255,255,255,0.1)',
+    borderRadius: '8px',
+    fontSize: '12px'
+  },
+  speedHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '8px'
+  },
+  speedDetails: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    fontSize: '11px',
+    opacity: 0.9
+  },
+  speedRow: {
+    display: 'flex',
+    justifyContent: 'space-between'
   },
   statsGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '15px'
+    gridTemplateColumns: '1fr',
+    gap: '12px'
   },
   statItem: {
-    backgroundColor: '#fff',
-    padding: '10px',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    display: 'grid',
+    gridTemplateColumns: '60px 40px 1fr',
+    gap: '8px',
+    alignItems: 'center'
   },
   statLabel: {
-    fontSize: '12px',
-    color: '#666',
-    marginBottom: '5px'
+    fontSize: '14px'
   },
   statValue: {
-    fontSize: '18px',
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: '5px'
+    fontSize: '14px'
   },
   statBar: {
-    height: '6px',
-    backgroundColor: '#e0e0e0',
-    borderRadius: '3px',
+    background: 'rgba(0,0,0,0.3)',
+    borderRadius: '10px',
+    height: '16px',
     overflow: 'hidden'
   },
   statBarFill: {
     height: '100%',
-    transition: 'width 0.3s ease-in-out'
+    borderRadius: '10px',
+    transition: 'width 0.5s ease'
   },
   resourcesGrid: {
     display: 'grid',
@@ -325,36 +379,34 @@ const styles = {
     gap: '10px'
   },
   resourceItem: {
-    backgroundColor: '#fff',
-    padding: '10px',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
     display: 'flex',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    padding: '8px',
+    background: 'rgba(255,255,255,0.1)',
+    borderRadius: '8px'
   },
-  inventoryBtn: {
-    padding: '10px 20px',
+  allocateBtn: {
+    flex: 1,
+    padding: '8px 16px',
     border: 'none',
     borderRadius: '8px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: '#fff',
+    color: 'white',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    fontSize: '14px',
+    transition: 'transform 0.2s, box-shadow 0.2s',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+  },
+  inventoryBtn: {
+    width: '100%',
+    padding: '10px',
+    background: 'rgba(255,255,255,0.2)',
+    border: '1px solid rgba(255,255,255,0.3)',
+    borderRadius: '8px',
+    color: 'white',
     cursor: 'pointer',
     fontWeight: 'bold',
-    fontSize: '14px',
-    transition: 'all 0.3s',
-    boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
-  },
-  speedInfo: {
-    marginTop: '12px',
-    padding: '10px',
-    backgroundColor: '#fff',
-    borderRadius: '6px',
-    border: '1px solid #e0e0e0'
-  },
-  speedHeader: {
-    marginBottom: '8px',
-    paddingBottom: '6px',
-    borderBottom: '1px dashed #e0e0e0'
+    transition: 'all 0.3s'
   },
   speedFormula: {
     fontSize: '12px'
@@ -369,9 +421,9 @@ const styles = {
   speedItem: {
     fontSize: '11px',
     padding: '2px 6px',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: '3px',
-    border: '1px solid #e0e0e0'
+    border: '1px solid rgba(255,255,255,0.2)'
   }
 };
 

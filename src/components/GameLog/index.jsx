@@ -129,7 +129,7 @@ const styles = {
   filterBtnActive: {
     backgroundColor: '#4A90E2',
     color: '#fff',
-    borderColor: '#4A90E2',
+    border: '1px solid #4A90E2', // 使用完整的border属性，避免与borderColor冲突
     fontWeight: 'bold'
   },
   logWindow: {

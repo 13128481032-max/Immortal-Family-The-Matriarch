@@ -50,7 +50,7 @@ const TopStatusBar = ({ player, isAuto, onBreakthrough }) => {
         </div>
         <div style={styles.time}>
           <span style={styles.timeIcon}>📅</span>
-          <span style={styles.timeValue}>{player.time.year}年{player.time.month}月</span>
+          <span style={styles.timeValue}>云澜历 {Math.floor(player.age)}年 {player.time.month}月</span>
         </div>
       </div>
     </div>
