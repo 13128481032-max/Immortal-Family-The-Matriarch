@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import theme from './styles/theme.js';
 // 引入新组件
 import TopStatusBar from './components/TopStatusBar/index.jsx';
 import BottomNav from './components/BottomNav/index.jsx';
@@ -119,7 +120,11 @@ function App() {
   const [gameStage, setGameStage] = useState('PROLOGUE'); // 'PROLOGUE' | 'MAIN' | 'ENDING'
   const [player, setPlayer] = useState({
     ...initialPlayer,
-    businesses: [] // 新增：玩家拥有的产业
+    businesses: [], // 新增：玩家拥有的产业
+    gazetteHistory: [], // 邸报历史记录
+    gazetteIssue: 0, // 邸报期数
+    hasUnreadGazette: false, // 是否有未读邸报
+    newsBuffer: [] // 新闻缓冲区
   });
   const [activeNpcs, setActiveNpcs] = useState(initialNpcs);
   const [deadNpcs, setDeadNpcs] = useState([]); // 新增：已死亡的NPC列表
@@ -1915,7 +1920,8 @@ function App() {
           hasUnreadGazette: false // 暂时不显示红点，等生成完成
         }));
         
-        generateGazette(finalNewsBuffer, player, npcsWithLogs, (player.gazetteIssue || 0) + 1, settings)
+        // generateGazette 返回的是对象而不是 Promise，需要包装为 Promise
+        Promise.resolve(generateGazette(finalNewsBuffer, player, npcsWithLogs, (player.gazetteIssue || 0) + 1, settings))
           .then(gazette => {
             if (gazette) {
               // 生成完成后才更新状态并显示红点
@@ -1950,7 +1956,7 @@ function App() {
 
     // --- 🌟 世界名人演化（每年执行一次）---
     if (nextMonth === 1) { // 每年1月
-      const evolvedWorldNpcs = evolveWorldNpcs(player.worldNpcs || [], nextYear);
+      const evolvedWorldNpcs = evolveWorldNpcs(player.worldNpcs || [], nextAge);
       setPlayer(prev => ({
         ...prev,
         worldNpcs: evolvedWorldNpcs
@@ -1958,7 +1964,7 @@ function App() {
       
       // 检查是否有名人陨落，添加到新闻
       evolvedWorldNpcs.forEach(npc => {
-        if (npc.status === 'DEAD' && npc.deathYear === nextYear) {
+        if (npc.status === 'DEAD' && npc.deathYear === nextAge) {
           pushToNewsBuffer(
             player.newsBuffer || [],
             'DEATH',
@@ -3220,6 +3226,11 @@ function App() {
       {/* 📰 邸报按钮 (左下角) */}
       <button
         onClick={() => {
+          console.log('打开邸报，当前数据:', { 
+            currentGazette, 
+            gazetteHistory: player.gazetteHistory,
+            hasUnreadGazette: player.hasUnreadGazette 
+          });
           setShowGazette(true);
           // 标记已读
           setPlayer(prev => ({ ...prev, hasUnreadGazette: false }));
@@ -3421,7 +3432,8 @@ const styles = {
     flexDirection: 'column',
     height: '100vh',
     fontFamily: "'Noto Serif SC', serif",
-    backgroundImage: 'linear-gradient(rgba(245, 240, 232, 0.8), rgba(245, 240, 232, 0.8))',
+    backgroundColor: theme.colors.background,
+    backgroundImage: 'linear-gradient(rgba(245, 240, 232, 0.6), rgba(245, 240, 232, 0.6))',
     backgroundSize: '100% 100%'
   },
   mainContent: {
@@ -3452,37 +3464,37 @@ const styles = {
   },
   actionButton: {
     padding: '15px',
-    background: 'linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%)', // 渐变背景
-    color: 'white',
+    background: theme.gradients.subtle,
+    color: theme.colors.ink,
     border: 'none',
     borderRadius: '12px', // 圆角
     cursor: 'pointer',
     fontSize: '15px',
     fontWeight: 'bold',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.15)', // 柔和阴影
+    boxShadow: `0 2px 8px ${theme.colors.shadow}`,
     transition: 'all 0.3s ease',
     ':hover': {
       transform: 'translateY(-2px)',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+      boxShadow: `0 4px 12px ${theme.colors.shadow}`
     }
   },
   // 外出游历按钮
   exploreBtn: {
     padding: '15px 30px',
-    background: 'linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%)', // 渐变背景
-    color: 'white',
+    background: theme.gradients.subtle,
+    color: theme.colors.ink,
     border: 'none',
     borderRadius: '20px',
     cursor: 'pointer',
     fontSize: '15px',
     fontWeight: 'bold',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.15)', // 柔和阴影
+    boxShadow: `0 2px 8px ${theme.colors.shadow}`,
     transition: 'all 0.3s ease',
     width: '100%',
     maxWidth: '300px',
     ':hover': {
       transform: 'translateY(-2px)',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+      boxShadow: `0 4px 12px ${theme.colors.shadow}`
     }
   },
   // 新增容器：把两个按钮包起来
@@ -3501,14 +3513,14 @@ const styles = {
   autoBtn: {
     padding: '6px 12px',
     borderRadius: '18px',
-    border: '2px solid #d7ccc8', // 古色边框
+    border: `2px solid ${theme.colors.border}`,
     fontSize: '11px',
     fontWeight: 'bold',
     cursor: 'pointer',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.1)', // 柔和阴影
+    boxShadow: `0 2px 6px ${theme.colors.shadow}`,
     transition: 'all 0.3s ease',
-    backgroundColor: '#f5f0e8', // 古色背景
-    color: '#5d4037' // 古色文字
+    backgroundColor: theme.colors.parchment,
+    color: theme.colors.ink
   },
 
   // 邸报按钮 (左下角)
@@ -3516,22 +3528,21 @@ const styles = {
     position: 'absolute',
     bottom: '70px',
     left: '20px',
-    width: '50px',
-    height: '50px',
+    width: theme.sizes.smallBtn,
+    height: theme.sizes.smallBtn,
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #fff9e6 0%, #f5f0e8 100%)',
-    border: '2px solid #8d6e63',
-    fontSize: '24px',
+    background: theme.gradients.subtle,
+    border: `2px solid ${theme.colors.border}`,
+    fontSize: '22px',
     cursor: 'pointer',
-    boxShadow: '0 3px 12px rgba(0,0,0,0.2)',
+    boxShadow: `0 3px 12px ${theme.colors.shadow}`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'all 0.3s ease',
     zIndex: 90,
     ':hover': {
-      transform: 'scale(1.1)',
-      boxShadow: '0 5px 18px rgba(0,0,0,0.25)'
+      transform: 'scale(1.05)'
     }
   },
 
@@ -3540,26 +3551,25 @@ const styles = {
     position: 'absolute',
     bottom: '130px', // 在邸报按钮上方
     left: '20px',
-    width: '50px',
-    height: '50px',
+    width: theme.sizes.smallBtn,
+    height: theme.sizes.smallBtn,
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #faf8f3 0%, #f0ebe0 100%)',
-    border: '2px solid #5c3317',
-    fontSize: '24px',
+    background: theme.gradients.subtle,
+    border: `2px solid ${theme.colors.border}`,
+    fontSize: '22px',
     cursor: 'pointer',
-    boxShadow: '0 3px 12px rgba(0,0,0,0.2)',
+    boxShadow: `0 3px 12px ${theme.colors.shadow}`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'all 0.3s ease',
     zIndex: 90,
     ':hover': {
-      transform: 'scale(1.1)',
-      boxShadow: '0 5px 18px rgba(0,0,0,0.25)'
+      transform: 'scale(1.05)'
     }
   },
 
-  // 红点提示
+  // 红点提示（使用较低饱和度的警示色）
   redDot: {
     position: 'absolute',
     top: '5px',
@@ -3567,7 +3577,7 @@ const styles = {
     width: '12px',
     height: '12px',
     borderRadius: '50%',
-    background: '#d32f2f',
+    background: '#b33',
     border: '2px solid white',
     animation: 'pulse 2s infinite'
   },
@@ -3578,10 +3588,10 @@ const styles = {
     gap: '5px',
     marginBottom: '10px',
     padding: '8px',
-    background: 'rgba(255,255,255,0.95)',
+    background: theme.gradients.subtle,
     borderRadius: '15px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-    border: '2px solid #d7ccc8'
+    border: `2px solid ${theme.colors.border}`
   },
 
   // 速度按钮
@@ -3599,13 +3609,13 @@ const styles = {
 
   // 修改主按钮样式
   fabBtn: {
-    width: '56px',
-    height: '56px',
+    width: theme.sizes.fabSize,
+    height: theme.sizes.fabSize,
     borderRadius: '50%',
-    backgroundColor: 'linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%)', // 渐变背景
-    color: '#fff',
-    border: '3px solid #f5f0e8', // 古色边框
-    boxShadow: '0 3px 12px rgba(0,0,0,0.2)', // 柔和阴影
+    background: theme.gradients.subtle,
+    color: theme.colors.ink,
+    border: `3px solid ${theme.colors.parchment}`,
+    boxShadow: `0 3px 12px ${theme.colors.shadow}`,
     cursor: 'pointer',
     display: 'flex',
     flexDirection: 'column',
@@ -3613,8 +3623,7 @@ const styles = {
     justifyContent: 'center',
     transition: 'all 0.3s ease',
     ':hover': {
-      transform: 'scale(1.1)',
-      boxShadow: '0 5px 18px rgba(0,0,0,0.25)'
+      transform: 'scale(1.05)'
     }
   },
 
@@ -3627,15 +3636,15 @@ const styles = {
   // 面板切换按钮
   tabButton: {
     padding: '10px 20px',
-    border: '2px solid #d7ccc8', // 古色边框
+    border: `2px solid ${theme.colors.border}`, // 古色边框
     borderRadius: '12px', // 圆角
     cursor: 'pointer',
     fontWeight: 'bold',
     transition: 'all 0.3s ease',
-    backgroundColor: '#f5f0e8', // 古色背景
-    color: '#5d4037', // 古色文字
+    backgroundColor: theme.colors.parchment, // 古色背景
+    color: theme.colors.ink, // 古色文字
     ':hover': {
-      background: 'linear-gradient(135deg, #d7ccc8 0%, #bcaaa4 100%)',
+      background: theme.gradients.subtle,
       transform: 'translateY(-2px)'
     }
   },
@@ -3650,48 +3659,48 @@ const styles = {
 
   // 家族经营卡片
   actionCard: {
-    backgroundColor: 'linear-gradient(135deg, #ffffff 0%, #f5f0e8 100%)', // 渐变背景
+    background: theme.gradients.subtle,
     borderRadius: '16px', // 圆角
     padding: '20px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.1)', // 柔和阴影
+    boxShadow: `0 4px 15px ${theme.colors.shadow}`,
     cursor: 'pointer',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-    border: '2px solid #d7ccc8', // 古色边框
+    border: `2px solid ${theme.colors.border}`,
     ':hover': {
       transform: 'translateY(-5px)',
-      boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
+      boxShadow: `0 8px 25px ${theme.colors.shadow}`
     }
   },
 
   // 返回按钮
-  backButton: {
+    backButton: {
     marginBottom: '15px',
     padding: '8px 16px',
-    backgroundColor: 'linear-gradient(135deg, #f5f0e8 0%, #e0e0e0 100%)', // 渐变背景
-    border: '2px solid #d7ccc8', // 古色边框
+    backgroundColor: theme.gradients.subtle,
+    border: `2px solid ${theme.colors.border}`,
     borderRadius: '12px', // 圆角
     cursor: 'pointer',
     fontSize: '14px',
     fontWeight: 'bold',
-    color: '#5d4037', // 古色文字
+    color: theme.colors.ink,
     transition: 'all 0.3s ease',
     ':hover': {
-      background: 'linear-gradient(135deg, #d7ccc8 0%, #bcaaa4 100%)',
+      background: theme.gradients.subtle,
       transform: 'translateY(-2px)'
     }
   },
   // 修为进度条区域
   cultivationSection: {
-    background: 'linear-gradient(135deg, #ffffff 0%, #f5f0e8 100%)', // 渐变背景
+    background: theme.gradients.subtle,
     borderRadius: '16px',
     padding: '15px',
     marginBottom: '20px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.1)', // 柔和阴影
-    border: '2px solid #d7ccc8' // 古色边框
+    boxShadow: `0 4px 15px ${theme.colors.shadow}`,
+    border: `2px solid ${theme.colors.border}` // 古色边框
   },
   expContainer: {
     display: 'flex',
