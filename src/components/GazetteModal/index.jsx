@@ -6,6 +6,9 @@ const GazetteModal = ({ gazette, onClose, history = [], playerName = '楚清辞'
   const [viewMode, setViewMode] = useState('current'); // 'current' or 'history'
   const [selectedHistory, setSelectedHistory] = useState(null);
   
+  // 调试日志
+  console.log('GazetteModal props:', { gazette, history, hasGazette: !!gazette, historyLength: history.length });
+  
   // 高亮玩家相关内容的函数
   const highlightPlayerContent = (text) => {
     if (!text || !playerName) return text;
