@@ -28,23 +28,21 @@ const PlayerPanel = ({ player, childFeedback = 0, onOpenInventory, onAllocateSki
       <h3 style={styles.title}>🧙‍♀️ 主角信息</h3>
       
       <div style={styles.content}>
-        {/* 左侧：头像和基本信息 */}
-        <div style={styles.leftSection}>
+        {/* 顶部：头像和基本信息水平排列 */}
+        <div style={styles.topSection}>
           <div style={styles.avatarContainer}>
-            <Avatar dna={player.avatar} gender={player.gender} size={100} />
+            <Avatar dna={player.avatar} gender={player.gender} size={80} />
           </div>
           
           <div style={styles.basicInfo}>
-            <h2>{player.name}</h2>
+            <h2 style={styles.playerName}>{player.name}</h2>
             <div style={styles.tierBadge}>{player.tier}</div>
-            <div style={styles.infoRow}>
-              <span>年龄:</span> <span>{Math.floor(player.age)}岁</span>
-            </div>
+            <div style={styles.ageText}>{Math.floor(player.age)}岁</div>
           </div>
         </div>
         
-        {/* 右侧：详细属性 */}
-        <div style={styles.rightSection}>
+        {/* 主体内容：单栏垂直布局 */}
+        <div style={styles.mainSection}>
           {/* 灵根信息 */}
           <div style={styles.section}>
             <h4>🔮 灵根资质</h4>
@@ -256,38 +254,53 @@ const styles = {
   },
   content: {
     display: 'flex',
-    gap: '20px'
-  },
-  leftSection: {
-    flex: '0 0 auto',
-    display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    gap: '15px'
+    gap: '16px'
   },
-  rightSection: {
-    flex: 1,
+  topSection: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    padding: '16px',
+    background: 'rgba(255,255,255,0.1)',
+    borderRadius: '12px',
+    backdropFilter: 'blur(10px)'
+  },
+  mainSection: {
     display: 'flex',
     flexDirection: 'column',
     gap: '15px'
   },
   avatarContainer: {
-    background: 'rgba(255,255,255,0.1)',
+    background: 'rgba(255,255,255,0.15)',
     borderRadius: '50%',
-    padding: '10px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+    padding: '8px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+    flexShrink: 0
   },
   basicInfo: {
-    textAlign: 'center'
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  playerName: {
+    margin: 0,
+    fontSize: '20px',
+    fontWeight: 'bold'
   },
   tierBadge: {
-    background: 'rgba(255,255,255,0.2)',
-    padding: '6px 16px',
-    borderRadius: '20px',
-    fontSize: '14px',
-    marginTop: '8px',
+    background: 'rgba(255,255,255,0.25)',
+    padding: '4px 12px',
+    borderRadius: '16px',
+    fontSize: '13px',
     display: 'inline-block',
-    border: '1px solid rgba(255,255,255,0.3)'
+    border: '1px solid rgba(255,255,255,0.3)',
+    fontWeight: '600'
+  },
+  ageText: {
+    fontSize: '14px',
+    opacity: 0.9
   },
   infoRow: {
     marginTop: '8px',
