@@ -49,6 +49,23 @@ const ExplorationModal = ({
 
   const progressPercent = ((progress / total) * 100).toFixed(0);
 
+  // 当玩家选择一个选项后，自动执行并进入下一步
+  const handleOptionSelect = (opt) => {
+    onSelectOption(opt);
+    // 延迟一小段时间让玩家看到选择结果，然后自动前进
+    setTimeout(() => {
+      onNext();
+    }, 800);
+  };
+
+  // 当战斗开始后，也自动前进
+  const handleCombatStart = () => {
+    onStartCombat();
+    setTimeout(() => {
+      onNext();
+    }, 800);
+  };
+
   return (
     <div style={styles.overlay}>
       <div style={{
@@ -117,7 +134,7 @@ const ExplorationModal = ({
                     }}
                     onMouseEnter={() => setHoveredOption(idx)}
                     onMouseLeave={() => setHoveredOption(null)}
-                    onClick={() => onSelectOption(opt)}
+                    onClick={() => handleOptionSelect(opt)}
                   >
                     <span style={styles.optionIcon}>🎯</span>
                     <span style={styles.optionLabel}>{opt.label}</span>
@@ -136,52 +153,16 @@ const ExplorationModal = ({
               }}
               onMouseEnter={() => setHoveredBtn('fight')}
               onMouseLeave={() => setHoveredBtn(null)}
-              onClick={onStartCombat}
+              onClick={handleCombatStart}
             >
               <span style={styles.fightIcon}>⚔️</span>
               <span>开始战斗</span>
             </button>
           )}
-
-          {/* 探险日志 */}
-          {log && log.length > 0 && (
-            <div style={styles.logContainer}>
-              <div style={styles.logHeader}>
-                <span>📜 探险日志</span>
-              </div>
-              <div style={styles.logBox}>
-                {log.map((l, i) => (
-                  <div 
-                    key={i} 
-                    style={{
-                      ...styles.logLine,
-                      animation: `fadeIn 0.5s ease-in ${i * 0.1}s backwards`
-                    }}
-                  >
-                    <span style={styles.logBullet}>▸</span>
-                    <span>{l}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* 底部操作栏 */}
+        {/* 底部操作栏 - 仅保留结束探险按钮 */}
         <div style={styles.footer}>
-          <button 
-            style={{
-              ...styles.actionBtn,
-              ...styles.nextBtn,
-              ...(hoveredBtn === 'next' ? styles.nextBtnHover : {})
-            }}
-            onMouseEnter={() => setHoveredBtn('next')}
-            onMouseLeave={() => setHoveredBtn(null)}
-            onClick={onNext}
-          >
-            <span>继续前进</span>
-            <span style={styles.btnIcon}>➤</span>
-          </button>
           <button 
             style={{
               ...styles.actionBtn,
@@ -411,38 +392,6 @@ const styles = {
     fontSize: '20px',
     animation: 'pulse 1.5s ease-in-out infinite'
   },
-  logContainer: {
-    background: '#f7fafc',
-    borderRadius: '10px',
-    padding: '12px',
-    border: '1px solid #e2e8f0'
-  },
-  logHeader: {
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#2d3748',
-    marginBottom: '8px'
-  },
-  logBox: {
-    maxHeight: '180px',
-    overflowY: 'auto',
-    paddingRight: '8px'
-  },
-  logLine: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '8px',
-    fontSize: '13px',
-    color: '#4a5568',
-    lineHeight: 1.6,
-    marginBottom: '6px',
-    padding: '4px 0'
-  },
-  logBullet: {
-    color: '#718096',
-    fontWeight: 'bold',
-    fontSize: '14px'
-  },
   footer: {
     display: 'flex',
     gap: '12px',
@@ -464,15 +413,6 @@ const styles = {
     fontSize: '15px',
     transition: 'all 0.2s ease'
   },
-  nextBtn: {
-    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-    color: '#fff',
-    boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
-  },
-  nextBtnHover: {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)'
-  },
   exitBtn: {
     background: '#f1f5f9',
     color: '#475569',
@@ -481,9 +421,6 @@ const styles = {
   exitBtnHover: {
     background: '#e2e8f0',
     borderColor: '#94a3b8'
-  },
-  btnIcon: {
-    fontSize: '16px'
   }
 };
 
