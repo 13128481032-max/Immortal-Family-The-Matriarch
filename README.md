@@ -4,7 +4,49 @@ A React-based cultivation game inspired by Chinese xianxia novels.
 
 ## 🎮 Game Features
 
-### 🧠 AI Memory Palace System (v1.0.1 - NEW!)
+### 🎓 Tutorial System (v1.0.0 - NEW!)
+- **📚 Interactive Tutorial Modal**: New players get a smooth onboarding experience
+  - ✨ 5-Step Guided Tour: Welcome → UI Navigation → Cultivation System → Combat → Start Playing
+  - 🎨 Beautiful UI Design: Gold gradient theme matching the cultivation aesthetic
+  - 📊 Progress Indicator: Real-time progress bar showing current step
+  - ⏭️ Flexible Navigation: Support for "Next", "Previous", and "Skip" options
+  - 💾 Smart Memory: Auto-saves completion status, won't show again
+- **🎯 Core Mechanics Explained**:
+  - Game objectives and revenge storyline
+  - Interface navigation (top status bar + bottom nav)
+  - Cultivation feedback mechanism (境界系数)
+  - Threat level and combat system
+  - Quick tips for getting started
+- **🔄 Two-Tier Help System**:
+  - TutorialModal: First-time quick start guide (5 steps)
+  - GuideModal: Detailed reference guide (accessible anytime from System panel)
+- **✨ User-Friendly**: Auto-triggers on first game entry, never interrupts returning players
+
+See [新手引导弹窗说明](docs/新手引导弹窗说明.md) for details.
+
+### ⚔️ Revenge Gazette System (v1.2.0 - NEW!)
+- **📰 Dynamic News Feed**: Experience your enemy's "perfect life" through newspaper headlines
+  - 📅 Timeline Events: Watch your rival rise (breakthrough, engagement, marriage, childbirth)
+  - 🗣️ Rumor Effects: See your actions impact headlines (reputation collapse, mental demons)
+  - ⚠️ Threat Warnings: Real-time danger alerts ("Blood List Assassin spotted!")
+- **🎭 Strategic Revenge Gameplay**:
+  - 📜 Spread Rumors: Weaken enemy's cultivation and reputation (adjustable investment)
+  - 🌫️ Hide from Pursuit: Lower threat level to avoid assassination
+  - ⚔️ Final Duel: Ultimate showdown when ready
+- **⚖️ Risk Management**: 
+  - Threat level system (0-100%): Too many rumors trigger manhunt
+  - Assassination events: Survive or game over
+  - Strategic planning: Balance weakening enemy vs staying safe
+- **🎯 Priority News System**:
+  1. 🚨 Critical Threat (80%+): "Assassin incoming!" → Must hide immediately
+  2. 📖 Timeline Milestones: Enemy's life events (automatic)
+  3. 💬 Action Feedback: Your rumor effects (player-triggered)
+  4. 📋 Daily News: Normal world events (filler)
+- **✨ Text-Based Drama**: No complex CGI needed - newspaper text creates emotional impact
+
+See [复仇邸报系统快速开始](docs/复仇邸报系统快速开始.md) for quick start guide.
+
+### 🧠 AI Memory Palace System (v1.0.1)
 - **🏛️ Layered Memory Storage**: NPCs remember everything important
   - 💎 Milestones: Permanent memories (childbirth, marriage, life-death moments)
   - 📝 Recent Events: Short-term memory (last 20 interactions)
