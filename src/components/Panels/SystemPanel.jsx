@@ -15,7 +15,9 @@ const SystemPanel = ({ player, onSave, onLoad, onReset, onOpenGuide }) => {
   
   // 邸报配置状态
   const [enableGazette, setEnableGazette] = useState(true);
-  const [useAIForGazette, setUseAIForGazette] = useState(true);
+  
+  // 传书馆配置状态
+  const [useAIForLetter, setUseAIForLetter] = useState(true);
 
   // 初始化检查存档
   useEffect(() => {
@@ -26,16 +28,16 @@ const SystemPanel = ({ player, onSave, onLoad, onReset, onOpenGuide }) => {
 
   const loadGazetteConfig = () => {
     const enabled = localStorage.getItem('enableGazette');
-    const useAI = localStorage.getItem('useAIForGazette');
+    const useAILetter = localStorage.getItem('useAIForLetter');
     
     setEnableGazette(enabled !== 'false'); // 默认开启
-    setUseAIForGazette(useAI !== 'false'); // 默认使用AI
+    setUseAIForLetter(useAILetter !== 'false'); // 默认使用AI
   };
 
   const saveGazetteConfig = () => {
     localStorage.setItem('enableGazette', enableGazette.toString());
-    localStorage.setItem('useAIForGazette', useAIForGazette.toString());
-    alert('邸报配置已保存！');
+    localStorage.setItem('useAIForLetter', useAIForLetter.toString());
+    alert('配置已保存！');
   };
 
   const loadAPIConfig = () => {
@@ -200,7 +202,7 @@ const SystemPanel = ({ player, onSave, onLoad, onReset, onOpenGuide }) => {
         <h4>📰 修真界邸报</h4>
         <p style={styles.info}>
           每季度自动生成一份修真界八卦报纸，记录你和NPC的大事件。<br/>
-          <small style={{color: '#999'}}>支持AI生成（更生动）或本地模板（离线可用）</small>
+          <small style={{color: '#999'}}>使用本地模板生成，离线可用</small>
         </p>
         
         <div style={styles.formGroup}>
@@ -218,16 +220,31 @@ const SystemPanel = ({ player, onSave, onLoad, onReset, onOpenGuide }) => {
           </small>
         </div>
 
+        <button 
+          onClick={saveGazetteConfig} 
+          style={styles.saveBtn}
+        >
+          💾 保存配置
+        </button>
+      </div>
+      
+      {/* 传书馆配置卡片 */}
+      <div style={styles.card}>
+        <h4>📜 传书馆（家书系统）</h4>
+        <p style={styles.info}>
+          NPC会定期给你写家书，分享近况和思念。<br/>
+          <small style={{color: '#999'}}>支持AI生成（内容更真实细腻）或本地模板（离线可用）</small>
+        </p>
+        
         <div style={styles.formGroup}>
           <label style={styles.checkboxLabel}>
             <input 
               type="checkbox"
-              checked={useAIForGazette}
-              onChange={(e) => setUseAIForGazette(e.target.checked)}
-              disabled={!enableGazette}
+              checked={useAIForLetter}
+              onChange={(e) => setUseAIForLetter(e.target.checked)}
               style={styles.checkbox}
             />
-            <span>使用AI生成邸报</span>
+            <span>使用AI生成家书</span>
           </label>
           <small style={styles.hint}>
             需要配置API Key。关闭后使用本地模板（更快但内容固定）
