@@ -18,7 +18,10 @@ import {
   generateDualCultivationLog,
   markNpcLoggedThisMonth,
   generatePregnancyDecisionLog,
-  generateMaleBirthLog
+  generateMaleBirthLog,
+  generateFirstMeetLog,
+  generateJealousyLog,
+  generatePleasePlanLog
 } from './game/npcLogSystem.js';
 // 引入记忆系统
 import MemoryManager from './game/memoryManager.js';
@@ -29,6 +32,21 @@ import {
   getRelationshipStatus,
   getRelationshipStatusDisplay
 } from './game/npcLifecycle.js';
+// 引入吃醋系统
+import {
+  checkWitnessEvent,
+  calculateJealousyIncrease,
+  applyJealousyIncrease,
+  generateJealousyLogContent,
+  getJealousyLevel
+} from './game/jealousySystem.js';
+// 引入消息中心系统
+import MessageManager, { 
+  createObituaryMessage, 
+  createLetterMessage, 
+  shouldSendLetter 
+} from './game/messageCenter.js';
+import MessageCenterModal from './components/MessageCenterModal/index.js';
 // 引入序章组件
 import Prologue from './components/Prologue/index.jsx';
 // 引入新面板
@@ -37,8 +55,11 @@ import ChallengePanel from './components/Panels/ChallengePanel.jsx';
 import RevengePanel from './components/Panels/RevengePanel.jsx';
 import SystemPanel from './components/Panels/SystemPanel.jsx';
 import PlayerPanel from './components/PlayerPanel/index.jsx';
+// 引入复仇系统
+import { updateThreatLevel, checkAssassinationEvent, updateRivalTimeline } from './game/revengeSystem.js';
 // 引入新弹窗
 import GiftModal from './components/Modals/GiftModal.jsx';
+import SpouseSelectionModal from './components/SpouseSelectionModal/index.jsx';
 import NegotiationModal from './components/Modals/NegotiationModal.jsx';
 import ResultModal from './components/Modals/ResultModal.jsx';
 import SpiritRootTestModal from './components/Modals/SpiritRootTestModal.jsx';
@@ -48,12 +69,17 @@ import EventModal from './components/Modals/EventModal.jsx'; // 引入事件弹�
 import InventoryModal from './components/Modals/InventoryModal.jsx';
 import ChildSelectorModal from './components/Modals/ChildSelectorModal.jsx';
 import NpcLogModal from './components/Modals/NpcLogModal.jsx'; // NPC 日志模态框
+import GazetteModal from './components/GazetteModal/index.jsx'; // 修真界邸报弹窗
 // 引入文本引擎
 import { getChatText, getGiftReaction, getPersuadeText, createMonkScriptureEvent, getRandomInteractionEvent, getUnifiedInteractionEvent } from './game/textEngine.js';
+// 引入邸报系统
+import { generateGazette, pushToNewsBuffer } from './game/gazetteSystem.js';
+// 引入世界名人池系统
+import { generateWorldElites, evolveWorldNpcs, findEliteByCondition, getEliteRanking } from './game/worldNpcGenerator.js';
 // 引入数据和逻辑
 import { initialPlayer } from './data/initialPlayer.js';
 import { initialNpcs } from './data/npcPool.js';
-import { generateChild, processChildrenGrowth, generateSpouse, calculateChildFeedback, attemptBreakthrough, calculateBusinessIncome, exploreRealm } from './game/mechanics.js';
+import { generateChild, processChildrenGrowth, generateSpouse, generateSpouseCandidates, calculateChildFeedback, attemptBreakthrough, calculateBusinessIncome, exploreRealm } from './game/mechanics.js';
 import { getTierConfig, calculateStats, getRootConfigByValue, MUTANT_ELEMENTS, ELEMENTS, getSectById, calculateCultivationSpeed } from './game/cultivationSystem.js';
 import { generateRandomNpc } from './game/npcGenerator.js'; // 引入生成器
 import { calculateCombatPower } from './game/challengeSystem.js'; // 复用战力计算
@@ -64,6 +90,7 @@ import CombatModal from './components/Modals/CombatModal.jsx'; // 引入战斗�
 import ExplorationModal from './components/ExplorationModal/index.jsx'; // 新增：探险模态
 import { getRandomExplorationEvent, getBossEvent, generateRealmEnemy } from './game/explorationEvents.js';
 import GuideModal from './components/Modals/GuideModal.jsx'; // 引入指南弹窗组件
+import TutorialModal from './components/Modals/TutorialModal.jsx'; // 引入新手引导弹窗组件
 import SectSelectionModal from './components/Modals/SectSelectionModal.jsx';
 import { createItemInstance, isEquipment, getItemTemplate } from './data/itemLibrary.js';
 import { MANUALS } from './data/manualData.js'; // 引入功法数据
@@ -101,15 +128,16 @@ function App() {
   // 2. 新增：宿敌状态
   const [rival, setRival] = useState({
     name: "楚清瑶",
-    tier: "炼气六层", // 开局比你强
-    combatPower: 800,
+    tier: "炼气八层", // 天灵根，开局更强
+    combatPower: 1200,
     threat: 30, // 初始威胁
     status: "alive", // alive | defeated
-    logs: ["楚清瑶夺走了你的筑基丹。", "楚清瑶成为了家族重点培养对象。"]
+    logs: ["楚清瑶觉醒天灵根，震惊全城。", "楚清瑶夺走了你的筑基丹。", "楚清瑶成为了家族重点培养对象。"]
   });
   
   // 初始化日志，直接使用初始日志数据，避免依赖rival对象
   const [logs, setLogs] = useState([
+    { turn: 0, message: "楚清瑶觉醒天灵根，震惊全城。" },
     { turn: 0, message: "楚清瑶夺走了你的筑基丹。" },
     { turn: 0, message: "楚清瑶成为了家族重点培养对象。" }
   ]);
@@ -119,6 +147,7 @@ function App() {
   const [selectedChild, setSelectedChild] = useState(null); // 当前选中的孩子
   const [npcLogModal, setNpcLogModal] = useState({ open: false, npc: null }); // NPC 日志查看
   const [isAuto, setIsAuto] = useState(false); // 新增：自动播放开关
+  const [autoSpeed, setAutoSpeed] = useState(1); // 自动速度倍率：0.3, 1, 3
   const [showBizPanel, setShowBizPanel] = useState(false); // 新增：产业面板显示状态
   const [showChallengePanel, setShowChallengePanel] = useState(false); // 新增：探险面板显示状态
   const [npcSort, setNpcSort] = useState('DEFAULT');
@@ -132,11 +161,24 @@ function App() {
   const [currentExploreEvent, setCurrentExploreEvent] = useState(null);
   const [exploreTeamIds, setExploreTeamIds] = useState([]);
   const [showGuide, setShowGuide] = useState(false); // 控制指南弹窗显示
+  const [showTutorial, setShowTutorial] = useState(false); // 控制新手引导弹窗显示
+  const [showGazette, setShowGazette] = useState(false); // 控制邸报弹窗显示
+  const [currentGazette, setCurrentGazette] = useState(null); // 当前邸报数据
+
+  // 消息中心相关状态
+  const [messageManager] = useState(() => new MessageManager());
+  const [messages, setMessages] = useState([]);
+  const [showMessageCenter, setShowMessageCenter] = useState(false);
+  const [lastMessageCheck, setLastMessageCheck] = useState({}); // 记录每个NPC上次发送消息的月份
 
   // 3. 新增：待测灵的孩子队列
   const [testQueue, setTestQueue] = useState([]);
   // 4. 新增：待处理的宗门选择队列（12岁触发）
   const [pendingSectChoices, setPendingSectChoices] = useState([]);
+  // 5. 新增：配偶选择相关状态
+  const [showSpouseSelection, setShowSpouseSelection] = useState(false);
+  const [spouseCandidates, setSpouseCandidates] = useState([]);
+  const [marryingChild, setMarryingChild] = useState(null);
   
   // --- 🚑 数据自动修复补丁 ---
   useEffect(() => {
@@ -236,24 +278,47 @@ function App() {
     }
   }, [player, activeNpcs, children]);
 
+  // --- 🌟 世界名人池初始化 ---
+  useEffect(() => {
+    // 如果玩家的worldNpcs为空，初始化世界名人池
+    if (player.worldNpcs && player.worldNpcs.length === 0) {
+      console.log('初始化世界名人池...');
+      const worldElites = generateWorldElites(30);
+      setPlayer(prev => ({
+        ...prev,
+        worldNpcs: worldElites
+      }));
+    }
+  }, [player.worldNpcs]);
+
   // --- 1. 自动检测是否需要显示新手教程 ---
   useEffect(() => {
     // 检查本地存储中是否有标记
-    const hasReadTutorial = localStorage.getItem('has_read_tutorial_v1');
+    const hasReadTutorial = localStorage.getItem('has_read_tutorial_v2');
     
     // 如果是序章刚结束进入 MAIN 阶段，且没读过教程
     if (gameStage === 'MAIN' && !hasReadTutorial) {
       // 稍微延迟一点弹出，不要和序章结束动画冲突
       setTimeout(() => {
-        setShowGuide(true);
+        setShowTutorial(true);
       }, 1000);
     }
   }, [gameStage]);
 
-  // 关闭教程时的处理
+  // 关闭新手引导时的处理
+  const handleCloseTutorial = () => {
+    setShowTutorial(false);
+    localStorage.setItem('has_read_tutorial_v2', 'true'); // 标记为已读
+  };
+
+  // 完成新手引导时的处理
+  const handleCompleteTutorial = () => {
+    localStorage.setItem('has_read_tutorial_v2', 'true'); // 标记为已读
+  };
+
+  // 关闭详细指南时的处理
   const handleCloseGuide = () => {
     setShowGuide(false);
-    localStorage.setItem('has_read_tutorial_v1', 'true'); // 标记为已读
   };
 
   // --- 新增：弹窗控制状态 ---
@@ -399,7 +464,7 @@ function App() {
           };
           
           // 生成切磋日志
-          updated = generateSparLog(updated, player, player.time.year, player.time.month, !playerWon);
+          updated = generateSparLog(updated, player, Math.floor(player.age), player.time.month, !playerWon);
           updated = markNpcLoggedThisMonth(updated);
           return updated;
         }
@@ -420,6 +485,9 @@ function App() {
         true,
         { 好感: playerWon ? 3 : 5, 经验: playerWon ? 3 : 5 }
       );
+      
+      // 检测是否被其他NPC目击
+      handleWitnessCheck(targetNpc, 'SPAR');
       return;
     }
 
@@ -429,6 +497,20 @@ function App() {
       if (!check.allowed) {
         showResult('无法双修', check.reason, false);
         return;
+      }
+      
+      // 佛修特殊判定：第一次双修只有1%概率同意
+      const isBuddhaFirstTime = check.requiresCheck;
+      if (isBuddhaFirstTime) {
+        const success = Math.random() < check.checkRate;
+        if (!success) {
+          showResult(
+            '双修被拒',
+            `${targetNpc.name}闭目摇头："施主，贫僧虽对你动了凡心，但此事关乎戒律，贫僧...还需再思量。"你能感受到${targetNpc.gender === '女' ? '她' : '他'}内心的挣扎与矛盾。`,
+            false
+          );
+          return;
+        }
       }
       
       // 双修消耗灵石
@@ -481,20 +563,30 @@ function App() {
             relationship: {
               ...oldRel,
               affection: Math.min(100, oldAff + 5) // 双修增加亲密度
-            }
+            },
+            // 记录双修次数（用于佛修首次判定）
+            dualCultivationCount: (n.dualCultivationCount || 0) + 1
           };
           
           // 生成双修日志（私密）
-          updated = generateDualCultivationLog(updated, player, player.time.year, player.time.month);
+          updated = generateDualCultivationLog(updated, player, Math.floor(player.age), player.time.month);
           updated = markNpcLoggedThisMonth(updated);
           return updated;
         }
         return n;
       }));
       
+      // 佛修初次双修的专属剧情
+      let dualCultivationText;
+      if (isBuddhaFirstTime) {
+        dualCultivationText = `烛火摇曳，${targetNpc.name}似乎正在忍受极大的痛苦，额角冷汗滴落。你刚想靠近，却被${targetNpc.gender === '女' ? '她' : '他'}猛地拽入怀中，滚烫的体温几乎将你灼伤。\n\n向来洁白的僧袍凌乱不堪，${targetNpc.gender === '女' ? '她' : '他'}埋首在你颈窝，一口咬在你的锁骨上，既是惩罚也是索取。\n\n"什么清规戒律，什么大道飞升……"${targetNpc.gender === '女' ? '她' : '他'}声音破碎，带着绝望的沉沦，"若修佛的尽头没有你，这佛……不修也罢。"`;
+      } else {
+        dualCultivationText = `你与 ${targetNpc.name} 共修大道，灵气在经脉中交融流转。${affection >= 80 ? '心意相通，修为大增！' : affection >= 60 ? '灵犀相映，效果显著。' : '互有增益，略有所得。'}`;
+      }
+      
       showResult(
         '双修',
-        `你与 ${targetNpc.name} 共修大道，灵气在经脉中交融流转。${affection >= 80 ? '心意相通，修为大增！' : affection >= 60 ? '灵犀相映，效果显著。' : '互有增益，略有所得。'}`,
+        dualCultivationText,
         true,
         { 
           好感: 5, 
@@ -504,6 +596,9 @@ function App() {
         },
         true // 不自动关闭，因为是重要事件
       );
+      
+      // 检测是否被其他NPC目击（双修被目击概率很低但醋意很高）
+      handleWitnessCheck(targetNpc, 'DUAL_CULTIVATION');
       return;
     }
 
@@ -561,13 +656,14 @@ function App() {
       
       // 3. 普通闲聊（大概率：约70-85%）
       const chatText = getChatText(targetNpc);
+      const isBuddha = targetNpc.identity === '佛修';
       
       setActiveNpcs(prev => prev.map(n => {
         if (n.id === npcId) {
           // 佛修不通过闲聊获得好感
           if (n.identity === '佛修') {
             // 佛修也记录日志，但不增加好感
-            let updated = generateChatLog(n, player, player.time.year, player.time.month);
+            let updated = generateChatLog(n, player, Math.floor(player.age), player.time.month);
             updated = markNpcLoggedThisMonth(updated);
             return updated;
           }
@@ -582,25 +678,88 @@ function App() {
               affection: oldAff + 2
             }
           };
-          updated = generateChatLog(updated, player, player.time.year, player.time.month);
+          updated = generateChatLog(updated, player, Math.floor(player.age), player.time.month);
           updated = markNpcLoggedThisMonth(updated);
           return updated;
         }
         return n;
       }));
       
-      // 显示结果
+      // 显示结果 - 佛修不显示好感增加
       showResult(
         "闲聊",
         `你与 ${targetNpc.name} 攀谈。${targetNpc.gender === '女' ? '她' : '他'}道：\n"${chatText}"`,
         true,
-        { 好感: 2 }
+        isBuddha ? {} : { 好感: 2 }
       );
+      
+      // 检测是否被其他NPC目击，触发吃醋
+      handleWitnessCheck(targetNpc, 'CHAT');
     }
 
     // DETAIL 逻辑保持不变...
     if (actionType === 'DETAIL') {
       setSelectedNpc(targetNpc);
+    }
+  };
+  
+  // --- 处理互动被目击（吃醋系统）---
+  const handleWitnessCheck = (targetNpc, actionType) => {
+    // 检测是否有其他NPC目击
+    const witnesses = checkWitnessEvent(player, targetNpc, activeNpcs, actionType);
+    
+    if (witnesses.length > 0) {
+      setActiveNpcs(prev => prev.map(npc => {
+        // 找到目击者
+        const witness = witnesses.find(w => w.id === npc.id);
+        if (!witness) return npc;
+        
+        // 计算醋意增加
+        const increase = calculateJealousyIncrease(npc, targetNpc, actionType);
+        if (increase === 0) return npc;
+        
+        // 应用醋意增加
+        const event = applyJealousyIncrease(npc, targetNpc, actionType, increase);
+        let updated = { ...npc, relationship: event.witnessName ? npc.relationship : npc.relationship };
+        
+        // 更新醋意值
+        const oldJealousy = npc.relationship?.jealousy || 0;
+        const newJealousy = Math.min(100, oldJealousy + increase);
+        updated.relationship = {
+          ...updated.relationship,
+          jealousy: newJealousy,
+          lastInteraction: player.time.month
+        };
+        
+        // 记录情敌
+        if (!updated.relationship.rivalNpcs) {
+          updated.relationship.rivalNpcs = [];
+        }
+        if (!updated.relationship.rivalNpcs.includes(targetNpc.id)) {
+          updated.relationship.rivalNpcs.push(targetNpc.id);
+        }
+        
+        // 生成吃醋日志（私密）
+        updated = generateJealousyLog(updated, player, player.time.year, player.time.month, targetNpc, newJealousy);
+        
+        // 中等醋意以上，有概率生成计划讨好的日志
+        if (newJealousy >= 41 && Math.random() < 0.3) {
+          updated = generatePleasePlanLog(updated, player, player.time.year, player.time.month);
+        }
+        
+        return updated;
+      }));
+      
+      // 如果有高醋意的目击者，在日志中提示
+      const highJealousyWitness = witnesses.find(w => {
+        const j = w.relationship?.jealousy || 0;
+        return j >= 60;
+      });
+      
+      if (highJealousyWitness) {
+        const level = getJealousyLevel(highJealousyWitness.relationship?.jealousy || 0);
+        addLog(`你感觉到有人在注视着你...空气中似乎弥漫着一股微妙的气息。`);
+      }
     }
   };
 
@@ -659,7 +818,7 @@ function App() {
           }
         };
         // 生成赠礼日志
-        updated = generateGiftLog(updated, player, player.time.year, player.time.month, item.name, true);
+        updated = generateGiftLog(updated, player, Math.floor(player.age), player.time.month, item.name, true);
         updated = markNpcLoggedThisMonth(updated);
         
         // 🆕 记录记忆：收到礼物
@@ -678,6 +837,9 @@ function App() {
       { 好感: change }
     );
     
+    // 检测是否被其他NPC目击
+    handleWitnessCheck(npc, 'GIFT');
+    
     // 5. 关闭弹窗
     setModalState({ type: null, data: null });
   };
@@ -689,6 +851,17 @@ function App() {
     // 防御性编程：检查npc是否存在
     if (!npc) {
       console.warn('No NPC found in modalState.data');
+      return;
+    }
+    
+    // 佛修特殊规则：必须先有过双修才能劝生
+    const isBuddha = npc.identity === '佛修';
+    const hasDualCultivated = (npc.dualCultivationCount || 0) > 0;
+    
+    if (isBuddha && !hasDualCultivated) {
+      // 佛修未双修前劝生必定失败
+      const failText = `${npc.name}轻声叹息："施主，诞子之事关乎清规戒律...贫僧心中虽有情愫，却仍放不下这身袈裟。还请施主莫要为难贫僧。"`;
+      showResult("劝生失败", failText, false, null, false);
       return;
     }
     
@@ -705,7 +878,7 @@ function App() {
 
     if (isSuccess) {
        // 生成男性怀孕决定日志
-       const updatedNpc = generatePregnancyDecisionLog(npc, player, player.time.year, player.time.month);
+       const updatedNpc = generatePregnancyDecisionLog(npc, player, Math.floor(player.age), player.time.month);
        
        // 🆕 记录记忆：怀孕开始
        MemoryManager.onPregnancyStart(updatedNpc);
@@ -936,6 +1109,15 @@ function App() {
   const handlePrologueFinish = () => {
     // 直接开始游戏，不再有选择奖励
     addLog("你的逆天之路由此开启...");
+    
+    // 为初始NPC生成初遇剧情日志
+    setActiveNpcs(prev => prev.map(npc => {
+      if (npc.id === 1 || npc.id === 2) {
+        return generateFirstMeetLog(npc, player, player.time.year, player.time.month);
+      }
+      return npc;
+    }));
+    
     setGameStage('MAIN');
   };
 
@@ -950,6 +1132,8 @@ function App() {
       gameStage,
       logs,
       inventory,
+      messages: messageManager.toJSON(), // 保存消息中心数据
+      lastMessageCheck, // 保存消息检查记录
       // 可以在这里加更多，比如 businesses 如果它是独立状态的话
     };
     return saveGameToStorage(gameState);
@@ -967,6 +1151,15 @@ function App() {
       setGameStage(savedData.gameStage || 'MAIN');
       setLogs(savedData.logs || []);
       setInventory(savedData.inventory || []);
+      
+      // 恢复消息中心数据
+      if (savedData.messages) {
+        messageManager.loadFromData(savedData.messages);
+        setMessages(messageManager.getAllMessages());
+      }
+      if (savedData.lastMessageCheck) {
+        setLastMessageCheck(savedData.lastMessageCheck);
+      }
       
       // 读档后通常需要重置一些UI状态
       setIsAuto(false); 
@@ -1126,17 +1319,28 @@ function App() {
 
     // 1. NPC怀孕进度 - 先收集所有需要出生的孩子
     let newBabies = [];
+    let newSkillPoints = 0; // 记录本次新增的技能点
     const updatedNpcs = activeNpcs.map(npc => {
       if (npc.isPregnant) {
         const newProgress = npc.pregnancyProgress + 1;
         if (newProgress >= 9) { // 9个月怀孕期
-          // 生成孩子
-          const child = generateChild(player, npc, player.time.year);
+          // 生成孩子（使用云澜历年份）
+          const child = generateChild(player, npc, Math.floor(player.age));
           newBabies.push(child);
           newLogs.push(`【诞子】${npc.name}为你诞下一子：${child.name}（${child.gender}，天赋${child.tier}）`);
           
+          // 📰 添加到新闻缓存
+          pushToNewsBuffer(
+            player.newsBuffer || [],
+            'BIRTH',
+            { actor: player.name, target: child.name, detail: child.gender }
+          );
+          
+          // 每生一个子嗣，主角获得1点技能点
+          newSkillPoints += 1;
+          
           // 生成男性分娩日志（重大事件，私密）
-          let updatedNpc = generateMaleBirthLog(npc, player, player.time.year, player.time.month, child.name);
+          let updatedNpc = generateMaleBirthLog(npc, player, Math.floor(player.age), player.time.month, child.name);
           
           // 🆕 记录记忆：生子里程碑
           const birthDifficulty = Math.random() > 0.7 ? "难产" : "顺利";
@@ -1203,14 +1407,24 @@ function App() {
             color: config.color,
             multiplier: config.multiplier // 战斗力加成系数
           };
-
-          return { ...child, spiritRoot: spiritRoot };
+          
+          // 标记为已测灵
+          const updatedChild = { ...child, spiritRoot: spiritRoot, isTested: true };
+          
+          // 孙辈自动测灵，不弹窗
+          if ((child.generation || 1) > 1) {
+            newLogs.push(`🔮 【自动测灵】${child.name} 已满六岁，灵根为【${spiritRoot.type}】（资质${aptitude}）`);
+          }
+          
+          return updatedChild;
         }
         return child;
       });
       
-      // 加入测试队列
-      const testQueueChildren = finalChildren.filter(c => readyToTest.some(r => r.id === c.id));
+      // 只有第一代子嗣才加入测试队列（需要弹窗）
+      const testQueueChildren = finalChildren.filter(c => 
+        readyToTest.some(r => r.id === c.id) && (c.generation || 1) === 1
+      );
       if (testQueueChildren.length > 0) {
         setTestQueue(prev => [...prev, ...testQueueChildren]);
         // 如果是自动模式，有测灵事件时暂停
@@ -1225,6 +1439,15 @@ function App() {
     
     // 6. 最终统一更新children状态（不再需要去重，因为newBabies是新生成的，ID唯一）
     setChildren(finalChildren);
+    
+    // 统计孙辈出生数量，每个孙辈增加1技能点
+    const grandchildBirthEvents = childEvents.filter(e => e.type === 'GRANDCHILD_BIRTH');
+    newSkillPoints += grandchildBirthEvents.length;
+    
+    // 如果有新增技能点，给予提示
+    if (newSkillPoints > 0) {
+      newLogs.push(`🎁 【家族繁荣】新增后代${newSkillPoints}人，获得${newSkillPoints}点技能点！可在玩家面板分配。`);
+    }
     
     // 合并成长日志
     newLogs = [...newLogs, ...growLogs];
@@ -1271,9 +1494,46 @@ function App() {
        totalFeedback += calculateChildFeedback(child);
      });
 
-    // 3. 宿敌成长 (如果是活的)
+    // 3. 复仇系统更新（新版）
+    // 3.1 更新宿敌威胁度（缓慢上升）
+    if (player.rival && !player.rival.isDead) {
+      updateThreatLevel(player);
+      
+      // 3.2 检查刺杀事件
+      const assassinEvent = checkAssassinationEvent(player);
+      if (assassinEvent) {
+        if (assassinEvent.survived) {
+          // 逃脱刺杀
+          newLogs.push(`【危险】${assassinEvent.message}`);
+          pushToNewsBuffer(
+            player.newsBuffer || [],
+            'ASSASSINATION_SURVIVED',
+            { actor: player.name }
+          );
+        } else {
+          // 被刺杀 - Game Over
+          if (isAutoMode) setIsAuto(false);
+          alert(assassinEvent.message);
+          // 可以在这里添加游戏结束逻辑
+        }
+      }
+      
+      // 3.3 年度时间线事件（每12月触发）
+      if (player.time.month === 12) {
+        const timelineEvent = updateRivalTimeline(player);
+        if (timelineEvent) {
+          pushToNewsBuffer(
+            player.newsBuffer || [],
+            timelineEvent.type,
+            timelineEvent.data
+          );
+        }
+      }
+    }
+    
+    // 4. 旧版宿敌系统（保留兼容）
     if (rival.status === 'alive') {
-      // 庶妹是天才，成长速度很快
+      // 庶妹是天灵根绝世天才，成长速度极快
       const growth = 20 + Math.floor(Math.random() * 30);
       let newThreat = rival.threat + 2; // 威胁增长快一点
 
@@ -1344,6 +1604,9 @@ function App() {
         newTime.year += 1;
       }
       
+      // 主角年龄增长（每月增加1/12岁）
+      const newAge = (prevPlayer.age || 16) + 1/12;
+      
       // 获取当前境界配置
       const tierConf = getTierConfig(prevPlayer.tier);
       
@@ -1368,6 +1631,8 @@ function App() {
 
       return {
         ...prevPlayer,
+        age: newAge, // 更新年龄
+        skillPoints: (prevPlayer.skillPoints || 0) + newSkillPoints, // 更新技能点
         time: newTime,
         currentExp: newExp, // 使用新经验
         maxExp: tierConf.maxExp, // 确保 maxExp 同步
@@ -1386,11 +1651,12 @@ function App() {
     });
 
     // --- 新增：为所有 NPC 生成本月日志 ---
-    const nextYear = player.time.month === 12 ? player.time.year + 1 : player.time.year;
     const nextMonth = player.time.month === 12 ? 1 : player.time.month + 1;
+    // 使用玩家年龄作为年份（云澜历）
+    const nextAge = player.time.month === 12 ? Math.floor(player.age) + 1 : Math.floor(player.age);
     
     // 先处理 NPC 生命周期（年龄、寿元、修为推进）
-    const lifecycleResult = processNpcLifecycles(updatedNpcs, player, nextYear, nextMonth);
+    const lifecycleResult = processNpcLifecycles(updatedNpcs, player, nextAge, nextMonth);
     const npcsAfterLifecycle = lifecycleResult.npcs;
     const lifecycleEvents = lifecycleResult.events;
     
@@ -1398,30 +1664,143 @@ function App() {
     const aliveNpcs = npcsAfterLifecycle.filter(npc => !npc.isDead);
     const newlyDeadNpcs = npcsAfterLifecycle.filter(npc => npc.isDead);
     
-    // 将新死亡的NPC添加到死亡列表
+    // 将新死亡的NPC添加到死亡列表，并生成遗言消息
     if (newlyDeadNpcs.length > 0) {
       setDeadNpcs(prev => [...prev, ...newlyDeadNpcs]);
+      
+      // 为每个新死亡的NPC生成遗言
+      newlyDeadNpcs.forEach(deadNpc => {
+        const obituaryMsg = createObituaryMessage(deadNpc, player, { year: nextAge, month: nextMonth });
+        messageManager.addMessage(obituaryMsg);
+      });
+      
+      // 更新消息列表
+      setMessages(messageManager.getAllMessages());
+    }
+    
+    // --- 家书生成逻辑 ---
+    // 每3个月检查一次是否有NPC发送家书
+    if (nextMonth % 3 === 0) {
+      aliveNpcs.forEach(npc => {
+        // 只有不在玩家身边的NPC才会发送家书
+        const isAway = npc.sect || npc.status === 'away';
+        if (!isAway) return;
+        
+        // 检查距离上次发送消息的时间
+        const lastCheck = lastMessageCheck[npc.id] || 0;
+        const currentMonthIndex = nextAge * 12 + nextMonth;
+        const monthsSinceLastMessage = currentMonthIndex - lastCheck;
+        
+        // 判断是否应该发送家书
+        if (shouldSendLetter(npc, monthsSinceLastMessage)) {
+          const letterMsg = createLetterMessage(npc, player, { year: nextAge, month: nextMonth }, true);
+          messageManager.addMessage(letterMsg);
+          
+          // 更新上次检查时间
+          setLastMessageCheck(prev => ({
+            ...prev,
+            [npc.id]: currentMonthIndex
+          }));
+        }
+      });
+      
+      // 更新消息列表
+      setMessages(messageManager.getAllMessages());
     }
     
     // 记录生命周期事件日志
     lifecycleEvents.forEach(event => {
       if (event.type === 'NPC_DEATH') {
         newLogs.push(`💀 ${event.message}`);
+        // 📰 添加到新闻缓存
+        pushToNewsBuffer(
+          player.newsBuffer || [],
+          'DEATH',
+          { 
+            actor: event.npcName,
+            detail: event.age || 0,
+            location: '某地'
+          }
+        );
       } else if (event.type === 'NPC_BREAKTHROUGH') {
         newLogs.push(`⚡ ${event.message}`);
+        // 📰 添加到新闻缓存
+        pushToNewsBuffer(
+          player.newsBuffer || [],
+          'NPC_BREAKTHROUGH',
+          {
+            actor: event.npcName,
+            detail: event.newTier
+          }
+        );
+      } else if (event.type === 'NPC_BREAKTHROUGH_FAIL') {
+        // 📰 添加到新闻缓存
+        pushToNewsBuffer(
+          player.newsBuffer || [],
+          'BREAKTHROUGH_FAIL',
+          {
+            actor: event.npcName,
+            detail: event.tier
+          }
+        );
       }
     });
     
     // 然后为所有存活的 NPC 生成日志
-    const npcsWithLogs = generateMonthlyLogsForAll(aliveNpcs, player, nextYear, nextMonth);
+    const npcsWithLogs = generateMonthlyLogsForAll(aliveNpcs, player, nextAge, nextMonth);
     
-    setActiveNpcs(npcsWithLogs);
+    // --- 🆕 每月醋意检测和衰减 ---
+    const npcsAfterJealousy = npcsWithLogs.map(npc => {
+      if (!npc.jealousy) {
+        npc.jealousy = 0; // 初始化醋意值
+      }
+      if (!npc.lastInteraction) {
+        npc.lastInteraction = { year: nextAge, month: nextMonth }; // 初始化最后互动时间
+      }
+      
+      // 检查长期冷落（3个月以上未互动）
+      const currentMonthIndex = nextAge * 12 + nextMonth;
+      const lastMonthIndex = npc.lastInteraction.year * 12 + npc.lastInteraction.month;
+      const monthsSinceInteraction = currentMonthIndex - lastMonthIndex;
+      
+      // 如果超过3个月未互动，触发冷落检测
+      if (monthsSinceInteraction >= 3) {
+        const { jealousyGain, shouldLog: logNeglect } = checkNeglect(npc, monthsSinceInteraction);
+        if (jealousyGain > 0) {
+          npc.jealousy = Math.min(100, (npc.jealousy || 0) + jealousyGain);
+          
+          // 只在首次触发或每6个月提醒一次时生成日志
+          if (logNeglect) {
+            const neglectLog = generateJealousyLog(
+              npc,
+              npc.jealousy,
+              { year: nextAge, month: nextMonth },
+              player.name,
+              'neglect'
+            );
+            if (neglectLog) {
+              npc.logs = [...(npc.logs || []), neglectLog];
+            }
+          }
+        }
+      }
+      
+      // 醋意自然衰减（每月）
+      if (npc.jealousy > 0) {
+        const decay = calculateJealousyDecay(npc);
+        npc.jealousy = Math.max(0, npc.jealousy - decay);
+      }
+      
+      return npc;
+    });
+    
+    setActiveNpcs(npcsAfterJealousy);
     
     // --- 新增：生成修仙大陆纪事（包含NPC相关事件） ---
-    const worldEvents = generateMonthlyWorldEvents(nextYear, nextMonth, player, npcsWithLogs);
+    const worldEvents = generateMonthlyWorldEvents(nextAge, nextMonth, player, npcsWithLogs);
     
     // 尝试生成与玩家相关的事件（如子女在宗门的表现）
-    const playerRelatedEvent = generatePlayerRelatedEvent(player, finalChildren, nextYear, nextMonth);
+    const playerRelatedEvent = generatePlayerRelatedEvent(player, finalChildren, nextAge, nextMonth);
     if (playerRelatedEvent) {
       worldEvents.push(playerRelatedEvent);
     }
@@ -1430,6 +1809,102 @@ function App() {
     worldEvents.forEach(event => {
       addLog(event.message, event.category, event.type, event.title);
     });
+
+    // --- 🆕 修真界邸报系统 ---
+    // 每3个月（每季度）生成一期邸报
+    
+    if (nextMonth % 3 === 0) { // 每季度（3、6、9、12月）
+      // 检查设置：是否启用邸报功能
+      const gazetteEnabled = localStorage.getItem('enableGazette') !== 'false'; // 默认开启
+      
+      if (gazetteEnabled) {
+        // 获取新闻缓存
+        const newsBuffer = player.newsBuffer || [];
+        
+        // 如果新闻太少，添加填充新闻
+        const finalNewsBuffer = newsBuffer.length > 0 ? newsBuffer : [
+          { type: 'FILLER', data: {}, timestamp: Date.now() }
+        ];
+        
+        // 获取设置
+        const apiKey = localStorage.getItem('game_api_key') || '';
+        const apiUrl = localStorage.getItem('game_api_url') || '';
+        const apiModel = localStorage.getItem('game_api_model') || '';
+        const useAIForGazette = localStorage.getItem('useAIForGazette') !== 'false';
+        
+        const settings = {
+          enableGazette: true,
+          apiKey,
+          apiUrl,
+          apiModel,
+          useAIForGazette
+        };
+        
+        // 异步生成邸报（不阻塞游戏流程）
+        // 先清空新闻缓存，但不显示红点
+        setPlayer(prev => ({
+          ...prev,
+          newsBuffer: [], // 清空新闻缓存
+          hasUnreadGazette: false // 暂时不显示红点，等生成完成
+        }));
+        
+        generateGazette(finalNewsBuffer, player, npcsWithLogs, (player.gazetteIssue || 0) + 1, settings)
+          .then(gazette => {
+            if (gazette) {
+              // 生成完成后才更新状态并显示红点
+              setPlayer(prev => ({
+                ...prev,
+                gazetteHistory: [...(prev.gazetteHistory || []), gazette], // 保存到历史
+                gazetteIssue: gazette.issue,
+                hasUnreadGazette: true // 内容已生成，显示红点
+              }));
+              
+              // 设置当前邸报，但不自动弹出
+              setCurrentGazette(gazette);
+              // ❌ 不再自动弹窗，用户需手动点击左下角按钮查看
+            }
+          })
+          .catch(error => {
+            console.error('生成邸报失败:', error);
+            // 失败时也要确保清空缓存
+            setPlayer(prev => ({
+              ...prev,
+              newsBuffer: []
+            }));
+          });
+      } else {
+        // 即使不生成邸报，也要清空新闻缓存，避免堆积
+        setPlayer(prev => ({
+          ...prev,
+          newsBuffer: []
+        }));
+      }
+    }
+
+    // --- 🌟 世界名人演化（每年执行一次）---
+    if (nextMonth === 1) { // 每年1月
+      const evolvedWorldNpcs = evolveWorldNpcs(player.worldNpcs || [], nextYear);
+      setPlayer(prev => ({
+        ...prev,
+        worldNpcs: evolvedWorldNpcs
+      }));
+      
+      // 检查是否有名人陨落，添加到新闻
+      evolvedWorldNpcs.forEach(npc => {
+        if (npc.status === 'DEAD' && npc.deathYear === nextYear) {
+          pushToNewsBuffer(
+            player.newsBuffer || [],
+            'DEATH',
+            {
+              actor: `${npc.title} ${npc.name}`,
+              detail: npc.age,
+              location: npc.deathReason || '某地'
+            }
+          );
+          addLog(`💀 震惊！天机榜${npc.rank ? `第${npc.rank}名` : ''}【${npc.title} ${npc.name}】${npc.deathReason}！`);
+        }
+      });
+    }
   }, [children, player, activeNpcs, rival, testQueue, isAuto]);
 
   // 回调：玩家为子嗣选择宗门并分配职位
@@ -1455,6 +1930,34 @@ function App() {
           MemoryManager.onChildJoinSect(parentNpc, c, sectObj.name);
         }
         
+        // 生成离别消息（子女前往宗门）
+        const departureMsg = createLetterMessage(
+          { 
+            id: c.id, 
+            name: c.name, 
+            gender: c.gender,
+            sect: sectObj.name,
+            cultivation: { stage: c.tierTitle },
+            affection: 100, // 子女对父母的好感度默认很高
+          },
+          player,
+          { year: Math.floor(player.age), month: player.time.month },
+          true
+        );
+        messageManager.addMessage(departureMsg);
+        setMessages(messageManager.getAllMessages());
+        
+        // 📰 添加到新闻缓存
+        pushToNewsBuffer(
+          player.newsBuffer || [],
+          'JOIN_SECT',
+          {
+            actor: player.name,
+            target: c.name,
+            detail: sectObj.name
+          }
+        );
+        
         return recalcCombatStatsWithEquip(updated);
       }
       return c;
@@ -1474,12 +1977,14 @@ function App() {
     if (isAuto) {
       const runAuto = () => {
         handleNextMonth(true); // 传入 true，表示这是自动触发的
-        timer = setTimeout(runAuto, 1000); // 加快速度：1000毫秒(1秒) = 1个月，方便测试
+        // 使用autoSpeed来控制速度：基础1秒除以速度倍率
+        // 0.3倍速 = 3333ms, 1倍速 = 1000ms, 3倍速 = 333ms
+        timer = setTimeout(runAuto, 1000 / autoSpeed);
       };
-      timer = setTimeout(runAuto, 1000);
+      timer = setTimeout(runAuto, 1000 / autoSpeed);
     }
     return () => clearTimeout(timer);
-  }, [isAuto, handleNextMonth]); // 依赖isAuto和handleNextMonth函数
+  }, [isAuto, autoSpeed, handleNextMonth]); // 依赖isAuto、autoSpeed和handleNextMonth函数
 
   // --- 排序改变时更新selectedChild ---
   useEffect(() => {
@@ -1496,7 +2001,7 @@ function App() {
     }
   }, [childSort, children, selectedChild]);
 
-  // 2. 新增：处理婚配
+  // 2. 新增：处理婚配 - 显示配偶选择界面
   const handleMarry = (childId) => {
     // 先查找子嗣
     const child = children.find(c => c.id === childId);
@@ -1514,26 +2019,40 @@ function App() {
       return;
     }
 
+    // 生成三个候选配偶
+    const candidates = generateSpouseCandidates(child.tierTitle || '凡人', child.gender);
+    
+    setSpouseCandidates(candidates);
+    setMarryingChild(child);
+    setShowSpouseSelection(true);
+  };
+
+  // 3. 新增：确认选择配偶
+  const handleSpouseSelect = (selectedSpouse) => {
+    if (!marryingChild) return;
+
     setChildren(prev => prev.map(c => {
-      if (c.id === childId) {
-        // 生成对应境界的强力配偶，确保是异性
-        const spouse = generateSpouse(c.tierTitle || '凡人', c.gender);
-        
+      if (c.id === marryingChild.id) {
         // 🆕 为父母 NPC 记录子女成婚里程碑
         const parentNpc = activeNpcs.find(n => 
           n.name === c.fatherName || n.name === c.motherName
         );
         if (parentNpc) {
-          MemoryManager.onChildMarriage(parentNpc, c, spouse.name);
+          MemoryManager.onChildMarriage(parentNpc, c, selectedSpouse.name);
         }
         
-        return { ...c, spouse: spouse };
+        return { ...c, spouse: selectedSpouse };
       }
       return c;
     }));
 
     setPlayer(p => ({...p, resources: {...p.resources, spiritStones: p.resources.spiritStones - 500}}));
-    addLog(`💍 花费500灵石，为子嗣操办了婚事，家族开枝散叶指日可待！`);
+    addLog(`💍 花费500灵石，为 ${marryingChild.name} 选择了 ${selectedSpouse.name} 作为配偶，家族开枝散叶指日可待！`);
+    
+    // 关闭弹窗并清空状态
+    setShowSpouseSelection(false);
+    setSpouseCandidates([]);
+    setMarryingChild(null);
   };
 
   // --- 新增：子嗣操作逻辑 ---
@@ -1936,6 +2455,17 @@ function App() {
         currentExp: 0, // 突破后经验归零
         maxExp: result.newMaxExp // 更新上限
       }));
+      
+      // 📰 添加到新闻缓存
+      pushToNewsBuffer(
+        player.newsBuffer || [],
+        'LEVEL_UP',
+        {
+          actor: player.name,
+          detail: result.newTier
+        }
+      );
+      
       // 弹窗报喜 (不自动关闭)
       showResult("境界突破", result.msg, true, { 境界: "提升" }, false);
     } else {
@@ -1946,6 +2476,39 @@ function App() {
       // 弹窗报忧
       showResult("突破失败", result.msg, false, { 修为: -result.penalty }, false);
     }
+  };
+
+  // 4. 新增：处理技能点分配
+  const handleAllocateSkillPoint = (type) => {
+    if ((player.skillPoints || 0) <= 0) {
+      addLog('❌ 没有可分配的技能点！');
+      return;
+    }
+
+    setPlayer(prev => {
+      const newPlayer = { ...prev, skillPoints: prev.skillPoints - 1 };
+      
+      if (type === 'aptitude') {
+        // 增加资质
+        newPlayer.stats = {
+          ...newPlayer.stats,
+          aptitude: Math.min(100, (newPlayer.stats.aptitude || 20) + 1)
+        };
+        addLog(`✨ 使用1点技能点，资质提升至 ${newPlayer.stats.aptitude}！`);
+      } else if (type === 'combatPower') {
+        // 增加战斗属性
+        newPlayer.combatStats = {
+          ...newPlayer.combatStats,
+          maxHp: newPlayer.combatStats.maxHp + 50,
+          hp: newPlayer.combatStats.maxHp + 50,
+          atk: newPlayer.combatStats.atk + 5,
+          def: (newPlayer.combatStats.def || 0) + 3
+        };
+        addLog(`⚔️ 使用1点技能点，战力提升！（生命+50，攻击+5，防御+3）`);
+      }
+      
+      return newPlayer;
+    });
   };
 
   // 调试：随机化玩家头像以验证 Avatar 渲染（生成与 Avatar.jsx 兼容的 DNA）
@@ -2013,7 +2576,20 @@ function App() {
                 player={player}
                 children={children} // 传入所有子嗣（包括孙子）
                 pregnantNpcs={activeNpcs.filter(n => n.isPregnant)}
-                onChildClick={(child) => setSelectedChild(child)}
+                onChildClick={(child) => {
+                  // 如果是胚胎，显示特殊提示
+                  if (child.isEmbryo) {
+                    showResult(
+                      '胚胎详情',
+                      `${child.npc.name} 正在孕育中...\n\n🥚 生命正在悄然成长\n\n进度: ${child.npc.pregnancyProgress || 0}/9月`,
+                      true,
+                      null,
+                      false
+                    );
+                  } else {
+                    setSelectedChild(child);
+                  }
+                }}
               />
               
               {/* 统计信息 */}
@@ -2151,8 +2727,7 @@ function App() {
           {activeTab === 'REVENGE' && (
             <RevengePanel
               player={player}
-              rival={rival}
-              onAction={handleRevengeAction}
+              setPlayer={setPlayer}
             />
           )}
 
@@ -2173,6 +2748,7 @@ function App() {
               player={player} 
               childFeedback={totalChildFeedback}
               onOpenInventory={() => setInventoryModal({ open: true, mode: 'VIEW', slot: null, childId: null })}
+              onAllocateSkillPoint={handleAllocateSkillPoint}
             />
           )}
         </div>
@@ -2476,11 +3052,61 @@ function App() {
         />
       )}
 
+      {/* 渲染配偶选择弹窗 */}
+      {showSpouseSelection && marryingChild && (
+        <SpouseSelectionModal
+          child={marryingChild}
+          candidates={spouseCandidates}
+          onSelect={handleSpouseSelect}
+          onClose={() => {
+            setShowSpouseSelection(false);
+            setSpouseCandidates([]);
+            setMarryingChild(null);
+          }}
+        />
+      )}
+
       {/* 4. 底部导航栏 */}
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* 5. 升级版悬浮控制台 */}
       <div style={styles.fabContainer}>
+        
+        {/* 速度选择按钮组 */}
+        {isAuto && (
+          <div style={styles.speedSelector}>
+            <button
+              onClick={() => setAutoSpeed(0.3)}
+              style={{
+                ...styles.speedBtn,
+                backgroundColor: autoSpeed === 0.3 ? '#4CAF50' : '#e0e0e0',
+                color: autoSpeed === 0.3 ? 'white' : '#666'
+              }}
+            >
+              ×0.3
+            </button>
+            <button
+              onClick={() => setAutoSpeed(1)}
+              style={{
+                ...styles.speedBtn,
+                backgroundColor: autoSpeed === 1 ? '#4CAF50' : '#e0e0e0',
+                color: autoSpeed === 1 ? 'white' : '#666'
+              }}
+            >
+              ×1
+            </button>
+            <button
+              onClick={() => setAutoSpeed(3)}
+              style={{
+                ...styles.speedBtn,
+                backgroundColor: autoSpeed === 3 ? '#4CAF50' : '#e0e0e0',
+                color: autoSpeed === 3 ? 'white' : '#666'
+              }}
+            >
+              ×3
+            </button>
+          </div>
+        )}
         
         {/* 自动播放开关 (小按钮) */}
         <button
@@ -2491,7 +3117,7 @@ function App() {
             color: isAuto ? '#33691e' : '#757575'
           }}
         >
-          {isAuto ? '⏸ 停止' : '▶ 闭关'}
+          {isAuto ? '⏸ 停止' : '⏩ 推进时间'}
         </button>
 
         {/* 主按钮 (手动下一月) */}
@@ -2515,6 +3141,34 @@ function App() {
         </button>
       </div>
 
+      {/* 📰 邸报按钮 (左下角) */}
+      <button
+        onClick={() => {
+          setShowGazette(true);
+          // 标记已读
+          setPlayer(prev => ({ ...prev, hasUnreadGazette: false }));
+        }}
+        style={styles.gazetteBtn}
+        title="修真界邸报"
+      >
+        📰
+        {player.hasUnreadGazette && <span style={styles.redDot}></span>}
+      </button>
+
+      {/* 📜 传书馆按钮 (左下角，邸报按钮上方) */}
+      <button
+        onClick={() => {
+          setShowMessageCenter(true);
+        }}
+        style={styles.messageCenterBtn}
+        title="传书馆 - 查看家书与遗言"
+      >
+        📜
+        {messageManager.getUnreadCount() > 0 && (
+          <span style={styles.redDot}>{messageManager.getUnreadCount()}</span>
+        )}
+      </button>
+
       {/* 6. NPC详情弹窗 (保持不变) */}
       {selectedNpc && (
         <NpcDetailModal
@@ -2536,6 +3190,21 @@ function App() {
           onClose={() => setNpcLogModal({ open: false, npc: null })}
         />
       )}
+
+      {/* 📜 传书馆弹窗 */}
+      <MessageCenterModal
+        isOpen={showMessageCenter}
+        onClose={() => setShowMessageCenter(false)}
+        messages={messages}
+        onMarkAsRead={(messageId) => {
+          messageManager.markAsRead(messageId);
+          setMessages(messageManager.getAllMessages());
+        }}
+        onDeleteMessage={(messageId) => {
+          messageManager.deleteMessage(messageId);
+          setMessages(messageManager.getAllMessages());
+        }}
+      />
 
       {/* 7. 战斗弹窗 */}
       {combatData && (
@@ -2646,22 +3315,36 @@ function App() {
         />
       )}
 
-      {/* 9. 渲染指南弹窗 */}
+      {/* 9. 渲染新手引导弹窗 */}
+      {showTutorial && (
+        <TutorialModal 
+          onClose={handleCloseTutorial}
+          onComplete={handleCompleteTutorial}
+        />
+      )}
+
+      {/* 10. 渲染详细指南弹窗 */}
       {showGuide && <GuideModal onClose={handleCloseGuide} />}
+
+      {/* 11. 修真界邸报弹窗 */}
+      {showGazette && (
+        <GazetteModal
+          gazette={currentGazette}
+          history={player.gazetteHistory || []}
+          playerName={player.name}
+          onClose={() => setShowGazette(false)}
+        />
+      )}
     </div>
   );
-}
+};
 
 const styles = {
   appContainer: {
     display: 'flex',
     flexDirection: 'column',
-    height: '100vh', // 占满整个屏幕高度
-    backgroundColor: '#f5f0e8', // 古色古香的背景色
-    maxWidth: '600px', // 在大屏幕上限制宽度，模拟手机
-    margin: '0 auto',
-    boxShadow: '0 0 30px rgba(0,0,0,0.15)', // 柔和阴影
-    position: 'relative',
+    height: '100vh',
+    fontFamily: "'Noto Serif SC', serif",
     backgroundImage: 'linear-gradient(rgba(245, 240, 232, 0.8), rgba(245, 240, 232, 0.8))',
     backgroundSize: '100% 100%'
   },
@@ -2750,6 +3433,92 @@ const styles = {
     transition: 'all 0.3s ease',
     backgroundColor: '#f5f0e8', // 古色背景
     color: '#5d4037' // 古色文字
+  },
+
+  // 邸报按钮 (左下角)
+  gazetteBtn: {
+    position: 'absolute',
+    bottom: '90px',
+    left: '25px',
+    width: '60px',
+    height: '60px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #fff9e6 0%, #f5f0e8 100%)',
+    border: '3px solid #8d6e63',
+    fontSize: '28px',
+    cursor: 'pointer',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
+    zIndex: 90,
+    ':hover': {
+      transform: 'scale(1.1)',
+      boxShadow: '0 6px 20px rgba(0,0,0,0.25)'
+    }
+  },
+
+  // 传书馆按钮 (左下角，邸报上方)
+  messageCenterBtn: {
+    position: 'absolute',
+    bottom: '160px', // 在邸报按钮上方
+    left: '25px',
+    width: '60px',
+    height: '60px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #faf8f3 0%, #f0ebe0 100%)',
+    border: '3px solid #5c3317',
+    fontSize: '28px',
+    cursor: 'pointer',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.3s ease',
+    zIndex: 90,
+    ':hover': {
+      transform: 'scale(1.1)',
+      boxShadow: '0 6px 20px rgba(0,0,0,0.25)'
+    }
+  },
+
+  // 红点提示
+  redDot: {
+    position: 'absolute',
+    top: '5px',
+    right: '5px',
+    width: '12px',
+    height: '12px',
+    borderRadius: '50%',
+    background: '#d32f2f',
+    border: '2px solid white',
+    animation: 'pulse 2s infinite'
+  },
+
+  // 速度选择器容器
+  speedSelector: {
+    display: 'flex',
+    gap: '5px',
+    marginBottom: '10px',
+    padding: '8px',
+    background: 'rgba(255,255,255,0.95)',
+    borderRadius: '15px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+    border: '2px solid #d7ccc8'
+  },
+
+  // 速度按钮
+  speedBtn: {
+    padding: '8px 14px',
+    fontSize: '12px',
+    border: 'none',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    transition: 'all 0.2s',
+    minWidth: '50px',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.1)'
   },
 
   // 修改主按钮样式
@@ -2913,6 +3682,24 @@ const styles = {
       transform: 'translateY(0)',
       boxShadow: '0 2px 8px rgba(255, 111, 0, 0.2)'
     }
+  },
+
+  // 🌟 天机榜按钮
+  eliteRankingBtn: {
+    marginTop: '10px',
+    padding: '12px 24px',
+    background: 'linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '20px',
+    cursor: 'pointer',
+    fontSize: '15px',
+    fontWeight: 'bold',
+    boxShadow: '0 3px 12px rgba(141, 110, 99, 0.3)',
+    transition: 'all 0.3s ease',
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: '300px'
   },
   
   // 死亡NPC列表样式
