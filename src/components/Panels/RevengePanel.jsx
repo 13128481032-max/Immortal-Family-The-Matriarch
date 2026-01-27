@@ -175,6 +175,35 @@ const RevengePanel = ({ player, setPlayer }) => {
       <div style={styles.actions}>
         <h3 style={styles.sectionTitle}>复仇操作</h3>
         
+        {/* 隐匿行踪 */}
+        <div style={styles.actionCard}>
+          <div style={styles.actionHeader}>
+            <h4 style={styles.actionTitle}>🌫️ 隐匿行踪</h4>
+            <span style={styles.actionCost}>消耗：{hidingMonths * 30} 灵石</span>
+          </div>
+          <p style={styles.actionDesc}>
+            躲避楚清瑶的搜捕，大幅降低威胁度。威胁度超过80%时必须使用！
+          </p>
+          <div style={styles.actionControlsVertical}>
+            <select 
+              value={hidingMonths} 
+              onChange={(e) => setHidingMonths(Number(e.target.value))}
+              style={styles.select}
+            >
+              <option value="1">1个月（-40%威胁）</option>
+              <option value="2">2个月（-80%威胁）</option>
+              <option value="3">3个月（-100%威胁）</option>
+            </select>
+            <button 
+              style={styles.hideBtn}
+              onClick={handleHide}
+              disabled={player.resources.spiritStones < hidingMonths * 30}
+            >
+              隐匿行踪 ({hidingMonths * 30}灵石)
+            </button>
+          </div>
+        </div>
+
         {/* 散布谣言 */}
         <div style={styles.actionCard}>
           <div style={styles.actionHeader}>
@@ -206,35 +235,6 @@ const RevengePanel = ({ player, setPlayer }) => {
           <div style={styles.actionInfo}>
             成功率：{Math.min(90, 60 + rumorCost / 2)}% | 
             威胁度+{rumorCost >= 100 ? 25 : 10}
-          </div>
-        </div>
-
-        {/* 隐匿行踪 */}
-        <div style={styles.actionCard}>
-          <div style={styles.actionHeader}>
-            <h4 style={styles.actionTitle}>🌫️ 隐匿行踪</h4>
-            <span style={styles.actionCost}>消耗：{hidingMonths * 30} 灵石</span>
-          </div>
-          <p style={styles.actionDesc}>
-            躲避楚清瑶的搜捕，大幅降低威胁度。威胁度超过80%时必须使用！
-          </p>
-          <div style={styles.actionControlsVertical}>
-            <select 
-              value={hidingMonths} 
-              onChange={(e) => setHidingMonths(Number(e.target.value))}
-              style={styles.select}
-            >
-              <option value="1">1个月（-40%威胁）</option>
-              <option value="2">2个月（-80%威胁）</option>
-              <option value="3">3个月（-100%威胁）</option>
-            </select>
-            <button 
-              style={styles.hideBtn}
-              onClick={handleHide}
-              disabled={player.resources.spiritStones < hidingMonths * 30}
-            >
-              隐匿行踪 ({hidingMonths * 30}灵石)
-            </button>
           </div>
         </div>
 

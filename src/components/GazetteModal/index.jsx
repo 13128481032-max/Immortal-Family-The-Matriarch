@@ -1,5 +1,6 @@
 // src/components/GazetteModal/index.jsx
 import React, { useState, useEffect } from 'react';
+import theme from '../../styles/theme.js';
 
 const GazetteModal = ({ gazette, onClose, history = [], playerName = '楚清辞' }) => {
   const [viewMode, setViewMode] = useState('current'); // 'current' or 'history'
@@ -15,7 +16,7 @@ const GazetteModal = ({ gazette, onClose, history = [], playerName = '楚清辞'
     
     return parts.map((part, index) => 
       part === playerName ? 
-        <span key={index} style={{ color: '#ff4444', fontWeight: 'bold' }}>{part}</span> : 
+        <span key={index} style={{ color: '#b33', fontWeight: 'bold' }}>{part}</span> : 
         part
     );
   };
@@ -57,8 +58,8 @@ const GazetteModal = ({ gazette, onClose, history = [], playerName = '楚清辞'
                 onClick={() => setViewMode('current')}
                 style={{
                   ...styles.tab,
-                  background: viewMode === 'current' ? '#8d6e63' : '#f5f5f5',
-                  color: viewMode === 'current' ? '#fff' : '#333',
+                  background: viewMode === 'current' ? theme.colors.primary : theme.colors.parchment,
+                  color: viewMode === 'current' ? '#fff' : theme.colors.ink,
                   opacity: !gazette ? 0.5 : 1,
                   cursor: !gazette ? 'not-allowed' : 'pointer'
                 }}
@@ -70,8 +71,8 @@ const GazetteModal = ({ gazette, onClose, history = [], playerName = '楚清辞'
                 onClick={() => setViewMode('history')}
                 style={{
                   ...styles.tab,
-                  background: viewMode === 'history' ? '#8d6e63' : '#f5f5f5',
-                  color: viewMode === 'history' ? '#fff' : '#333'
+                  background: viewMode === 'history' ? theme.colors.primary : theme.colors.parchment,
+                  color: viewMode === 'history' ? '#fff' : theme.colors.ink
                 }}
               >
                 📚 往期回顾 ({history.length})
@@ -226,7 +227,7 @@ const styles = {
     zIndex: 1000
   },
   modal: {
-    background: 'linear-gradient(135deg, #fff9e6 0%, #f5f0e8 100%)',
+    background: theme.gradients.warm,
     borderRadius: '16px',
     maxWidth: '800px',
     width: '90%',
@@ -234,7 +235,7 @@ const styles = {
     overflow: 'hidden',
     position: 'relative',
     boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-    border: '3px solid #8d6e63'
+    border: `3px solid ${theme.colors.border}`
   },
   closeBtn: {
     position: 'absolute',
@@ -244,7 +245,7 @@ const styles = {
     height: '35px',
     borderRadius: '50%',
     border: 'none',
-    background: '#d32f2f',
+    background: '#b33',
     color: 'white',
     fontSize: '24px',
     cursor: 'pointer',
@@ -258,7 +259,7 @@ const styles = {
     display: 'flex',
     gap: '10px',
     padding: '15px 20px',
-    borderBottom: '2px solid #d7ccc8'
+    borderBottom: `2px solid ${theme.colors.border}`
   },
   tab: {
     padding: '10px 20px',
@@ -275,46 +276,46 @@ const styles = {
     overflowY: 'auto'
   },
   newspaper: {
-    background: '#fffef7',
+    background: theme.colors.paper,
     padding: '30px',
     borderRadius: '8px',
-    boxShadow: 'inset 0 0 20px rgba(139, 69, 19, 0.1)',
+    boxShadow: `inset 0 0 20px ${theme.colors.shadow}`,
     fontFamily: '"Noto Serif SC", "KaiTi", serif'
   },
   header: {
     textAlign: 'center',
-    borderBottom: '3px double #8d6e63',
+    borderBottom: `3px double ${theme.colors.border}`,
     paddingBottom: '20px',
     marginBottom: '25px'
   },
   title: {
     fontSize: '36px',
-    color: '#5d4037',
+    color: theme.colors.primary,
     margin: '0 0 10px 0',
     letterSpacing: '8px',
     textShadow: '2px 2px 4px rgba(0,0,0,0.1)'
   },
   subtitle: {
     fontSize: '14px',
-    color: '#8d6e63',
+    color: theme.colors.primary,
     marginBottom: '5px'
   },
   date: {
     fontSize: '12px',
-    color: '#a1887f'
+    color: theme.colors.muted
   },
   section: {
     marginBottom: '25px',
     padding: '15px',
-    background: 'rgba(255, 248, 220, 0.5)',
+    background: theme.gradients.subtle,
     borderRadius: '8px',
-    border: '1px solid #d7ccc8'
+    border: `1px solid ${theme.colors.border}`
   },
   sectionTitle: {
     fontSize: '20px',
-    color: '#5d4037',
+    color: theme.colors.primary,
     marginBottom: '15px',
-    borderBottom: '2px solid #bcaaa4',
+    borderBottom: `2px solid ${theme.colors.border}`,
     paddingBottom: '8px'
   },
   ranking: {
@@ -325,14 +326,14 @@ const styles = {
   rankItem: {
     fontSize: '16px',
     padding: '8px',
-    background: '#fff',
+    background: theme.colors.paper,
     borderRadius: '4px',
-    border: '1px solid #d7ccc8'
+    border: `1px solid ${theme.colors.border}`
   },
   newsContent: {
     fontSize: '15px',
     lineHeight: '1.8',
-    color: '#3e2723'
+    color: theme.colors.ink
   },
   newsItem: {
     margin: '10px 0',
@@ -347,13 +348,13 @@ const styles = {
   adSection: {
     marginTop: '30px',
     padding: '15px',
-    background: '#fff9c4',
+    background: theme.gradients.subtle,
     borderRadius: '8px',
-    border: '2px dashed #fbc02d'
+    border: `2px dashed ${theme.colors.border}`
   },
   ad: {
     fontSize: '12px',
-    color: '#f57f17',
+    color: theme.colors.primary,
     marginBottom: '5px'
   },
   historyView: {
@@ -366,26 +367,26 @@ const styles = {
   },
   historyItem: {
     padding: '20px',
-    background: '#fff',
+    background: theme.colors.paper,
     borderRadius: '8px',
-    border: '2px solid #d7ccc8',
+    border: `2px solid ${theme.colors.border}`,
     cursor: 'pointer',
     textAlign: 'center',
     transition: 'all 0.3s',
     ':hover': {
       transform: 'translateY(-5px)',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+      boxShadow: `0 4px 12px ${theme.colors.shadow}`
     }
   },
   historyTitle: {
     fontSize: '16px',
     fontWeight: 'bold',
-    color: '#5d4037',
+    color: theme.colors.primary,
     marginBottom: '8px'
   },
   historyDate: {
     fontSize: '12px',
-    color: '#8d6e63'
+    color: theme.colors.primary
   },
   emptyHistory: {
     textAlign: 'center',
@@ -419,19 +420,19 @@ const styles = {
   },
   emptyTitle: {
     fontSize: '24px',
-    color: '#5d4037',
+    color: theme.colors.primary,
     marginBottom: '10px'
   },
   emptyText: {
     fontSize: '14px',
-    color: '#999',
+    color: theme.colors.muted,
     textAlign: 'center',
     lineHeight: '1.6',
     marginBottom: '30px'
   },
   emptyBtn: {
     padding: '10px 30px',
-    background: '#8d6e63',
+    background: theme.colors.primary,
     color: 'white',
     border: 'none',
     borderRadius: '8px',

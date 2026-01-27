@@ -98,7 +98,7 @@ const MessageCenterModal = ({ isOpen, onClose, messages, onMarkAsRead, onDeleteM
           </button>
           
           {/* 一键已读按钮 */}
-          {messages.some(m => !m.isRead) && (
+              {messages.some(m => !m.isRead) && (
             <button
               className="filter-btn mark-all-read-btn"
               onClick={() => {
@@ -110,7 +110,7 @@ const MessageCenterModal = ({ isOpen, onClose, messages, onMarkAsRead, onDeleteM
               }}
               style={{
                 marginLeft: 'auto',
-                background: '#4caf50',
+                background: '#7AA893',
                 color: 'white'
               }}
             >

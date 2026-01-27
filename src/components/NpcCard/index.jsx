@@ -1,13 +1,14 @@
 import React from 'react';
 import Avatar from '../Common/Avatar.jsx';
+import theme from '../../styles/theme.js';
 
 const NpcCard = ({ npc, onInteract }) => {
-  // 根据好感度改变心形颜色
+  // 根据好感度改变心形颜色（使用更柔和的色调）
   const getHeartColor = () => {
     const affection = npc.relationship?.affection || 0;
-    if (affection >= 80) return "#ff1744"; // 深爱-红
-    if (affection >= 40) return "#ff9100"; // 友善-橙
-    return "#bdbdbd"; // 路人-灰
+    if (affection >= 80) return '#b03a3a'; // 柔和红
+    if (affection >= 40) return theme.colors.accent; // 青玉绿作为友好色
+    return theme.colors.muted; // 中性灰
   };
 
   return (
@@ -20,7 +21,7 @@ const NpcCard = ({ npc, onInteract }) => {
             {npc.name} 
             <span style={styles.tag}>{npc.identity}</span>
           </h3>
-          <small style={{color: '#666'}}>{npc.cultivation}</small>
+          <small style={{color: theme.colors.muted}}>{npc.cultivation}</small>
           
           {/* 宗门标签（紧凑显示） */}
           {npc.sect && npc.sectStatus !== 'mysterious' && npc.sectStatus !== 'rogue' && (
@@ -30,12 +31,12 @@ const NpcCard = ({ npc, onInteract }) => {
                 padding: '2px 6px',
                 borderRadius: '8px',
                 color: 'white',
-                background: npc.sectStatus === 'defected' ? '#e53935' :
-                           npc.sectStatus === 'hidden' ? '#9c27b0' :
-                           npc.sect.level === 'TOP' ? '#ffd700' :
-                           npc.sect.level === 'HIGH' ? '#00bcd4' :
-                           npc.sect.level === 'RECKLESS' ? '#d32f2f' :
-                           '#66bb6a',
+                background: npc.sectStatus === 'defected' ? '#a65a5a' :
+                           npc.sectStatus === 'hidden' ? theme.colors.primary :
+                           npc.sect.level === 'TOP' ? '#c9a84a' :
+                           npc.sect.level === 'HIGH' ? theme.colors.accent :
+                           npc.sect.level === 'RECKLESS' ? '#a65a5a' :
+                           theme.colors.muted,
                 fontWeight: 'bold'
               }}>
                 {npc.sect.name}
@@ -44,14 +45,14 @@ const NpcCard = ({ npc, onInteract }) => {
           )}
           {npc.sectStatus === 'mysterious' && (
             <div style={{marginTop: '2px'}}>
-              <span style={{fontSize: '9px', padding: '2px 6px', borderRadius: '8px', color: 'white', background: '#616161', fontWeight: 'bold'}}>
+              <span style={{fontSize: '9px', padding: '2px 6px', borderRadius: '8px', color: 'white', background: theme.colors.muted, fontWeight: 'bold'}}>
                 神秘
               </span>
             </div>
           )}
           {npc.sectStatus === 'rogue' && (
             <div style={{marginTop: '2px'}}>
-              <span style={{fontSize: '9px', padding: '2px 6px', borderRadius: '8px', color: 'white', background: '#8d6e63', fontWeight: 'bold'}}>
+              <span style={{fontSize: '9px', padding: '2px 6px', borderRadius: '8px', color: 'white', background: theme.colors.primary, fontWeight: 'bold'}}>
                 散修
               </span>
             </div>
@@ -94,7 +95,7 @@ const NpcCard = ({ npc, onInteract }) => {
           style={{
             ...styles.btn, 
             opacity: (npc.relationship?.affection || 0) < 0 ? 0.5 : 1,
-            backgroundColor: '#ff9800',
+            backgroundColor: theme.colors.primary,
             color: 'white'
           }}
           title="友好切磋，提升修为"
@@ -109,7 +110,7 @@ const NpcCard = ({ npc, onInteract }) => {
             style={{
               ...styles.btn, 
               opacity: (npc.relationship?.affection || 0) < 80 ? 0.5 : 1, 
-              backgroundColor: '#7b1fa2', 
+              backgroundColor: theme.colors.accent, 
               color: 'white'
             }}
             title="双修大道，共享经验（需要80+好感）"
@@ -126,7 +127,7 @@ const NpcCard = ({ npc, onInteract }) => {
             style={{
               ...styles.btn, 
               opacity: (npc.relationship?.affection || 0) < 80 ? 0.5 : 1, 
-              backgroundColor: '#d81b60', 
+              backgroundColor: theme.colors.primary, 
               color: 'white',
               cursor: (npc.relationship?.affection || 0) < 80 ? 'not-allowed' : 'pointer'
             }}
@@ -143,22 +144,22 @@ const NpcCard = ({ npc, onInteract }) => {
 // 样式
 const styles = {
   card: {
-    border: '1px solid #ddd',
+    border: `1px solid ${theme.colors.border}`,
     borderRadius: '8px',
     padding: '15px',
-    backgroundColor: '#fff',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+    backgroundColor: theme.colors.paper,
+    boxShadow: `0 2px 6px ${theme.colors.shadow}`,
     marginBottom: '10px'
   },
   header: { display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' },
-  avatar: { fontSize: '40px', background: '#f5f5f5', borderRadius: '50%', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  tag: { fontSize: '12px', background: '#e0e0e0', padding: '2px 6px', borderRadius: '4px', color: '#333' },
-  desc: { fontStyle: 'italic', color: '#555', fontSize: '14px', margin: '5px 0 15px 0' },
+  avatar: { fontSize: '40px', background: theme.colors.parchment, borderRadius: '50%', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  tag: { fontSize: '12px', background: theme.colors.parchment, padding: '2px 6px', borderRadius: '4px', color: theme.colors.ink },
+  desc: { fontStyle: 'italic', color: theme.colors.ink, fontSize: '14px', margin: '5px 0 15px 0' },
   statRow: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', fontSize: '14px' },
-  progressBar: { flex: 1, height: '10px', background: '#eee', borderRadius: '5px', overflow: 'hidden' },
+  progressBar: { flex: 1, height: '10px', background: theme.colors.parchment, borderRadius: '5px', overflow: 'hidden' },
   progressFill: { height: '100%', transition: 'width 0.3s ease' },
   actions: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' },
-  btn: { padding: '8px', border: '1px solid #ccc', borderRadius: '4px', background: 'white', cursor: 'pointer', fontSize: '12px' }
+  btn: { padding: '8px', border: `1px solid ${theme.colors.border}`, borderRadius: '4px', background: theme.colors.parchment, cursor: 'pointer', fontSize: '12px', color: theme.colors.ink }
 };
 
 export default NpcCard;

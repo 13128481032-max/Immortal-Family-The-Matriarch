@@ -1,4 +1,5 @@
 import React from 'react';
+import theme from '../../styles/theme.js';
 
 const BottomNav = ({ activeTab, onTabChange }) => {
   const tabs = [
@@ -33,19 +34,19 @@ const BottomNav = ({ activeTab, onTabChange }) => {
 
 const styles = {
   container: {
-    height: '56px',
-    background: 'linear-gradient(135deg, #3e2723 0%, #2c1810 100%)', // 深色渐变背景，提高对比度
-    borderTop: '2px solid #5d4037', // 深色边框
+    height: theme.sizes.navHeight,
+    background: theme.gradients.warm,
+    borderTop: `2px solid ${theme.colors.border}`,
     display: 'flex',
     justifyContent: 'space-around',
     alignItems: 'center',
-    position: 'fixed', // 绝对定位在底部
+    position: 'fixed',
     bottom: 0,
     left: 0,
-    right: 0, // 撑满宽度
+    right: 0,
     zIndex: 100,
-    boxShadow: '0 -4px 15px rgba(0,0,0,0.3)', // 加深阴影
-    borderRadius: '16px 16px 0 0' // 顶部圆角
+    boxShadow: `0 -6px 18px ${theme.colors.shadow}`,
+    borderRadius: '16px 16px 0 0'
   },
   btn: {
     background: 'none',
@@ -55,15 +56,11 @@ const styles = {
     alignItems: 'center',
     cursor: 'pointer',
     padding: '6px 3px',
-    borderRadius: '10px', // 圆角
-    transition: 'all 0.3s ease',
-    ':hover': {
-      background: 'rgba(255, 255, 255, 0.1)', // 悬停背景
-      transform: 'translateY(-2px)'
-    }
+    borderRadius: '10px',
+    transition: 'all 0.2s ease'
   },
-  icon: { fontSize: '18px', marginBottom: '2px' },
-  label: { fontSize: '10px', color: '#fff', fontFamily: 'Microsoft YaHei, SimSun, serif' } // 白色文字
+  icon: { fontSize: '16px', marginBottom: '2px', color: theme.colors.ink },
+  label: { fontSize: '10px', color: theme.colors.muted, fontFamily: 'Microsoft YaHei, SimSun, serif' }
 };
 
 export default BottomNav;
