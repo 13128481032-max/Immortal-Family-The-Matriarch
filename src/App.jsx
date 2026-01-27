@@ -38,7 +38,8 @@ import {
   calculateJealousyIncrease,
   applyJealousyIncrease,
   generateJealousyLogContent,
-  getJealousyLevel
+  getJealousyLevel,
+  checkNeglect
 } from './game/jealousySystem.js';
 // 引入消息中心系统
 import MessageManager, { 
