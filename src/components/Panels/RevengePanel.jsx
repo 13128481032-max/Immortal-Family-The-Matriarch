@@ -195,14 +195,14 @@ const RevengePanel = ({ player, setPlayer }) => {
               onChange={(e) => setRumorCost(Number(e.target.value))}
               style={styles.slider}
             />
-            <button 
-              style={styles.rumorBtn}
-              onClick={handleSpreadRumor}
-              disabled={player.resources.spiritStones < rumorCost}
-            >
-              散布谣言 ({rumorCost}灵石)
-            </button>
           </div>
+          <button 
+            style={styles.rumorBtn}
+            onClick={handleSpreadRumor}
+            disabled={player.resources.spiritStones < rumorCost}
+          >
+            散布谣言 ({rumorCost}灵石)
+          </button>
           <div style={styles.actionInfo}>
             成功率：{Math.min(90, 60 + rumorCost / 2)}% | 
             威胁度+{rumorCost >= 100 ? 25 : 10}
@@ -218,7 +218,7 @@ const RevengePanel = ({ player, setPlayer }) => {
           <p style={styles.actionDesc}>
             躲避楚清瑶的搜捕，大幅降低威胁度。威胁度超过80%时必须使用！
           </p>
-          <div style={styles.actionControls}>
+          <div style={styles.actionControlsVertical}>
             <select 
               value={hidingMonths} 
               onChange={(e) => setHidingMonths(Number(e.target.value))}
@@ -329,8 +329,8 @@ const styles = {
   },
   statusGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '15px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+    gap: '12px',
     marginBottom: '15px'
   },
   statusItem: {
@@ -425,17 +425,22 @@ const styles = {
   },
   actionControls: {
     display: 'flex',
-    gap: '15px',
-    alignItems: 'center',
-    marginBottom: '10px'
+    flexDirection: 'column',
+    gap: '12px',
+    marginBottom: '12px'
+  },
+  actionControlsVertical: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
   },
   slider: {
-    flex: 1,
+    width: '100%',
     height: '8px'
   },
   select: {
-    flex: 1,
-    padding: '10px',
+    width: '100%',
+    padding: '12px',
     background: 'rgba(0, 0, 0, 0.5)',
     color: '#fff',
     border: '2px solid #8b4513',
@@ -444,7 +449,8 @@ const styles = {
     cursor: 'pointer'
   },
   rumorBtn: {
-    padding: '12px 24px',
+    width: '100%',
+    padding: '14px 24px',
     border: 'none',
     borderRadius: '8px',
     background: 'linear-gradient(135deg, #6a5acd, #8b7ad8)',
@@ -452,11 +458,12 @@ const styles = {
     fontWeight: 'bold',
     fontSize: '15px',
     cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
+    boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+    transition: 'transform 0.2s'
   },
   hideBtn: {
-    padding: '12px 24px',
+    width: '100%',
+    padding: '14px 24px',
     border: 'none',
     borderRadius: '8px',
     background: 'linear-gradient(135deg, #4a90e2, #5ba3f5)',
@@ -464,8 +471,8 @@ const styles = {
     fontWeight: 'bold',
     fontSize: '15px',
     cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
+    boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+    transition: 'transform 0.2s'
   },
   duelBtn: {
     width: '100%',
