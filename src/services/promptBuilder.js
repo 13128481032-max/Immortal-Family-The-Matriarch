@@ -19,6 +19,24 @@ export const buildSystemPrompt = (npc, player, gameState = {}, userMessage = "")
   else if (affection >= 40) relation = "熟络";
   else if (affection >= 20) relation = "认识";
   
+  // 获取醋意值和等级
+  const jealousy = npc.relationship?.jealousy || npc.jealousy || 0;
+  let jealousyLevel = "平静";
+  let jealousyDesc = "";
+  if (jealousy >= 81) {
+    jealousyLevel = "修罗场";
+    jealousyDesc = "你现在极度嫉妒，情绪濒临失控，可能会质问、冷战、甚至做出极端行为";
+  } else if (jealousy >= 61) {
+    jealousyLevel = "大醋";
+    jealousyDesc = "你现在很吃醋，内心充满不满和委屈，会明显表现出不高兴";
+  } else if (jealousy >= 41) {
+    jealousyLevel = "中醋";
+    jealousyDesc = "你有些吃醋，会旁敲侧击、阴阳怪气地试探";
+  } else if (jealousy >= 21) {
+    jealousyLevel = "微醋";
+    jealousyDesc = "你有一点小情绪，欲言又止，会不经意流露出在意";
+  }
+  
   // 获取性格标签
   const personality = npc.personality?.label || "普通";
   const personalityDesc = npc.personality?.desc || npc.desc || "性格平和";
@@ -140,6 +158,7 @@ export const buildSystemPrompt = (npc, player, gameState = {}, userMessage = "")
 玩家姓名：${player.name}
 玩家境界：${player.tierTitle || "凡人"}
 你对玩家的态度：${relation}（好感度：${affection}/100）
+${jealousy > 0 ? `你的醋意状态：${jealousyLevel}（${jealousy}/100）- ${jealousyDesc}` : ''}
 ${relationshipContext ? '\n【你们的关系】' + relationshipContext : ''}
 ${memoryContext ? '\n' + memoryContext : ''}
 
@@ -161,12 +180,13 @@ ${memoryContext ? '\n' + memoryContext : ''}
    - 重要剧情：可适当延长至80字
    - 严禁长篇大论
 
-4. 根据好感度调整态度：
+4. 根据好感度和醋意调整态度：
    - 好感度低（<30）：冷淡、敷衍、甚至不耐烦
    - 好感度中（30-60）：平和、礼貌、正常交流
    - 好感度高（60-80）：友好、主动、关心
    - 好感度极高（>80）：亲昵、依赖、深情
    ${children.length > 0 ? '- 谈及子女时：表现出为人父母的温情和关切' : ''}
+   ${jealousy >= 21 ? `\n   ⚠️ 重要：你现在处于【${jealousyLevel}】状态，必须在对话中体现出${jealousyDesc.replace('你现在', '').replace('你有些', '').replace('你有一点', '')}的情绪` : ''}
 
 5. 严格禁止：
    - 跳出角色说话
