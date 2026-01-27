@@ -17,7 +17,7 @@
 
 /* 主弹窗 */
 .message-center-modal {
-  background: linear-gradient(135deg, #f5f1e8 0%, #e8dcc8 100%);
+  background: linear-gradient(135deg, #F4EEE6 0%, #EFE6D8 100%);
   border-radius: 12px;
   width: 90%;
   max-width: 1000px;
@@ -26,11 +26,13 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideUp 0.3s ease;
-  overflow: hidden;  margin: auto;
-  position: relative;
+  overflow: hidden;
+  position: absolute;
   top: 50%;
-  transform: translateY(-50%);}
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: none;
+}
 
 /* 标题栏 */
 .message-center-header {
@@ -438,7 +440,11 @@
 @media (max-width: 768px) {
   .message-center-modal {
     width: 95%;
-    height: 90vh;
+    height: 85vh;
+    max-height: 85vh;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
   .message-center-content {
