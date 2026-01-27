@@ -76,9 +76,37 @@ export const TIERS = [
   // 金丹期：分水岭
   { name: "金丹初期", maxExp: 200000, feedback: 100, chance: 0.30, desc: "金丹大道" },
   { name: "金丹中期", maxExp: 500000, feedback: 150, chance: 0.25, desc: "丹纹九转" },
+  { name: "金丹后期", maxExp: 1000000, feedback: 200, chance: 0.20, desc: "金丹圆满" },
   
   // 元婴期：极难
-  { name: "元婴老祖", maxExp: 2000000, feedback: 500, chance: 0.10, desc: "碎丹成婴" }
+  { name: "元婴初期", maxExp: 2000000, feedback: 500, chance: 0.10, desc: "碎丹成婴" },
+  { name: "元婴中期", maxExp: 5000000, feedback: 800, chance: 0.08, desc: "元婴稳固" },
+  { name: "元婴后期", maxExp: 10000000, feedback: 1200, chance: 0.06, desc: "元婴大成" },
+  
+  // 化神期：天堑
+  { name: "化神初期", maxExp: 20000000, feedback: 2000, chance: 0.05, desc: "神魂化形" },
+  { name: "化神中期", maxExp: 50000000, feedback: 3500, chance: 0.04, desc: "神识无边" },
+  { name: "化神后期", maxExp: 100000000, feedback: 5000, chance: 0.03, desc: "化神圆满" },
+  
+  // 炼虚期：虚空境界
+  { name: "炼虚初期", maxExp: 200000000, feedback: 8000, chance: 0.025, desc: "炼化虚空" },
+  { name: "炼虚中期", maxExp: 500000000, feedback: 12000, chance: 0.02, desc: "虚实自如" },
+  { name: "炼虚后期", maxExp: 1000000000, feedback: 18000, chance: 0.015, desc: "虚空大成" },
+  
+  // 合体期：天人合一
+  { name: "合体初期", maxExp: 2000000000, feedback: 25000, chance: 0.012, desc: "天人合一" },
+  { name: "合体中期", maxExp: 5000000000, feedback: 40000, chance: 0.01, desc: "合道境界" },
+  { name: "合体后期", maxExp: 10000000000, feedback: 60000, chance: 0.008, desc: "合体圆满" },
+  
+  // 大乘期：准仙人
+  { name: "大乘初期", maxExp: 20000000000, feedback: 100000, chance: 0.006, desc: "大乘之路" },
+  { name: "大乘中期", maxExp: 50000000000, feedback: 150000, chance: 0.005, desc: "半步真仙" },
+  { name: "大乘后期", maxExp: 100000000000, feedback: 250000, chance: 0.004, desc: "大乘圆满" },
+  
+  // 渡劫期：最终境界
+  { name: "渡劫初期", maxExp: 200000000000, feedback: 400000, chance: 0.003, desc: "准备飞升" },
+  { name: "渡劫中期", maxExp: 500000000000, feedback: 600000, chance: 0.002, desc: "劫云将至" },
+  { name: "渡劫后期", maxExp: 1000000000000, feedback: 1000000, chance: 0.001, desc: "飞升在即" }
 ];
 
 // 辅助：获取下一阶
@@ -107,7 +135,27 @@ export const calculateStats = (tierName, aptitude, spiritRootType, equipment = n
     "筑基初期":  { hp: 10000, atk: 1000, mp: 5000 },
     "筑基中期":  { hp: 15000, atk: 1500, mp: 8000 },
     "筑基后期":  { hp: 20000, atk: 2000, mp: 12000 },
-    "金丹初期":  { hp: 100000, atk: 10000, mp: 50000 }
+    "金丹初期":  { hp: 100000, atk: 10000, mp: 50000 },
+    "金丹中期":  { hp: 200000, atk: 20000, mp: 100000 },
+    "金丹后期":  { hp: 400000, atk: 40000, mp: 200000 },
+    "元婴初期":  { hp: 1000000, atk: 100000, mp: 500000 },
+    "元婴中期":  { hp: 2000000, atk: 200000, mp: 1000000 },
+    "元婴后期":  { hp: 4000000, atk: 400000, mp: 2000000 },
+    "化神初期":  { hp: 10000000, atk: 1000000, mp: 5000000 },
+    "化神中期":  { hp: 20000000, atk: 2000000, mp: 10000000 },
+    "化神后期":  { hp: 40000000, atk: 4000000, mp: 20000000 },
+    "炼虚初期":  { hp: 100000000, atk: 10000000, mp: 50000000 },
+    "炼虚中期":  { hp: 200000000, atk: 20000000, mp: 100000000 },
+    "炼虚后期":  { hp: 400000000, atk: 40000000, mp: 200000000 },
+    "合体初期":  { hp: 1000000000, atk: 100000000, mp: 500000000 },
+    "合体中期":  { hp: 2000000000, atk: 200000000, mp: 1000000000 },
+    "合体后期":  { hp: 4000000000, atk: 400000000, mp: 2000000000 },
+    "大乘初期":  { hp: 10000000000, atk: 1000000000, mp: 5000000000 },
+    "大乘中期":  { hp: 20000000000, atk: 2000000000, mp: 10000000000 },
+    "大乘后期":  { hp: 40000000000, atk: 4000000000, mp: 20000000000 },
+    "渡劫初期":  { hp: 100000000000, atk: 10000000000, mp: 50000000000 },
+    "渡劫中期":  { hp: 200000000000, atk: 20000000000, mp: 100000000000 },
+    "渡劫后期":  { hp: 400000000000, atk: 40000000000, mp: 200000000000 }
   };
 
   const base = baseStats[tierName] || baseStats["凡人"];

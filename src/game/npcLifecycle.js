@@ -167,15 +167,17 @@ function attemptNpcBreakthrough(npc, player, year, month) {
   const aptitude = updated.stats?.aptitude || 50;
   const rootMultiplier = updated.spiritRoot?.multiplier || 0.5;
   
-  // 基础成功率：30%
-  let successRate = 0.3;
-  // 资质加成：每10点资质增加5%成功率
-  successRate += (aptitude / 10) * 0.05;
-  // 灵根加成：天灵根额外+30%，单灵根+15%等
-  successRate += rootMultiplier * 0.3;
+  // 基础成功率：从境界配置中获取，随着境界升高而降低
+  let successRate = tierConfig.chance || 0.3;
   
-  // 限制在10%-90%之间
-  successRate = Math.max(0.1, Math.min(0.9, successRate));
+  // 资质加成：每10点资质增加3%成功率（降低资质影响）
+  successRate += (aptitude / 10) * 0.03;
+  
+  // 灵根加成：天灵根额外+20%，单灵根+10%等（降低灵根影响）
+  successRate += rootMultiplier * 0.2;
+  
+  // 限制在5%-95%之间
+  successRate = Math.max(0.05, Math.min(0.95, successRate));
   
   const success = Math.random() < successRate;
   
@@ -234,11 +236,18 @@ function attemptNpcBreakthrough(npc, player, year, month) {
       message: `${updated.name} 成功突破至 ${tierConfig.nextTier}！`
     });
   } else {
-    // 突破失败
-    updated.currentExp = Math.floor(updated.currentExp * 0.7); // 损失30%经验
+    // 突破失败：经验清零，从头开始
+    updated.currentExp = 0;
     
     // 生成突破失败日志
     updated = generateBreakthroughLog(updated, player, year, month, false, tierConfig.nextTier);
+    
+    events.push({
+      type: 'NPC_BREAKTHROUGH_FAIL',
+      npcName: updated.name,
+      tier: updated.tier,
+      message: `${updated.name} 突破失败，修为散尽，需从头修炼！`
+    });
   }
   
   return { npc: updated, events };
@@ -338,7 +347,7 @@ export function getRelationshipStatusDisplay(status) {
  * 检查是否可以进行某项互动（根据关系状态）
  * @param {Object} npc - NPC对象
  * @param {string} actionType - 互动类型
- * @returns {Object} { allowed, reason }
+ * @returns {Object} { allowed, reason, requiresCheck, checkRate }
  */
 export function checkInteractionAllowed(npc, actionType) {
   const affection = npc.relationship?.affection || 0;
@@ -349,6 +358,15 @@ export function checkInteractionAllowed(npc, actionType) {
       // 双修需要亲密关系（80+好感）
       if (status !== RELATIONSHIP_STATUS.INTIMATE) {
         return { allowed: false, reason: '需要亲密关系才能双修（好感度 >= 80）' };
+      }
+      
+      // 佛修特殊判定：第一次双修只有1%概率同意
+      if (npc.identity === '佛修') {
+        const dualCultivationCount = npc.dualCultivationCount || 0;
+        if (dualCultivationCount === 0) {
+          // 第一次，需要进行概率判定
+          return { allowed: true, requiresCheck: true, checkRate: 0.01 };
+        }
       }
       break;
       

@@ -19,6 +19,40 @@ export const initialPlayer = {
     health: 100
   },
   
+  // 技能点系统
+  skillPoints: 0, // 子嗣技能点数
+  
+  // 修真界邸报系统
+  newsBuffer: [], // 新闻事件缓存
+  gazetteHistory: [], // 历史邸报
+  gazetteIssue: 0, // 当前期号
+  hasUnreadGazette: false, // 是否有未读邸报
+  
+  // 世界名人池
+  worldNpcs: [], // 世界顶级NPC列表（会在游戏初始化时生成）
+  
+  // 复仇系统 - 宿敌状态跟踪
+  rival: {
+    name: "楚清瑶",
+    state: "NORMAL", // NORMAL(正常), ANXIOUS(焦虑/谣言生效), FURIOUS(暴怒/高威胁), DEAD(已死亡)
+    lifeStage: 0,    // 0:修行崛起(第1年), 1:订婚(第2年), 2:结婚(第3年), 3:生子掌权(第5年)
+    threatLevel: 0,  // 威胁度 0-100
+    rumorCount: 0,   // 累计散布谣言次数
+    hiddenTurns: 0,  // 隐匿行踪的持续回合数
+    isDead: false,   // 是否已死亡
+    relationValue: -100, // 关系值（负数代表仇恨）
+    tier: "炼气初期",     // 修为境界
+    currentExp: 300       // 当前修为进度（比玩家高）
+  },
+  
+  // 复仇操作记录
+  revengeActions: {
+    lastRumorMonth: 0,      // 上次散布谣言的月份
+    totalRumors: 0,         // 总共散布谣言次数
+    assassinationAttempts: 0, // 暗杀尝试次数
+    hidingMonths: 0         // 累计隐匿月数
+  },
+  
   // 必须补全的关键属性
   spiritRoot: {
     type: "五灵根",

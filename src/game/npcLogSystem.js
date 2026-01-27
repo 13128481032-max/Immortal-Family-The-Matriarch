@@ -26,6 +26,8 @@ import {
   socialTemplates,
   seclusionTemplates,
   sceneryTemplates,
+  jealousyPrivateTemplates,
+  pleasePlayerTemplates,
   randomPick
 } from '../data/logTemplates.js';
 
@@ -114,6 +116,25 @@ function fillTemplate(template, npc, player, extraParams = {}) {
 // ==================== 一、交互日志生成 ====================
 
 /**
+ * 生成初遇剧情日志
+ */
+export function generateFirstMeetLog(npc, player, year, month) {
+  // 根据NPC身份生成不同的初遇剧情
+  let content = '';
+  
+  if (npc.name === '陆昭') {
+    content = `今日在坊市偶遇${player.name}，此人气质不俗，与我攀谈甚欢。虽然我如今落魄，但${player.gender === '女' ? '她' : '他'}并未流露出轻视之意。这世道难得遇到如此真诚之人。或许...这是个机缘。`;
+  } else if (npc.name === '慧空') {
+    content = `于古刹禅房见到${player.name}，此施主身负因果，佛缘深厚。贫僧观其面相，红尘劫数未了，却有大道之姿。阿弥陀佛，或许这是天意安排，让贫僧在红尘中再历一劫。`;
+  } else {
+    // 通用初遇模板
+    content = `初次见到${player.name}，${player.gender === '女' ? '她' : '他'}给我留下了深刻的印象。或许今后会有更多交集。`;
+  }
+  
+  return addNpcLog(npc, year, month, content, LOG_TYPE.INTERACTION);
+}
+
+/**
  * 生成闲聊日志
  */
 export function generateChatLog(npc, player, year, month) {
@@ -155,6 +176,55 @@ export function generateDualCultivationLog(npc, player, year, month) {
   
   // 双修日志标记为私密
   return addNpcLog(npc, year, month, content, LOG_TYPE.INTERACTION, true);
+}
+
+/**
+ * 生成吃醋日志（私密，只在日志中展现）
+ */
+export function generateJealousyLog(npc, player, year, month, targetNpc, jealousyLevel) {
+  // 确定醋意等级类型
+  let levelType = 'LOW';
+  if (jealousyLevel >= 81) levelType = 'EXTREME';
+  else if (jealousyLevel >= 61) levelType = 'HIGH';
+  else if (jealousyLevel >= 41) levelType = 'MEDIUM';
+  else if (jealousyLevel >= 21) levelType = 'LOW';
+  else return npc; // 醋意太低，不生成日志
+  
+  // 获取性格
+  const personality = typeof npc.personality === 'object' && npc.personality !== null && 'label' in npc.personality 
+    ? npc.personality.label 
+    : (Array.isArray(npc.personality) ? npc.personality[0] : "普通");
+  
+  // 获取模板
+  const templates = jealousyPrivateTemplates[levelType]?.[personality] || jealousyPrivateTemplates[levelType]?.['默认'];
+  if (!templates || templates.length === 0) return npc;
+  
+  const template = randomPick(templates);
+  const content = fillTemplate(template, npc, player, { targetName: targetNpc?.name || '那人' });
+  
+  // 吃醋日志标记为私密
+  return addNpcLog(npc, year, month, content, LOG_TYPE.DAILY, true);
+}
+
+/**
+ * 生成计划讨好玩家的日志（私密）
+ */
+export function generatePleasePlanLog(npc, player, year, month) {
+  const personality = typeof npc.personality === 'object' && npc.personality !== null && 'label' in npc.personality 
+    ? npc.personality.label 
+    : (Array.isArray(npc.personality) ? npc.personality[0] : "普通");
+  
+  const templates = pleasePlayerTemplates[personality] || pleasePlayerTemplates['默认'];
+  if (!templates || templates.length === 0) return npc;
+  
+  const template = randomPick(templates);
+  
+  // 随机一个玩家喜欢的物品作为占位符
+  const favoriteItem = npc.likes?.[0] || '心仪之物';
+  const content = fillTemplate(template, npc, player, { favoriteItem });
+  
+  // 计划日志标记为私密
+  return addNpcLog(npc, year, month, content, LOG_TYPE.DAILY, true);
 }
 
 /**

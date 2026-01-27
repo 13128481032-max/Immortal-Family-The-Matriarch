@@ -480,66 +480,64 @@ export const processChildrenGrowth = (children, playerResources) => {
 };
 
 // 辅助：生成随机伴侣 (用于婚配)
-export const generateSpouse = (childTier, childGender) => {
-  // 小概率生成男性佛修（光头、高资质、特殊交互规则）
-  if (Math.random() < 0.05) {
-    const surnames = ["林", "慧", "释", "空", "达", "玄"];
-    const name = surnames[Math.floor(Math.random()*surnames.length)] + getRandomChar();
-    const aptitude = 90 + Math.floor(Math.random() * 10);
-    const looks = 30 + Math.floor(Math.random() * 30);
-    const intelligence = 80 + Math.floor(Math.random() * 20);
-    const spiritRoot = generateSpiritRootDetails(aptitude);
-    const emptyEquip = { weapon: null, armor: null, accessory: null };
-    const combatStats = calculateStats("凡人", aptitude, spiritRoot.type, emptyEquip);
-    return {
-      id: Date.now() + Math.random().toString().slice(2,8),
-      name,
-      gender: '男',
-      identity: '佛修',
-      stats: { aptitude, looks, intelligence },
-      spiritRoot,
-      cultivationMethod: 'basic_breath',
-      equipment: emptyEquip,
-      combatStats,
-      cultivation: 2000 + Math.floor(Math.random() * 5000),
-      tierTitle: getTierInfo(2000).name,
-      isTested: true,
-      isAdult: true,
-      avatar: { base: 0, skinColor: 2, hair: -1, hairColor: null, eye: 0, eyeColor: 0, mouth: 1 },
-      stats: { aptitude, looks, intelligence },
-      relationship: { stage: 1, affection: 0, trust: 0 },
-      likes: ['心经'],
-      isSpouse: true
-    };
-  }
-  // 随机姓氏库
-  const surnames = ["林", "萧", "叶", "苏", "陈", "李", "王", "张"];
+/**
+ * 生成单个配偶候选人
+ * @param {string} childTier - 子嗣境界
+ * @param {string} childGender - 子嗣性别
+ * @param {string} archetype - 候选人类型 ('talented' | 'beautiful' | 'wise' | 'buddha')
+ */
+const generateSingleSpouse = (childTier, childGender, archetype = 'random') => {
+  const spouseGender = childGender === "男" ? "女" : "男";
+  const surnames = ["林", "萧", "叶", "苏", "陈", "李", "王", "张", "赵", "钱"];
   const name = surnames[Math.floor(Math.random()*surnames.length)] + getRandomChar();
   
-  // 随机资质
-  const aptitude = 40 + Math.floor(Math.random() * 50);
+  let aptitude, looks, intelligence, identity = null;
   
-  // 随机容貌
-  const looks = 50 + Math.floor(Math.random() * 40);
+  // 根据类型生成不同特点的候选人
+  switch(archetype) {
+    case 'talented': // 资质型：高资质，低容貌
+      aptitude = 75 + Math.floor(Math.random() * 20); // 75-95
+      looks = 40 + Math.floor(Math.random() * 30); // 40-70
+      intelligence = 60 + Math.floor(Math.random() * 30); // 60-90
+      break;
+    case 'beautiful': // 容貌型：高容貌，中等资质
+      aptitude = 50 + Math.floor(Math.random() * 30); // 50-80
+      looks = 80 + Math.floor(Math.random() * 20); // 80-100
+      intelligence = 50 + Math.floor(Math.random() * 30); // 50-80
+      break;
+    case 'wise': // 悟性型：高悟性，中等资质和容貌
+      aptitude = 60 + Math.floor(Math.random() * 25); // 60-85
+      looks = 55 + Math.floor(Math.random() * 30); // 55-85
+      intelligence = 80 + Math.floor(Math.random() * 20); // 80-100
+      break;
+    case 'buddha': // 佛修：高资质悟性，低容貌，只有男性
+      aptitude = 90 + Math.floor(Math.random() * 10);
+      looks = 30 + Math.floor(Math.random() * 30);
+      intelligence = 80 + Math.floor(Math.random() * 20);
+      identity = '佛修';
+      break;
+    default: // 随机均衡型
+      aptitude = 40 + Math.floor(Math.random() * 50);
+      looks = 50 + Math.floor(Math.random() * 40);
+      intelligence = 40 + Math.floor(Math.random() * 40);
+  }
   
-  // 随机智力
-  const intelligence = 40 + Math.floor(Math.random() * 40);
-  
-  // 生成灵根
   const spiritRoot = generateSpiritRootDetails(aptitude);
-  
-  // 计算战斗属性
   const emptyEquip = { weapon: null, armor: null, accessory: null };
   const combatStats = calculateStats("凡人", aptitude, spiritRoot.type, emptyEquip);
-  
-  // 随机修为
   const cultivation = 500 + Math.floor(Math.random() * 1500);
-  
-  // 随机境界
   const tierTitle = getTierInfo(cultivation).name;
   
-  // 随机生成avatar
-  const avatar = {
+  // 佛修特殊头像
+  const avatar = archetype === 'buddha' ? {
+    base: 0,
+    skinColor: 2,
+    hair: -1,
+    hairColor: null,
+    eye: 0,
+    eyeColor: 0,
+    mouth: 1
+  } : {
     base: Math.floor(Math.random() * 3),
     skinColor: Math.floor(Math.random() * 5),
     eye: Math.floor(Math.random() * 3),
@@ -549,32 +547,54 @@ export const generateSpouse = (childTier, childGender) => {
     hairColor: Math.floor(Math.random() * 5)
   };
   
-  // 确保配偶是异性
-  const spouseGender = childGender === "男" ? "女" : "男";
+  const actualGender = archetype === 'buddha' ? '男' : spouseGender;
   
   return {
     id: Date.now() + Math.random().toString().slice(2, 8),
     name,
-    gender: spouseGender,
+    gender: actualGender,
+    identity,
     aptitude,
     looks,
     intelligence,
     spiritRoot,
-    cultivationMethod: 'basic_breath', // 初始修炼吐纳法
+    cultivationMethod: 'basic_breath',
     equipment: emptyEquip,
     combatStats,
     cultivation,
     tierTitle,
     isTested: true,
     isAdult: true,
-    avatar: avatar,
-    stats: {
-      aptitude: aptitude,
-      looks: looks,
-      intelligence: intelligence
-    },
-    isSpouse: true // 标记身份
+    avatar,
+    stats: { aptitude, looks, intelligence },
+    relationship: archetype === 'buddha' ? { stage: 1, affection: 0, trust: 0 } : undefined,
+    likes: archetype === 'buddha' ? ['心经'] : undefined,
+    isSpouse: true,
+    archetype // 保存类型用于UI显示
   };
+};
+
+/**
+ * 生成三个属性各不相同的配偶候选人
+ * @param {string} childTier - 子嗣境界
+ * @param {string} childGender - 子嗣性别
+ */
+export const generateSpouseCandidates = (childTier, childGender) => {
+  // 三种类型：资质型、容貌型、悟性型
+  const candidates = [
+    generateSingleSpouse(childTier, childGender, 'talented'),
+    generateSingleSpouse(childTier, childGender, 'beautiful'),
+    generateSingleSpouse(childTier, childGender, 'wise')
+  ];
+  
+  return candidates;
+};
+
+/**
+ * 生成单个配偶（保留原接口用于兼容）
+ */
+export const generateSpouse = (childTier, childGender) => {
+  return generateSingleSpouse(childTier, childGender, 'random');
 };
 
 /**

@@ -12,6 +12,19 @@ export const getChatText = (npc) => {
   
   // 兼容stats.aptitude可能不存在的情况
   const hasHighAptitude = stats.aptitude && stats.aptitude >= 90;
+  
+  // 检查醋意等级，醋意高时优先返回吃醋对话
+  const jealousy = relationship?.jealousy || 0;
+  if (jealousy >= 60) {
+    // 大醋及以上，返回醋意对话
+    return getJealousChatText(npc, jealousy, trait);
+  } else if (jealousy >= 40 && Math.random() < 0.5) {
+    // 中醋，50%概率返回醋意对话
+    return getJealousChatText(npc, jealousy, trait);
+  } else if (jealousy >= 20 && Math.random() < 0.2) {
+    // 微醋，20%概率返回醋意对话
+    return getJealousChatText(npc, jealousy, trait);
+  }
 
   // --- A. 优先判定：特殊高资质/特殊体质 ---
   if (hasHighAptitude) {
@@ -763,14 +776,46 @@ const buddhistMonkEvents = [
     affectionBonus: 6
   },
   {
-    title: "破戒边缘",
-    text: (name) => `${name}看着你，眼神第一次出现波动："你……让贫僧动了凡心。这是破戒之念，本该斩断。可是……"${name}闭上眼，深吸一口气，"贫僧做不到。"`,
-    affectionBonus: 15
+    title: "禅房论道",
+    text: (name) => `${name}邀你入禅房品茗论道。淡淡的檀香中，${name}讲述着佛理，声音平和却蕴含深意："施主与贫僧相谈，总能让贫僧心境平和。这是好事...也是坏事。"`,
+    affectionBonus: 5,
+    minAffection: 40
   },
   {
     title: "舍利相赠",
     text: (name) => `${name}从怀中取出一颗散发柔光的舍利子："这是贫僧师尊圆寂时留下的，能保你平安。你且收下。"`,
-    affectionBonus: 10
+    affectionBonus: 10,
+    minAffection: 60
+  },
+  {
+    title: "戒律挣扎",
+    text: (name) => `${name}独自在佛堂打坐，眉头紧锁。见你到来，${name}睁开眼，眼中闪过一丝复杂："施主，你可知，贫僧为了守住本心，已三日未眠。你...让贫僧的修行，出现了裂痕。"`,
+    affectionBonus: 8,
+    minAffection: 70
+  },
+  {
+    title: "破戒边缘",
+    text: (name) => `${name}看着你，眼神第一次出现波动："你……让贫僧动了凡心。这是破戒之念，本该斩断。可是……"${name}闭上眼，深吸一口气，"贫僧做不到。"`,
+    affectionBonus: 15,
+    minAffection: 80
+  },
+  {
+    title: "佛心动摇",
+    text: (name) => `${name}凝视着你，良久才道："佛说，人有八苦，求不得为其一。贫僧本以为已斩断情丝，不受此苦...可如今才知，原来贫僧也只是凡人。"${name}转身，背影透出说不出的落寞。`,
+    affectionBonus: 12,
+    minAffection: 85
+  },
+  {
+    title: "破戒之念",
+    text: (name) => `${name}突然握住你的手，力道之大让你惊讶。${name}的声音低哑："施主可知，贫僧已为你破了多少戒？杀戒、酒戒...若再破色戒，贫僧便是堕入魔道。可...即便如此，贫僧也甘愿。"说完，${name}松开手，眼神充满挣扎。`,
+    affectionBonus: 20,
+    minAffection: 90
+  },
+  {
+    title: "红尘劫难",
+    text: (name) => `${name}苦笑道："师尊曾言，贫僧有红尘劫难，需经历方能成就罗汉金身。如今看来...这劫，便是你。"${name}看向你的眼神，既有佛门的慈悲，又有凡人的欲念，那种圣人与凡人之间的拉扯，让人心颤。`,
+    affectionBonus: 15,
+    minAffection: 95
   }
 ];
 
@@ -872,7 +917,18 @@ const getIdentityEvent = (identity, npc) => {
   
   if (pool.length === 0) return null;
   
-  const event = pool[Math.floor(Math.random() * pool.length)];
+  // 根据好感度过滤可用事件
+  const affection = npc.relationship?.affection || 0;
+  const availableEvents = pool.filter(event => {
+    if (event.minAffection && affection < event.minAffection) {
+      return false;
+    }
+    return true;
+  });
+  
+  if (availableEvents.length === 0) return null;
+  
+  const event = availableEvents[Math.floor(Math.random() * availableEvents.length)];
   return {
     title: event.title,
     text: event.text(npc.name),
@@ -975,3 +1031,129 @@ export const getUnifiedInteractionEvent = (npc, player) => {
   // 5. 如果没有身份专属剧情，返回null触发普通闲聊
   return null;
 };
+
+/**
+ * 根据醋意等级生成吃醋对话
+ * @param {Object} npc - NPC对象
+ * @param {number} jealousy - 醋意值
+ * @param {string} trait - 性格标签
+ * @returns {string} 对话文本
+ */
+function getJealousChatText(npc, jealousy, trait) {
+  const name = npc.name;
+  
+  // 大醋及以上（61-100）- 明显的不满和质问
+  if (jealousy >= 61) {
+    const highJealousyDialogs = {
+      '病娇': [
+        "你今天...又去找那个人了吗？",
+        "为什么...你的眼里再也没有我了？",
+        "呵...我算什么？你的消遣吗？"
+      ],
+      '傲娇': [
+        "哼！你别以为我不知道你在想什么！",
+        "我才不管你和谁在一起！...才、才不管！",
+        "你爱去哪就去哪！反正我也不在乎！（眼眶泛红）"
+      ],
+      '高冷': [
+        "...你最近，很忙吧。",
+        "不必勉强来陪我，我习惯了一个人。",
+        "你走吧，我想一个人静静。"
+      ],
+      '温柔': [
+        "最近...见你的时间越来越少了呢...",
+        "我是不是...做错了什么？",
+        "如果...你不想见我，直说就好..."
+      ],
+      '佛修': [
+        "施主...贫僧心中难平，还望施主勿怪。",
+        "阿弥陀佛...施主可知，贫僧为你已近魔障。",
+        "施主...能否听贫僧说几句心里话？"
+      ],
+      '默认': [
+        "我们...需要谈谈。",
+        "你最近是不是有什么瞒着我？",
+        "我有些话，不知当讲不当讲..."
+      ]
+    };
+    
+    const dialogs = highJealousyDialogs[trait] || highJealousyDialogs['默认'];
+    return dialogs[Math.floor(Math.random() * dialogs.length)];
+  }
+  
+  // 中醋（41-60）- 旁敲侧击，阴阳怪气
+  if (jealousy >= 41) {
+    const mediumJealousyDialogs = {
+      '病娇': [
+        "今天天气真好...适合和重要的人一起出游呢。你说是吗？",
+        "听说你最近交了新朋友？真好...能和我说说吗？",
+        "你最近...似乎很开心的样子。"
+      ],
+      '傲娇': [
+        "哼，你最近是不是很得意？",
+        "某人啊，最近可真忙呢。忙得连我都顾不上了。",
+        "也不知道是谁啊，整天神神秘秘的..."
+      ],
+      '高冷': [
+        "你似乎...心不在焉。",
+        "不必勉强陪我，我知道你还有别的事。",
+        "...随你吧。"
+      ],
+      '温柔': [
+        "你最近...是不是遇到了什么有趣的人？",
+        "能和我说说，你最近都在忙什么吗？",
+        "我这里有些茶点，是你喜欢的...虽然不知道你还记不记得..."
+      ],
+      '佛修': [
+        "施主最近...心绪似有波动？",
+        "贫僧感觉...施主与贫僧渐行渐远了。",
+        "施主可还记得...我们初次见面时的约定？"
+      ],
+      '默认': [
+        "最近见你的次数，似乎少了很多。",
+        "你是不是...有什么想和我说的？",
+        "有些事情，我憋在心里很久了..."
+      ]
+    };
+    
+    const dialogs = mediumJealousyDialogs[trait] || mediumJealousyDialogs['默认'];
+    return dialogs[Math.floor(Math.random() * dialogs.length)];
+  }
+  
+  // 微醋（21-40）- 小情绪，欲言又止
+  const lowJealousyDialogs = {
+    '病娇': [
+      "呐...你最近在忙什么呀？",
+      "今天有空陪我吗？好久没见你了...",
+      "你好像...变了一些？"
+    ],
+    '傲娇': [
+      "哼，你还知道来找我啊。",
+      "最近都不见你人影，死哪去了？",
+      "也、也不是很想你啦！只是...算了。"
+    ],
+    '高冷': [
+      "...你来了。",
+      "最近，还好吗？",
+      "...随意聊聊吧。"
+    ],
+    '温柔': [
+      "好久不见了...你还好吗？",
+      "我有些想你了...不知道你会不会觉得我烦...",
+      "能见到你真好..."
+    ],
+    '佛修': [
+      "施主近日可好？贫僧颇为挂念。",
+      "许久未见施主，贫僧心中略有不安。",
+      "施主...可否多陪贫僧片刻？"
+    ],
+    '默认': [
+      "最近都在忙什么？好久没这样聊天了。",
+      "见到你真好，最近有些想你。",
+      "你来了...我还以为你忘了我呢。"
+    ]
+  };
+  
+  const dialogs = lowJealousyDialogs[trait] || lowJealousyDialogs['默认'];
+  return dialogs[Math.floor(Math.random() * dialogs.length)];
+}
