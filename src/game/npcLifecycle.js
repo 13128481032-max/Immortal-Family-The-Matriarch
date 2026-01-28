@@ -1,7 +1,7 @@
 // src/game/npcLifecycle.js
 // NPC 生命周期系统：寿元、年龄、修为推进
 
-import { getTierConfig } from './cultivationSystem.js';
+import { getTierConfig, getNextTier } from './cultivationSystem.js';
 import { generateBreakthroughLog, generateNearDeathLog } from './npcLogSystem.js';
 
 /**
@@ -159,7 +159,9 @@ function attemptNpcBreakthrough(npc, player, year, month) {
   let updated = { ...npc };
   
   const tierConfig = getTierConfig(updated.tier);
-  if (!tierConfig || !tierConfig.nextTier) {
+  const nextTier = getNextTier(updated.tier);
+  
+  if (!tierConfig || !nextTier) {
     return { npc: updated, events };
   }
   
@@ -183,16 +185,15 @@ function attemptNpcBreakthrough(npc, player, year, month) {
   
   if (success) {
     // 突破成功
-    const nextTierConfig = getTierConfig(tierConfig.nextTier);
-    updated.tier = tierConfig.nextTier;
-    updated.tierTitle = tierConfig.nextTier; // 保持兼容性
+    updated.tier = nextTier.name;
+    updated.tierTitle = nextTier.name; // 保持兼容性
     updated.currentExp = 0;
-    updated.maxExp = nextTierConfig?.maxExp || 100;
+    updated.maxExp = nextTier.maxExp;
     
     // 境界突破增加寿命
     if (updated.stats) {
       let lifespanIncrease = 0;
-      const newTier = tierConfig.nextTier;
+      const newTier = nextTier.name;
       
       // 根据突破的境界增加不同的寿命
       if (newTier.includes('炼气')) {
@@ -203,6 +204,16 @@ function attemptNpcBreakthrough(npc, player, year, month) {
         lifespanIncrease = 200; // 金丹期每阶+200年
       } else if (newTier.includes('元婴')) {
         lifespanIncrease = 500; // 元婴期+500年
+      } else if (newTier.includes('化神')) {
+        lifespanIncrease = 1000; // 化神期+1000年
+      } else if (newTier.includes('炼虚')) {
+        lifespanIncrease = 2000; // 炼虚期+2000年
+      } else if (newTier.includes('合体')) {
+        lifespanIncrease = 5000; // 合体期+5000年
+      } else if (newTier.includes('大乘')) {
+        lifespanIncrease = 10000; // 大乘期+10000年
+      } else if (newTier.includes('渡劫')) {
+        lifespanIncrease = 50000; // 渡劫期+50000年
       }
       
       updated.stats = {
@@ -212,7 +223,7 @@ function attemptNpcBreakthrough(npc, player, year, month) {
     }
     
     // 更新战斗属性
-    if (updated.combatStats && nextTierConfig) {
+    if (updated.combatStats) {
       const hpBonus = Math.floor(updated.combatStats.maxHp * 0.5);
       const atkBonus = Math.floor(updated.combatStats.atk * 0.3);
       const defBonus = Math.floor((updated.combatStats.def || 0) * 0.2);
@@ -227,20 +238,20 @@ function attemptNpcBreakthrough(npc, player, year, month) {
     }
     
     // 生成突破成功日志
-    updated = generateBreakthroughLog(updated, player, year, month, true, tierConfig.nextTier);
+    updated = generateBreakthroughLog(updated, player, year, month, true, nextTier.name);
     
     events.push({
       type: 'NPC_BREAKTHROUGH',
       npcName: updated.name,
-      newTier: tierConfig.nextTier,
-      message: `${updated.name} 成功突破至 ${tierConfig.nextTier}！`
+      newTier: nextTier.name,
+      message: `${updated.name} 成功突破至 ${nextTier.name}！`
     });
   } else {
     // 突破失败：经验清零，从头开始
     updated.currentExp = 0;
     
     // 生成突破失败日志
-    updated = generateBreakthroughLog(updated, player, year, month, false, tierConfig.nextTier);
+    updated = generateBreakthroughLog(updated, player, year, month, false, nextTier.name);
     
     events.push({
       type: 'NPC_BREAKTHROUGH_FAIL',

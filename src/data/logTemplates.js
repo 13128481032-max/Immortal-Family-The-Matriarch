@@ -3,9 +3,9 @@
 
 // ==================== 一、交互日志模板 ====================
 
-// 1. 闲聊
+// 1. 闲聊（按性格和好感度分组）
 export const chatTemplates = {
-  // 按好感度分组
+  // 按好感度分组（通用版本）
   low: [
     "今日{playerName}与我攀谈，言谈间颇为生疏，我只是随意应付了几句。",
     "{playerName}又来找我闲聊，不知此人葫芦里卖的什么药？",
@@ -26,7 +26,147 @@ export const chatTemplates = {
   ]
 };
 
-// 2. 赠礼（喜欢）
+// 1.1 按性格区分的闲聊模板
+export const chatTemplatesByPersonality = {
+  "高冷": {
+    low: [
+      "{playerName}今日找我攀谈，我只是淡淡点头，未多言。",
+      "又是{playerName}...此人倒是锲而不舍，不过我并无闲谈之意。",
+      "{playerName}说了许多，我只是冷眼旁观，懒得搭理。"
+    ],
+    medium: [
+      "与{playerName}论道，{gender_ta}的见解虽不及我，但也算可圈可点。",
+      "{playerName}今日提出一个问题，倒是有些意思，我稍作解答。",
+      "难得{playerName}说了句有用的话，我多看了{gender_ta}一眼。"
+    ],
+    high: [
+      "今日{playerName}来访，我破例多谈了几句。{gender_ta}是少数能让我开口的人。",
+      "与{playerName}对坐，虽无言，却不觉尴尬。这种默契...难得。",
+      "{playerName}的话不多，但句句在理。我们心照不宣地点了点头。"
+    ]
+  },
+  "温柔": {
+    low: [
+      "{playerName}今日来访，虽不熟悉，我还是泡了茶款待。",
+      "与{playerName}聊了会儿，{gender_ta}看起来有些拘谨，我尽量让气氛轻松些。",
+      "{playerName}似乎有些紧张，我温和地笑笑，希望能让{gender_ta}放松。"
+    ],
+    medium: [
+      "今日与{playerName}闲聊，{gender_ta}分享的故事很有趣，我认真倾听。",
+      "{playerName}来访，我特意准备了糕点，看{gender_ta}吃得开心，我也很高兴。",
+      "与{playerName}越聊越投机，发现我们有很多共同话题呢。"
+    ],
+    high: [
+      "今日{playerName}又来了，我早已备好{gender_ta}喜欢的茶点。看{gender_ta}笑，我也跟着开心。",
+      "和{playerName}在一起的时光总是这么温暖，就像春日的阳光。",
+      "{playerName}今日看起来有些疲惫，我为{gender_ta}按摩肩膀，希望能帮{gender_ta}缓解。"
+    ]
+  },
+  "傲娇": {
+    low: [
+      "哼，{playerName}又来了。不是我想见{gender_ta}，只是...只是正好路过而已！",
+      "{playerName}居然主动找我说话，哼，看在{gender_ta}这么有诚意的份上，我就勉强应付几句吧。",
+      "才不是特意等{playerName}的！我只是刚好在这里！刚好而已！"
+    ],
+    medium: [
+      "今天{playerName}说的话还挺有意思的...才不是我觉得有趣！就是...就是随便听听而已！",
+      "{playerName}这个笨蛋，连这个都不懂。算了算了，我大发慈悲教教{gender_ta}吧！",
+      "哼！{playerName}今天表现还可以，勉强及格！（其实心里已经很满意了）"
+    ],
+    high: [
+      "今天{playerName}又来了...才、才不是因为高兴！我只是觉得...嗯...{gender_ta}来了也无妨...",
+      "{playerName}说想常来找我，我、我才不在乎！{gender_ta}来不来都行！（脸红）",
+      "笨蛋{playerName}！居然问我是不是喜欢和{gender_ta}聊天！谁、谁喜欢了！才没有！（心跳加速）"
+    ]
+  },
+  "病娇": {
+    low: [
+      "{playerName}...这个名字我记住了。{gender_ta}今日的一言一行，我都刻在心里。",
+      "第一次见{playerName}，{gender_ta}的眼神...我想占为己有。",
+      "{playerName}对我的态度还算客气，很好...{gender_ta}最好一直这样。"
+    ],
+    medium: [
+      "今日与{playerName}聊了很久，我悄悄记下了{gender_ta}的所有习惯...每一个细节我都不会放过。",
+      "{playerName}今日笑得很开心，那样的笑容...只有我能看到才对。",
+      "我开始期待{playerName}的每一次来访。{gender_ta}最好只找我，只看着我..."
+    ],
+    high: [
+      "今日{playerName}又来了，太好了...我最喜欢{gender_ta}了。{gender_ta}永远都不要离开我...",
+      "和{playerName}在一起的每一秒我都记得清清楚楚。{gender_ta}是我的，只能是我的...",
+      "{playerName}是不是也喜欢我？一定是的吧？那就永远和我在一起，不准看别人..."
+    ]
+  },
+  "正直": {
+    low: [
+      "今日{playerName}来访，虽不相识，但我以礼相待。待人以诚，是为正道。",
+      "{playerName}言谈举止尚算得体，不似邪魔外道。可以一谈。",
+      "与{playerName}论及修行之事，{gender_ta}虽有不解，但求知之心端正。"
+    ],
+    medium: [
+      "今日与{playerName}长谈，{gender_ta}心存正义，与我志同道合！",
+      "{playerName}提及路见不平之事，慷慨激昂，我深感认同。此乃同道中人！",
+      "与{playerName}越聊越投机，{gender_ta}的正直之心让我刮目相看。"
+    ],
+    high: [
+      "今日{playerName}又来了，我们畅谈人生理想和正道之义，真是难得的知己。",
+      "{playerName}对公平正义的追求与我不谋而合，有{gender_ta}这样的朋友，三生有幸！",
+      "与{playerName}论道至深夜，吾道不孤！有{gender_ta}在，何愁正道不兴！"
+    ]
+  },
+  "活泼": {
+    low: [
+      "嘿嘿，今天来了个新人{playerName}，看起来挺有趣的！",
+      "{playerName}今天找我聊天，虽然不太熟，但感觉还不错啦！",
+      "和{playerName}聊了几句，{gender_ta}笑起来还挺好看的呢！"
+    ],
+    medium: [
+      "哈哈！今天和{playerName}聊得超开心！{gender_ta}讲的那个笑话笑死我了！",
+      "{playerName}真好玩！我们约好下次一起去集市逛逛！期待期待！",
+      "今天和{playerName}玩了一天，好久没这么开心了！{gender_ta}真是个有趣的人！"
+    ],
+    high: [
+      "耶！{playerName}今天又来找我啦！我们聊了好多好多，永远聊不够！",
+      "和{playerName}在一起总是这么快乐！{gender_ta}懂我所有的梗，简直是灵魂伴侣！",
+      "{playerName}是我最好的朋友！不对，已经不止是朋友了吧...嘿嘿嘿~"
+    ]
+  },
+  "坚韧": {
+    low: [
+      "{playerName}今日来访，虽然话不多，但我能感受到{gender_ta}的诚意。",
+      "与{playerName}简单交谈，{gender_ta}言辞朴实，倒也实在。",
+      "{playerName}看起来是个踏实之人，值得结交。"
+    ],
+    medium: [
+      "今日与{playerName}聊及各自的经历，{gender_ta}的坚持让我动容。",
+      "{playerName}分享了{gender_ta}克服困难的故事，让我想起自己的过往。同是天涯人。",
+      "与{playerName}相谈甚欢，{gender_ta}那份不屈不挠的精神，与我相似。"
+    ],
+    high: [
+      "今日{playerName}又来了，我们谈到深夜。{gender_ta}是少数理解我的人。",
+      "与{playerName}互相勉励，无论前路多艰，有{gender_ta}并肩同行，我不觉孤单。",
+      "{playerName}说{gender_ta}会一直支持我。这份信任，我会用一生来回报。"
+    ]
+  },
+  "平和": {
+    low: [
+      "今日{playerName}来访，我以平常心待之，无喜无悲。",
+      "与{playerName}闲谈片刻，如清风拂面，淡然自得。",
+      "{playerName}言语有礼，举止得宜，是个有缘人。"
+    ],
+    medium: [
+      "今日与{playerName}品茗论道，心境愈发宁静。{gender_ta}的气息平和，与我相投。",
+      "{playerName}今日分享了{gender_ta}的感悟，让我也有所领悟。万法归一，心静则明。",
+      "与{playerName}相处越久，越觉投缘。{gender_ta}不争不抢，淡泊名利。"
+    ],
+    high: [
+      "今日{playerName}又来，我们无需多言，对坐品茶，便是最好的交流。",
+      "与{playerName}的情谊如细水长流，不急不躁，却绵延不绝。",
+      "{playerName}是我心灵的港湾。有{gender_ta}在，我的内心更加平静。"
+    ]
+  }
+};
+
+// 2. 赠礼（喜欢）- 通用版本
 export const giftLikeTemplates = [
   "今日{playerName}送了一份{giftName}给我，甚是欢喜，没想到{gender_ta}还记得我的喜好！",
   "{playerName}竟然送我{giftName}，此物我寻觅已久，{gender_ta}真是有心了。",
@@ -34,7 +174,7 @@ export const giftLikeTemplates = [
   "{giftName}正是我所需之物，{playerName}能送我此物，说明{gender_ta}必是打听过我的喜好。感激之余，又有些窃喜。"
 ];
 
-// 3. 赠礼（讨厌）
+// 3. 赠礼（讨厌）- 通用版本
 export const giftDislikeTemplates = [
   "{playerName}竟然送我{giftName}，此人莫不是来羞辱我的？真是不知所谓！",
   "今日{playerName}送来{giftName}，我最厌恶此物，{gender_ta}到底是真心还是故意为之？",
@@ -42,29 +182,249 @@ export const giftDislikeTemplates = [
   "{playerName}送的{giftName}让我哭笑不得，{gender_ta}难道完全不了解我吗？"
 ];
 
-// 4. 切磋（胜利）
+// 2.1 按性格区分的赠礼（喜欢）模板
+export const giftLikeTemplatesByPersonality = {
+  "高冷": [
+    "{playerName}送了{giftName}...我只是淡淡点了点头，不过...{gender_ta}有心了。",
+    "收到{giftName}，是我需要之物。{playerName}倒是细心。",
+    "{playerName}竟知道我喜欢{giftName}...哼，算{gender_ta}识货。"
+  ],
+  "温柔": [
+    "{playerName}送我{giftName}，真的太感谢了...{gender_ta}这么有心，我都不知道该怎么报答才好。",
+    "收到{playerName}的{giftName}，心里暖暖的。{gender_ta}总是这样温柔体贴。",
+    "{giftName}正是我想要的！{playerName}居然记得...我好开心，也好感动。"
+  ],
+  "傲娇": [
+    "哼！{playerName}送的{giftName}...我才不是因为高兴！只是...只是觉得还不错而已！",
+    "{giftName}...还算合我心意。{playerName}这次总算做对了一件事！（偷偷笑）",
+    "谁、谁稀罕{playerName}的{giftName}啊！不过既然{gender_ta}诚心诚意送了，我就勉强收下吧！"
+  ],
+  "病娇": [
+    "{playerName}送我{giftName}...这是{gender_ta}对我的爱吧？我要好好珍藏，永远不会丢掉...",
+    "收到{playerName}的{giftName}，我把它放在了最贴心的地方。这是我和{gender_ta}的羁绊...",
+    "{giftName}...{playerName}只送给我一个人吧？如果{gender_ta}还送给别人...我会很难过的。"
+  ],
+  "正直": [
+    "{playerName}赠我{giftName}，礼轻情意重！这份情谊我记在心中！",
+    "收到{playerName}的{giftName}，{gender_ta}的心意我领了。日后必有重谢！",
+    "{giftName}正是我所需！{playerName}真是雪中送炭！这份恩情我会铭记于心！"
+  ],
+  "活泼": [
+    "哇！{playerName}送我{giftName}啦！太开心了！谢谢谢谢！爱死{gender_ta}了！",
+    "啊啊啊！{giftName}！我超喜欢的！{playerName}你怎么知道的！你是我肚子里的蛔虫吗哈哈哈！",
+    "{playerName}送的{giftName}太棒了！我要把它带在身边到处炫耀！嘿嘿嘿！"
+  ],
+  "坚韧": [
+    "{playerName}送我{giftName}，虽然朴实，但我能感受到{gender_ta}的真心。这份情意，我记住了。",
+    "收到{playerName}的{giftName}，正是我所需。{gender_ta}的帮助，让我在艰难的道路上多了一份力量。",
+    "{giftName}...{playerName}一定是特意为我准备的。这份心意比礼物本身更重要。"
+  ],
+  "平和": [
+    "{playerName}赠我{giftName}，一切随缘，心怀感激。",
+    "收到{playerName}的{giftName}，不执于物，但念于情。谢过了。",
+    "{giftName}...{playerName}有心了。万物皆虚，唯情意真。"
+  ]
+};
+
+// 3.1 按性格区分的赠礼（讨厌）模板
+export const giftDislikeTemplatesByPersonality = {
+  "高冷": [
+    "{playerName}送的{giftName}...我最不喜欢此物。{gender_ta}这是故意的？",
+    "收到{giftName}，冷笑一声。{playerName}对我的了解还真是肤浅。",
+    "{giftName}...{playerName}的品味真是让人不敢恭维。"
+  ],
+  "温柔": [
+    "{playerName}送我{giftName}...虽然不太喜欢，但还是谢谢{gender_ta}的心意吧...",
+    "收到{playerName}的{giftName}，我勉强笑着接受。不想让{gender_ta}难堪，但...这真的不是我的菜。",
+    "{giftName}...我笑着收下了，但心里有些失落。{playerName}是不是不太了解我...？"
+  ],
+  "傲娇": [
+    "什、什么啊！{playerName}送的{giftName}我才不喜欢！笨蛋！大笨蛋！",
+    "{giftName}？谁要这种东西啊！{playerName}你是不是脑子有问题！气死我了！",
+    "哼！{playerName}居然送我{giftName}！我最讨厌这个了！{gender_ta}到底有没有用心啊！"
+  ],
+  "病娇": [
+    "{playerName}送的{giftName}...{gender_ta}是不是也送给别人了？为什么这么敷衍...我好难过...",
+    "收到{giftName}，强忍怒火。{playerName}...{gender_ta}是不是不在乎我了...？",
+    "{giftName}...我不想要这个...我只想要{playerName}的心...为什么{gender_ta}不懂...？"
+  ],
+  "正直": [
+    "{playerName}送我{giftName}...恕我直言，此物我实在不喜。希望{gender_ta}下次能更用心。",
+    "收到{playerName}的{giftName}，我直接说了，这不合我意。正直之人不说假话。",
+    "{giftName}？{playerName}，我不喜欢这个。请{gender_ta}下次不要再送了。"
+  ],
+  "活泼": [
+    "啊？{playerName}送的{giftName}？这个...呃...好吧...我勉强收下吧...（尴尬笑）",
+    "{giftName}啊...哈哈哈...{playerName}的品味还真是独特...嗯...谢谢啦...",
+    "噗！{playerName}送的{giftName}是什么鬼啊！哈哈哈笑死我了！{gender_ta}是认真的吗！"
+  ],
+  "坚韧": [
+    "{playerName}送的{giftName}...虽然不合心意，但我还是会收下。这是{gender_ta}的一份心意。",
+    "收到{playerName}的{giftName}，坦白说我不太喜欢。但我理解{gender_ta}的好意。",
+    "{giftName}...不是我想要的，但{playerName}既然送了，我就接受吧。"
+  ],
+  "平和": [
+    "{playerName}赠我{giftName}，虽非我所好，但心意已到。",
+    "收到{playerName}的{giftName}，不喜不怒，淡然处之。",
+    "{giftName}...非吾所爱，然{playerName}之情谊，吾已知晓。"
+  ]
+};
+
+// 4. 切磋(胜利)- 通用版本
 export const sparWinTemplates = [
-  "今日与{playerName}切磋，我略胜一筹。{gender_ta}的身法确实独特，值得我深思。",
-  "与{playerName}比试，我险胜半招。{gender_ta}实力不俗，下次若再交手，胜负难料。",
-  "切磋时{playerName}使出的那一招让我眼前一亮，虽然我最终获胜，但收获颇丰。",
-  "今日比武，{playerName}败于我手。不过{gender_ta}那股不服输的劲头倒是让我刮目相看。"
+  "今日与{playerName}切磋,我略胜一筹。{gender_ta}的身法确实独特,值得我深思。",
+  "与{playerName}比试,我险胜半招。{gender_ta}实力不俗,下次若再交手,胜负难料。",
+  "切磋时{playerName}使出的那一招让我眼前一亮,虽然我最终获胜,但收获颇丰。",
+  "今日比武,{playerName}败于我手。不过{gender_ta}那股不服输的劲头倒是让我刮目相看。"
 ];
 
-// 5. 切磋（失败）
+// 4.1 按性格区分的切磋(胜利)模板
+export const sparWinTemplatesByPersonality = {
+  "高冷": [
+    "今日与{playerName}切磋,我胜了。不过是预料之内。",
+    "{playerName}的招式尚可,但想要胜我,还远远不够。",
+    "比试结束,{playerName}败北。我只是淡淡点头,未发一言。"
+  ],
+  "温柔": [
+    "今日和{playerName}切磋,我好像赢了...希望{gender_ta}没有受伤,我已经留手了。",
+    "与{playerName}比试,最后是我赢了。但我更关心{gender_ta}是否安好。",
+    "{playerName}很努力了,只是这次运气不太好。我应该鼓励{gender_ta}才对。"
+  ],
+  "傲娇": [
+    "哼!跟{playerName}比当然是我赢啦!这不是很正常吗!(得意)",
+    "{playerName}这次输了呀~不过我不会取笑{gender_ta}的!我才不是那种人!(偶尔偏头笑)",
+    "哼哼~我就说嘛,{playerName}不是我的对手啦!不过{gender_ta}表现还算可以啦!"
+  ],
+  "病娇": [
+    "跟{playerName}切磋我赢了...看{gender_ta}输了还笑的样子,真可爱。我不会让{gender_ta}跟别人比试的...",
+    "我胜了{playerName}。{gender_ta}该不会因此离开我吧?不...{gender_ta}不会的,{gender_ta}是我的...",
+    "{playerName}输给我了,但{gender_ta}的每一个动作我都看在眼里,记在心里..."
+  ],
+  "正直": [
+    "今日与{playerName}切磋,我以正法取胜!光明磊落!",
+    "{playerName}实力不俗,但我更胜一筹。这是公平的比试!",
+    "比试中我获胜了,但{playerName}的武德值得称道!此乃真正的对手!"
+  ],
+  "活泼": [
+    "哈哈哈!我赢了{playerName}!超开心的!下次再来比试吧!",
+    "耶!跟{playerName}比试好好玩!虽然我赢了,但{gender_ta}也超厉害的!",
+    "{playerName}这次输给我啦!不过没关系,我们下次再比!期待期待!"
+  ],
+  "坚韧": [
+    "今日与{playerName}切磋,我用坚持和意志取得了胜利。",
+    "{playerName}很强,但我更加坚韧。这场胜利来之不易。",
+    "比试中我没有放弃,最终赢了{playerName}。这证明坚持是有意义的。"
+  ],
+  "平和": [
+    "与{playerName}切磋,我幸运取胜。胜负乃常事,心境不波。",
+    "{playerName}输了,但我不以此自得。一场比试而已,不足为惊。",
+    "今日一战,我赢了{playerName}。但我明白,山外有山,人外有人。"
+  ]
+};
+
+// 5. 切磋(失败)- 通用版本
 export const sparLoseTemplates = [
-  "今日与{playerName}切磋，我输了...{gender_ta}的实力比我想象中强得多。我要更加努力才行！",
-  "败在{playerName}手下，虽不甘心，但...确实痛快！{gender_ta}那一招我从未见过，我要想办法破解。",
-  "{playerName}今日将我击败，心中虽有不甘，但{gender_ta}确实技高一筹。我需要闭关苦修了。",
-  "与{playerName}比试落败，心中五味杂陈。{gender_ta}最后那一剑，竟让我有些心跳加速..."
+  "今日与{playerName}切磋,我输了...{gender_ta}的实力比我想象中强得多。我要更加努力才行!",
+  "败在{playerName}手下,虽不甘心,但...确实痛快!{gender_ta}那一招我从未见过,我要想办法破解。",
+  "{playerName}今日将我击败,心中虽有不甘,但{gender_ta}确实技高一筹。我需要闭关苦修了。",
+  "与{playerName}比试落败,心中五味杂陈。{gender_ta}最后那一剑,竟让我有些心跳加速..."
 ];
 
-// 6. 双修
+// 5.1 按性格区分的切磋(失败)模板
+export const sparLoseTemplatesByPersonality = {
+  "高冷": [
+    "今日输给了{playerName}...不过是技不如人,没什么好说的。下次不会了。",
+    "{playerName}的实力...我小看了。这次失败,我会铭记于心。",
+    "输了就是输了。{playerName},等我破境之日,再来战过。"
+  ],
+  "温柔": [
+    "今天输给{playerName}了...我还不够强呢。但{gender_ta}安慰我说我已经很棒了,真好。",
+    "跟{playerName}比试输了,虽然有点难过,但{gender_ta}真的很强。我会加油的。",
+    "{playerName}赢了我,我应该笑着祝贺{gender_ta}才对。不能让{gender_ta}觉得我在生气..."
+  ],
+  "傲娇": [
+    "输、输给{playerName}了...才不是因为不开心!(眼眶红了)",
+    "{playerName}这个笨蛋!居然赢了我!哼!下次我一定会赢回来的!(偷偷抹眼泪)",
+    "哼!我才、才不是输不起!只是{playerName}这次运气好而已!等着吧!"
+  ],
+  "病娇": [
+    "我输给{playerName}了...这样的{gender_ta}好强大。我更喜欢{gender_ta}了...我要变强,强到能保护{gender_ta}...",
+    "{playerName}赢了我,{gender_ta}的笑容好迷人...输给{gender_ta}也不错...",
+    "输了...但是和{playerName}比试的过程中,我们离得好近。{gender_ta}的气息...我都记住了..."
+  ],
+  "正直": [
+    "今日输给{playerName},技不如人无话可说。{gender_ta}实至名归!",
+    "{playerName}实力强劲,我输得服气!此乃真正的对手!",
+    "输了就是输了,我不找借口。{playerName},我会努力修炼,总有一天超过{gender_ta}!"
+  ],
+  "活泼": [
+    "呆呐!我竟然输给{playerName}了!不过好好玩啊!{gender_ta}超强的!",
+    "哇!{playerName}赢了!笑死我了!下次我一定要赢回来!加油!",
+    "{playerName}太厉害了!我以后也要像{gender_ta}一样强!请多指教!"
+  ],
+  "坚韧": [
+    "今日输给{playerName},但这不是结束。我会坚持下去,总有一天会赢。",
+    "{playerName}很强,但我不会放弃。这次的失败只会让我更加坚定。",
+    "输了就再来!我不会因为一次失败就放弃。{playerName},等着我!"
+  ],
+  "平和": [
+    "与{playerName}切磋,我输了。胜负乃常事,心境平和便好。",
+    "{playerName}赢了,我不以为耻。这只是修行路上的一场磨练。",
+    "输了就输了,无需执着。{playerName}教会了我很多,这就够了。"
+  ]
+};
+
+// 6. 双修 - 通用版本
 export const dualCultivationTemplates = [
-  "今夜与{playerName}双修，感觉灵气在经脉中流转顺畅，{gender_ta}的真元竟与我如此契合...",
-  "双修之时，{playerName}的气息温和纯净，让我感到前所未有的安心。",
-  "与{playerName}共修，不知不觉间竟已天明。{gender_ta}的修为又精进了，我也受益良多。",
-  "今日双修，{playerName}的真元几乎与我水乳交融，这种感觉...难以言喻。"
+  "今夜与{playerName}双修,感觉灵气在经脉中流转顺畅,{gender_ta}的真元竟与我如此契合...",
+  "双修之时,{playerName}的气息温和纯净,让我感到前所未有的安心。",
+  "与{playerName}共修,不知不觉间竟已天明。{gender_ta}的修为又精进了,我也受益良多。",
+  "今日双修,{playerName}的真元几乎与我水乳交融,这种感觉...难以言喻。"
 ];
+
+// 6.1 按性格区分的双修模板
+export const dualCultivationTemplatesByPersonality = {
+  "高冷": [
+    "与{playerName}双修,虽稀少,但效果显著。{gender_ta}是少数能让我放下防备的人。",
+    "今夜双修,{playerName}的真元与我契合。这种亲密...我允许的只有{gender_ta}。",
+    "{playerName}提议双修,我沉默片刻后点头。只有{gender_ta},我才会如此信任。"
+  ],
+  "温柔": [
+    "今夜和{playerName}双修,心跳得好快...但{gender_ta}很体贴,让我很安心。",
+    "双修之时,{playerName}轻轻握住我的手,说不用担心。那一刻,我觉得好幸福...",
+    "与{playerName}共修,{gender_ta}的温柔让我卸下了所有防备。这种亲密...真好。"
+  ],
+  "傲娇": [
+    "才、才不是我想和{playerName}双修!是{gender_ta}非要缠着我!我才不得已才答应的!",
+    "哼!双修而已,没什么大不了的!才不是因为{playerName}我才...(脸红)",
+    "{playerName}这个笨蛋!明明是{gender_ta}先提议的!我只是...(小声)只是不忍心拒绝{gender_ta}..."
+  ],
+  "病娇": [
+    "与{playerName}双修...我们的真元融合在一起,{gender_ta}就是我的,只能是我的...",
+    "今夜双修,{playerName}完全属于我。这种感觉...永远不要结束...",
+    "和{playerName}双修的时候,{gender_ta}就在我身边,谁也抢不走。这种独占...我好喜欢..."
+  ],
+  "正直": [
+    "与{playerName}双修,虽有些不自在,但{gender_ta}是我的道侣,这是我们共同修行的方式。",
+    "双修对修为增进有益,且{playerName}与我同为道侣,这是正当之事。",
+    "今日与{playerName}双修,我们共同精进。这是修真者的互助,也是道侣之间的信任。"
+  ],
+  "活泼": [
+    "哈哈哈!和{playerName}双修超有趣的!感觉修为增长很多呢!",
+    "今天和{playerName}一起双修啦!{gender_ta}的真元好温暖!感觉棒棒哒!",
+    "{playerName}说双修可以让我们都变强!太棒了!以后要经常一起双修!"
+  ],
+  "坚韧": [
+    "与{playerName}双修,过程虽艰,但效果显著。{gender_ta}的坚持和我一样。",
+    "双修之时,{playerName}和我都很专注。我们共同坚持,直到破晓。",
+    "今夜与{playerName}双修,我们都没有放弃。这种相互支持的感觉很好。"
+  ],
+  "平和": [
+    "与{playerName}双修,心境平和,真元交融自然而然。",
+    "双修之道,贵在心静。与{playerName}共修,如止水般宁静。",
+    "今夜与{playerName}双修,不急不躁,水到渠成。心境如一,便是最好的状态。"
+  ]
+};
 
 // 7. 男性决定怀孕（劝生成功后第一个月）
 export const malePregnancyDecisionTemplates = [
@@ -115,7 +475,7 @@ export const maleBirthTemplates = [
 
 // ==================== 二、重大状态变更日志模板 ====================
 
-// 1. 境界突破成功
+// 1. 境界突破成功 - 通用版本
 export const breakthroughSuccessTemplates = [
   "闭关三月，终于冲破瓶颈，踏入{newTier}！天道酬勤，我的努力没有白费！",
   "今日突破成功，迈入{newTier}！感受到体内灵力奔涌，仿佛脱胎换骨一般。",
@@ -124,13 +484,101 @@ export const breakthroughSuccessTemplates = [
   "突破的那一刻，雷劫降临，我硬抗下来了！如今已是{newTier}，距离那个目标又近了一步。"
 ];
 
-// 2. 境界突破失败
+// 1.1 按性格区分的突破成功模板
+export const breakthroughSuccessTemplatesByPersonality = {
+  "高冷": [
+    "踏入{newTier}，一切都在预料之中。",
+    "突破至{newTier}，不过是水到渠成罢了。",
+    "成为{newTier}修士，距离那个目标又近了。"
+  ],
+  "温柔": [
+    "终于突破到{newTier}了...好开心！要赶紧告诉{playerName}这个好消息！",
+    "成为{newTier}了，感谢一路上帮助过我的人。",
+    "突破成功了！{newTier}的境界比想象中更美妙，希望能帮到更多人。"
+  ],
+  "傲娇": [
+    "哼！{newTier}而已，对我来说轻而易举！才不是高兴呢！",
+    "突破到{newTier}了...不过这都是我实力的体现，完全在意料之中！",
+    "成为{newTier}了！看{playerName}还敢不敢小看我！哼！"
+  ],
+  "病娇": [
+    "终于突破到{newTier}了...这样我就能更好地保护{playerName}了...",
+    "成为{newTier}，距离能独占{playerName}的那天又近了一步...",
+    "突破成功...{playerName}会为我高兴吧？{gender_ta}一定要第一个知道..."
+  ],
+  "正直": [
+    "今日突破至{newTier}，实力提升，但也要时刻警醒，不可迷失于力量之中！",
+    "成为{newTier}了！这份力量我要用来匡扶正义，绝不能误入歧途！",
+    "踏入{newTier}境界，我发誓要用这份力量守护正道！"
+  ],
+  "活泼": [
+    "哇！我突破到{newTier}啦！太棒了！要庆祝一下！",
+    "耶！成为{newTier}了！我超厉害的！哈哈哈！",
+    "突破成功！{newTier}的感觉好神奇啊！我爱修炼！"
+  ],
+  "坚韧": [
+    "终于...经过无数次失败，我终于突破到{newTier}了。坚持是值得的。",
+    "踏入{newTier}境界。这证明了我的坚持没有错。",
+    "突破到{newTier}，每一次挫折都是通往成功的垫脚石。"
+  ],
+  "平和": [
+    "水到渠成，今日成{newTier}。心境如一，不骄不躁。",
+    "突破至{newTier}，顺其自然。修行之路，本就如此。",
+    "迈入{newTier}境界，心境依旧平和。境界虽变，初心不改。"
+  ]
+};
+
+// 2. 境界突破失败 - 通用版本
 export const breakthroughFailTemplates = [
   "该死！明明只差一线，为何灵气突然逆流？咳咳...看来又要修养数月了。",
   "尝试突破失败，经脉受损。这次失败让我明白，修炼不可急躁。",
   "突破失败，心魔反噬...我差点走火入魔。看来我的道心还不够坚定。",
   "冲击{targetTier}失败，灵力在关键时刻紊乱。或许是我准备不足，需要更多时间沉淀。"
 ];
+
+// 2.1 按性格区分的突破失败模板
+export const breakthroughFailTemplatesByPersonality = {
+  "高冷": [
+    "突破失败...不过是一次挫折罢了。下次会成功的。",
+    "失败了。看来我还需要更多时间准备。",
+    "突破未成。只是时机未到，无需多虑。"
+  ],
+  "温柔": [
+    "突破失败了...有点难过，但没关系，我会继续努力的。",
+    "这次没能突破成功...不过至少我尽力了。下次一定可以。",
+    "失败了...身体好疼。但不能放弃，还要继续加油。"
+  ],
+  "傲娇": [
+    "可恶！居然失败了！这、这只是意外！下次我一定会成功的！",
+    "突破失败...哼！这不算什么！我才不会气馁呢！",
+    "失败了...才、才不是因为难过！我只是...需要休息一下而已！"
+  ],
+  "病娇": [
+    "突破失败了...{playerName}会不会嫌弃我太弱...",
+    "失败了...如果这样会被{playerName}抛弃，那我...",
+    "没能突破...我必须更强，强到能让{playerName}只看我一个人..."
+  ],
+  "正直": [
+    "突破失败，是我准备不足。这次的教训我会铭记于心！",
+    "失败了...技不如天，无话可说。我会继续努力！",
+    "突破未成，但我不会放弃。正道修士岂能因一次失败而气馁！"
+  ],
+  "活泼": [
+    "哎呀！突破失败了！不过没关系，下次再来！加油加油！",
+    "失败了呢~有点可惜！但我不会放弃的！",
+    "突破没成功...呜呜呜...不过我很快就会振作的！"
+  ],
+  "坚韧": [
+    "突破失败...不过失败只会让我更强。我会再来的。",
+    "又失败了一次...但我不会放弃。坚持到底就是胜利。",
+    "失败是成功之母。这次的失败会成为下次成功的养分。"
+  ],
+  "平和": [
+    "突破未成，顺其自然。强求不得，待时机成熟自会水到渠成。",
+    "失败了，但心境不乱。修行路漫漫，此乃常事。",
+    "突破失败，心境依旧平和。失败亦是修行的一部分。"
+  ]
+};
 
 // 3. 结婚
 export const marriageTemplates = [
@@ -347,21 +795,122 @@ export const sceneryTemplates = [
 
 // ==================== 五、辅助函数 ====================
 
+// 导入统一的数组辅助函数
+import { randomPick } from '../utils/arrayHelpers';
+
+// 重新导出以保持向后兼容
+export { randomPick };
+
 /**
- * 随机从数组中选择一个元素
+ * 根据好感度和性格获取闲聊模板
  */
-export function randomPick(arr) {
-  if (!arr || arr.length === 0) return null;
-  return arr[Math.floor(Math.random() * arr.length)];
+export function getChatTemplateByAffection(affection, personality = null) {
+  let level = 'low';
+  if (affection < 30) level = 'low';
+  else if (affection < 70) level = 'medium';
+  else level = 'high';
+  
+  // 如果有性格且存在对应的性格模板,优先使用性格化模板
+  if (personality && chatTemplatesByPersonality[personality]) {
+    const personalityTemplates = chatTemplatesByPersonality[personality][level];
+    if (personalityTemplates && personalityTemplates.length > 0) {
+      return randomPick(personalityTemplates);
+    }
+  }
+  
+  // 降级到通用模板
+  return randomPick(chatTemplates[level]);
 }
 
 /**
- * 根据好感度获取对应的闲聊模板
+ * 根据性格获取赠礼(喜欢)模板
  */
-export function getChatTemplateByAffection(affection) {
-  if (affection < 30) return randomPick(chatTemplates.low);
-  if (affection < 70) return randomPick(chatTemplates.medium);
-  return randomPick(chatTemplates.high);
+export function getGiftLikeTemplate(personality = null) {
+  if (personality && giftLikeTemplatesByPersonality[personality]) {
+    const templates = giftLikeTemplatesByPersonality[personality];
+    if (templates && templates.length > 0) {
+      return randomPick(templates);
+    }
+  }
+  return randomPick(giftLikeTemplates);
+}
+
+/**
+ * 根据性格获取赠礼(讨厌)模板
+ */
+export function getGiftDislikeTemplate(personality = null) {
+  if (personality && giftDislikeTemplatesByPersonality[personality]) {
+    const templates = giftDislikeTemplatesByPersonality[personality];
+    if (templates && templates.length > 0) {
+      return randomPick(templates);
+    }
+  }
+  return randomPick(giftDislikeTemplates);
+}
+
+/**
+ * 根据性格获取切磋(胜利)模板
+ */
+export function getSparWinTemplate(personality = null) {
+  if (personality && sparWinTemplatesByPersonality[personality]) {
+    const templates = sparWinTemplatesByPersonality[personality];
+    if (templates && templates.length > 0) {
+      return randomPick(templates);
+    }
+  }
+  return randomPick(sparWinTemplates);
+}
+
+/**
+ * 根据性格获取切磋(失败)模板
+ */
+export function getSparLoseTemplate(personality = null) {
+  if (personality && sparLoseTemplatesByPersonality[personality]) {
+    const templates = sparLoseTemplatesByPersonality[personality];
+    if (templates && templates.length > 0) {
+      return randomPick(templates);
+    }
+  }
+  return randomPick(sparLoseTemplates);
+}
+
+/**
+ * 根据性格获取双修模板
+ */
+export function getDualCultivationTemplate(personality = null) {
+  if (personality && dualCultivationTemplatesByPersonality[personality]) {
+    const templates = dualCultivationTemplatesByPersonality[personality];
+    if (templates && templates.length > 0) {
+      return randomPick(templates);
+    }
+  }
+  return randomPick(dualCultivationTemplates);
+}
+
+/**
+ * 根据性格获取突破成功模板
+ */
+export function getBreakthroughSuccessTemplate(personality = null) {
+  if (personality && breakthroughSuccessTemplatesByPersonality[personality]) {
+    const templates = breakthroughSuccessTemplatesByPersonality[personality];
+    if (templates && templates.length > 0) {
+      return randomPick(templates);
+    }
+  }
+  return randomPick(breakthroughSuccessTemplates);
+}
+
+/**
+ * 根据性格获取突破失败模板
+ */
+export function getBreakthroughFailTemplate(personality = null) {
+  if (personality && breakthroughFailTemplatesByPersonality[personality]) {
+    const templates = breakthroughFailTemplatesByPersonality[personality];
+    if (templates && templates.length > 0) {
+      return randomPick(templates);
+    }
+  }
+  return randomPick(breakthroughFailTemplates);
 }
 
 /**

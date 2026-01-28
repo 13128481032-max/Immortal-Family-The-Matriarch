@@ -412,10 +412,8 @@ export const getEventPoolByType = (type) => {
   return pools[type] || [];
 };
 
-/**
- * 随机选择一个模板
- */
-export const randomPick = (array) => {
-  if (!array || array.length === 0) return null;
-  return array[Math.floor(Math.random() * array.length)];
-};
+// 导入统一的数组辅助函数
+import { randomPick } from '../utils/arrayHelpers';
+
+// 重新导出以保持向后兼容
+export { randomPick };

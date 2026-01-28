@@ -28,7 +28,7 @@ export function spreadRumor(player, cost = 50) {
   }
   
   // 扣除资源
-  player.resources.spiritStones -= cost;
+  player.resources.spiritStones = Math.max(0, player.resources.spiritStones - cost);
   
   // 计算成功率（基础60%，花费越多成功率越高，最高90%）
   const successRate = Math.min(0.9, 0.6 + (cost / 200));
@@ -111,7 +111,7 @@ export function hideFromRival(player, months = 1, costPerMonth = 30) {
   }
   
   // 扣除资源
-  player.resources.spiritStones -= totalCost;
+  player.resources.spiritStones = Math.max(0, player.resources.spiritStones - totalCost);
   
   // 大幅降低威胁度
   const threatReduction = 40 * months;
@@ -157,13 +157,21 @@ export function finalDuel(player) {
     };
   }
   
-  // 简单战力计算
-  const playerPower = player.currentExp + (player.combatStats?.atk || 50) * 10;
-  const rivalPower = rival.currentExp + 500; // 宿敌有额外加成
+  // 使用更合理的战力计算
+  // 玩家战力：修为 + 战斗属性加成
+  const playerPower = player.currentExp + 
+    (player.combatStats?.atk || 50) * 10 + 
+    (player.combatStats?.def || 20) * 5 +
+    (player.stats?.aptitude || 10) * 20;
+  
+  // 宿敌战力：修为 + 高资质加成（80资质）+ 特殊体质加成
+  const rivalBasePower = rival.currentExp + 
+    80 * 20 + // 高资质加成
+    500; // 天灵根和特殊体质的基础加成
   
   // 考虑谣言的削弱效果（每次谣言-5%战力）
   const rivalDebuff = 1 - (rival.rumorCount * 0.05);
-  const finalRivalPower = rivalPower * Math.max(0.5, rivalDebuff);
+  const finalRivalPower = rivalBasePower * Math.max(0.5, rivalDebuff);
   
   const playerWinRate = playerPower / (playerPower + finalRivalPower);
   const isVictory = Math.random() < playerWinRate;

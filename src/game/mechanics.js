@@ -87,6 +87,21 @@ export const generateChild = (mother, father, currentYear) => {
   
   if (father.constitution) variance += 5; // 良性变异加成
   
+  // 变异灵根遗传：父母有变异灵根时，子嗣有概率继承
+  let inheritedMutant = false;
+  const motherHasMutant = mother.spiritRoot?.type === '变异灵根';
+  const fatherHasMutant = father.spiritRoot?.type === '变异灵根';
+  
+  if (motherHasMutant && Math.random() < 0.2) {
+    // 20%概率遗传母亲的变异灵根
+    variance += 30; // 提升资质到变异灵根范围（80-89）
+    inheritedMutant = true;
+  } else if (fatherHasMutant && Math.random() < 0.2) {
+    // 20%概率遗传父亲的变异灵根
+    variance += 30;
+    inheritedMutant = true;
+  }
+  
   const finalApt = Math.max(1, Math.min(100, Math.floor(baseApt + variance)));
 
   // 2. 容貌计算
@@ -394,7 +409,20 @@ export const processChildrenGrowth = (children, playerResources) => {
         const parentApt = newChild.stats?.aptitude || 50;
         const spouseApt = newChild.spouse?.stats?.aptitude || newChild.spouse?.aptitude || 50;
         const baseApt = (parentApt + spouseApt) / 2;
-        const variance = Math.floor(Math.random() * 31) - 15;
+        let variance = Math.floor(Math.random() * 31) - 15;
+        
+        // 变异灵根遗传：父母有变异灵根时，孙辈有概率继承
+        const parentHasMutant = newChild.spiritRoot?.type === '变异灵根';
+        const spouseHasMutant = newChild.spouse?.spiritRoot?.type === '变异灵根';
+        
+        if (parentHasMutant && Math.random() < 0.2) {
+          // 20%概率遗传父亲的变异灵根
+          variance += 30; // 提升资质到变异灵根范围（80-89）
+        } else if (spouseHasMutant && Math.random() < 0.2) {
+          // 20%概率遗传母亲的变异灵根
+          variance += 30;
+        }
+        
         const finalApt = Math.max(1, Math.min(100, Math.floor(baseApt + variance)));
         
         // 计算孙子容貌
@@ -407,12 +435,9 @@ export const processChildrenGrowth = (children, playerResources) => {
         const spouseInt = newChild.spouse.stats?.intelligence || newChild.spouse.intelligence || 50;
         const finalInt = Math.max(1, Math.min(100, Math.floor((parentInt + spouseInt) / 2 + (Math.random()*10 - 5))));
         
-        // 生成灵根
-        const spiritRoot = generateSpiritRootDetails(finalApt);
-        
-        // 计算战斗属性
+        // 计算战斗属性（凡人）
         const emptyEquip = { weapon: null, armor: null, accessory: null };
-        const combatStats = calculateStats("凡人", finalApt, spiritRoot.type, emptyEquip);
+        const combatStats = calculateStats("凡人", finalApt, null, emptyEquip);
         
         // 生成孙子
         const grandchildGender = Math.random() > 0.5 ? "男" : "女";
@@ -435,7 +460,7 @@ export const processChildrenGrowth = (children, playerResources) => {
             looks: finalLooks,
             intelligence: finalInt
           },
-          spiritRoot: spiritRoot,
+          spiritRoot: null, // 出生时未知灵根，6岁测灵时才生成
           cultivationMethod: 'basic_breath', // 初始修炼吐纳法
           equipment: emptyEquip,
           combatStats: combatStats,

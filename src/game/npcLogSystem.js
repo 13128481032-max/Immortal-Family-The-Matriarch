@@ -3,16 +3,16 @@
 
 import {
   getChatTemplateByAffection,
-  giftLikeTemplates,
-  giftDislikeTemplates,
-  sparWinTemplates,
-  sparLoseTemplates,
-  dualCultivationTemplates,
+  getGiftLikeTemplate,
+  getGiftDislikeTemplate,
+  getSparWinTemplate,
+  getSparLoseTemplate,
+  getDualCultivationTemplate,
+  getBreakthroughSuccessTemplate,
+  getBreakthroughFailTemplate,
   malePregnancyDecisionTemplates,
   malePregnancyMonthlyTemplates,
   maleBirthTemplates,
-  breakthroughSuccessTemplates,
-  breakthroughFailTemplates,
   marriageTemplates,
   childbornTemplates,
   nearDeathTemplates,
@@ -139,7 +139,8 @@ export function generateFirstMeetLog(npc, player, year, month) {
  */
 export function generateChatLog(npc, player, year, month) {
   const affection = npc.relationship?.affection || 0;
-  const template = getChatTemplateByAffection(affection);
+  const personality = npc.personality?.label || null;
+  const template = getChatTemplateByAffection(affection, personality);
   const content = fillTemplate(template, npc, player);
   
   return addNpcLog(npc, year, month, content, LOG_TYPE.INTERACTION);
@@ -149,8 +150,8 @@ export function generateChatLog(npc, player, year, month) {
  * 生成赠礼日志
  */
 export function generateGiftLog(npc, player, year, month, giftName, isLiked) {
-  const templates = isLiked ? giftLikeTemplates : giftDislikeTemplates;
-  const template = randomPick(templates);
+  const personality = npc.personality?.label || null;
+  const template = isLiked ? getGiftLikeTemplate(personality) : getGiftDislikeTemplate(personality);
   const content = fillTemplate(template, npc, player, { giftName });
   
   return addNpcLog(npc, year, month, content, LOG_TYPE.INTERACTION);
@@ -160,8 +161,8 @@ export function generateGiftLog(npc, player, year, month, giftName, isLiked) {
  * 生成切磋日志
  */
 export function generateSparLog(npc, player, year, month, npcWon) {
-  const templates = npcWon ? sparWinTemplates : sparLoseTemplates;
-  const template = randomPick(templates);
+  const personality = npc.personality?.label || null;
+  const template = npcWon ? getSparWinTemplate(personality) : getSparLoseTemplate(personality);
   const content = fillTemplate(template, npc, player);
   
   return addNpcLog(npc, year, month, content, LOG_TYPE.INTERACTION);
@@ -171,7 +172,8 @@ export function generateSparLog(npc, player, year, month, npcWon) {
  * 生成双修日志
  */
 export function generateDualCultivationLog(npc, player, year, month) {
-  const template = randomPick(dualCultivationTemplates);
+  const personality = npc.personality?.label || null;
+  const template = getDualCultivationTemplate(personality);
   const content = fillTemplate(template, npc, player);
   
   // 双修日志标记为私密
@@ -276,8 +278,10 @@ export function generateMaleBirthLog(npc, player, year, month, childName) {
  * 生成突破日志
  */
 export function generateBreakthroughLog(npc, player, year, month, success, newTier) {
-  const templates = success ? breakthroughSuccessTemplates : breakthroughFailTemplates;
-  const template = randomPick(templates);
+  const personality = npc.personality?.label || null;
+  const template = success 
+    ? getBreakthroughSuccessTemplate(personality) 
+    : getBreakthroughFailTemplate(personality);
   const content = fillTemplate(template, npc, player, { 
     newTier: newTier || '未知境界',
     targetTier: newTier || '更高境界'
@@ -359,11 +363,12 @@ export function generateDailyLog(npc, player, year, month) {
   const isSpouse = npc.relationship?.stage >= 3; // 假设 stage 3 表示道侣
   
   // 权重系统：决定这个月 NPC 主要在做什么
+  // 增加性格权重,使性格对日志内容的影响更大
   const weights = {
     relationship: 0, // 提及玩家
-    identity: 30,    // 身份相关活动
-    personality: 20, // 性格相关活动
-    event: 15,       // 特殊事件（任务、探险等）
+    identity: 20,    // 身份相关活动（降低）
+    personality: 35, // 性格相关活动（大幅提升！）
+    event: 10,       // 特殊事件（降低）
     scenery: 35      // 通用场景/无事发生
   };
   
