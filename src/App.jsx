@@ -22,10 +22,20 @@ import {
   generateMaleBirthLog,
   generateFirstMeetLog,
   generateJealousyLog,
-  generatePleasePlanLog
+  generatePleasePlanLog,
+  generateMarriageLog
 } from './game/npcLogSystem.js';
 // 引入记忆系统
 import MemoryManager from './game/memoryManager.js';
+// 引入文本引擎（已整合）
+import { 
+  getChatText, 
+  getGiftReaction, 
+  getPersuadeText, 
+  createMonkScriptureEvent, 
+  getRandomInteractionEvent, 
+  getUnifiedInteractionEvent 
+} from './game/textEngine.js';
 // 引入生命周期系统
 import { 
   processNpcLifecycles, 
@@ -72,21 +82,22 @@ import InventoryModal from './components/Modals/InventoryModal.jsx';
 import ChildSelectorModal from './components/Modals/ChildSelectorModal.jsx';
 import NpcLogModal from './components/Modals/NpcLogModal.jsx'; // NPC 日志模态框
 import GazetteModal from './components/GazetteModal/index.jsx'; // 修真界邸报弹窗
-// 引入文本引擎
-import { getChatText, getGiftReaction, getPersuadeText, createMonkScriptureEvent, getRandomInteractionEvent, getUnifiedInteractionEvent } from './game/textEngine.js';
 // 引入邸报系统
 import { generateGazette, pushToNewsBuffer } from './game/gazetteSystem.js';
 // 引入世界名人池系统
 import { generateWorldElites, evolveWorldNpcs, findEliteByCondition, getEliteRanking } from './game/worldNpcGenerator.js';
+// 引入功法系统
+import { assignSectManual, changeManual, getRecommendedManuals } from './game/manualSystem.js';
+// 引入存档系统
+import { saveGameToStorage, loadGameFromStorage, hasSaveFile, clearSave } from './utils/saveSystem.js';
 // 引入数据和逻辑
 import { initialPlayer } from './data/initialPlayer.js';
 import { initialNpcs } from './data/npcPool.js';
-import { generateChild, processChildrenGrowth, generateSpouse, generateSpouseCandidates, calculateChildFeedback, attemptBreakthrough, calculateBusinessIncome, exploreRealm } from './game/mechanics.js';
+import { generateChild, processChildrenGrowth, generateSpouse, generateSpouseCandidates, calculateChildFeedback, attemptBreakthrough, calculateBusinessIncome } from './game/mechanics.js';
 import { getTierConfig, calculateStats, getRootConfigByValue, MUTANT_ELEMENTS, ELEMENTS, getSectById, calculateCultivationSpeed } from './game/cultivationSystem.js';
 import { generateRandomNpc } from './game/npcGenerator.js'; // 引入生成器
 import { calculateCombatPower } from './game/challengeSystem.js'; // 复用战力计算
-import { simulateCombat } from './game/combatEngine.js'; // 引入战斗引擎
-import { saveGameToStorage, loadGameFromStorage } from './utils/saveSystem.js';
+import { simulateCombat } from './game/combatEngine.js'; // 战斗引擎仍在使用中
 import { getRandomEvent } from './data/eventLibrary.js'; // 引入随机事件生成函数
 import CombatModal from './components/Modals/CombatModal.jsx'; // 引入战斗弹窗组件
 import ExplorationModal from './components/ExplorationModal/index.jsx'; // 新增：探险模态
@@ -96,7 +107,6 @@ import TutorialModal from './components/Modals/TutorialModal.jsx'; // 引入新�
 import SectSelectionModal from './components/Modals/SectSelectionModal.jsx';
 import { createItemInstance, isEquipment, getItemTemplate } from './data/itemLibrary.js';
 import { MANUALS } from './data/manualData.js'; // 引入功法数据
-import { changeManual } from './game/manualSystem.js'; // 引入功法更换系统
 import { generateMonthlyWorldEvents, generatePlayerRelatedEvent } from './game/worldEventsSystem.js'; // 引入世界事件系统
 
 // 排序配置
@@ -131,12 +141,10 @@ function App() {
   const [children, setChildren] = useState([]);
   const [inventory, setInventory] = useState([]); // 全局背包
   
-  // 2. 新增：宿敌状态
+  // 2. 新增：宿敌状态（使用player.rival字段，这里只是备用）
   const [rival, setRival] = useState({
     name: "楚清瑶",
     tier: "炼气八层", // 天灵根，开局更强
-    combatPower: 1200,
-    threat: 30, // 初始威胁
     status: "alive", // alive | defeated
     logs: ["楚清瑶觉醒天灵根，震惊全城。", "楚清瑶夺走了你的筑基丹。", "楚清瑶成为了家族重点培养对象。"]
   });
@@ -483,11 +491,23 @@ function App() {
         currentExp: (p.currentExp || 0) + (playerWon ? 3 : 5) // 切磋获得经验
       }));
       
+      // === 使用textEngine生成切磋文本 ===
+      // 原代码保留作为备份：
+      // showResult(
+      //   playerWon ? '切磋胜利' : '切磋落败',
+      //   playerWon 
+      //     ? `你在切磋中战胜了 ${targetNpc.name}，${targetNpc.gender === '女' ? '她' : '他'}对你心服口服。`
+      //     : `你在切磋中败给了 ${targetNpc.name}，但你从中学到了很多。`,
+      //   true,
+      //   { 好感: playerWon ? 3 : 5, 经验: playerWon ? 3 : 5 }
+      // );
+      
+      const sparEvent = getUnifiedInteractionEvent(targetNpc, player, 'SPAR');
       showResult(
         playerWon ? '切磋胜利' : '切磋落败',
-        playerWon 
+        sparEvent.description || (playerWon 
           ? `你在切磋中战胜了 ${targetNpc.name}，${targetNpc.gender === '女' ? '她' : '他'}对你心服口服。`
-          : `你在切磋中败给了 ${targetNpc.name}，但你从中学到了很多。`,
+          : `你在切磋中败给了 ${targetNpc.name}，但你从中学到了很多。`),
         true,
         { 好感: playerWon ? 3 : 5, 经验: playerWon ? 3 : 5 }
       );
@@ -522,7 +542,7 @@ function App() {
       // 双修消耗灵石
       const cost = 50;
       if (player.resources.spiritStones < cost) {
-        showResult('灵石不足', `双修需要消耗 ${cost} 灵石来布置阵法`, false);
+        showResult('灵石不足', `双修需要消耗 ${cost} 灵石来布置阵法，当前灵石: ${player.resources.spiritStones}`, false);
         return;
       }
       
@@ -550,7 +570,7 @@ function App() {
         ...p,
         resources: {
           ...p.resources,
-          spiritStones: p.resources.spiritStones - cost
+          spiritStones: Math.max(0, p.resources.spiritStones - cost)
         },
         // 玩家获得修为
         currentExp: (p.currentExp || 0) + baseGain
@@ -834,7 +854,12 @@ function App() {
     
     const change = Math.min(baseChange, 50); // 最多50好感
     
-    const msg = `你将 ${item.name} 赠予 ${npc.name}，${npc.gender === '女' ? '她' : '他'}${change > 15 ? '欣喜若狂' : change > 8 ? '非常高兴' : '表示感谢'}！`;
+    // === 使用textEngine生成赠礼反应 ===
+    // 原代码保留作为备份：
+    // const msg = `你将 ${item.name} 赠予 ${npc.name}，${npc.gender === '女' ? '她' : '他'}${change > 15 ? '欣喜若狂' : change > 8 ? '非常高兴' : '表示感谢'}！`;
+    
+    const giftReaction = getGiftReaction(npc, item, player);
+    const msg = giftReaction.description || `你将 ${item.name} 赠予 ${npc.name}，${npc.gender === '女' ? '她' : '他'}${change > 15 ? '欣喜若狂' : change > 8 ? '非常高兴' : '表示感谢'}！`;
 
     // 3. 更新 NPC 数据
     setActiveNpcs(prev => prev.map(n => {
@@ -956,11 +981,11 @@ function App() {
     // 1. 扣除消耗
     const cost = 10;
     if (player.resources.spiritStones < cost) {
-      showResult("灵石不足", `下山采购需要 ${cost} 灵石`, false);
+      showResult("灵石不足", `下山采购需要 ${cost} 灵石，当前灵石: ${player.resources.spiritStones}`, false);
       return;
     }
     
-    setPlayer(p => ({ ...p, resources: { ...p.resources, spiritStones: p.resources.spiritStones - cost } }));
+    setPlayer(p => ({ ...p, resources: { ...p.resources, spiritStones: Math.max(0, p.resources.spiritStones - cost) } }));
     
     // 2. 随机生成3-5个商品
     const itemCount = 3 + Math.floor(Math.random() * 3);
@@ -1053,8 +1078,13 @@ function App() {
 
   // 3. 保留原有的外出游历逻辑（用于情缘面板）
   const handleExplore = () => {
-    // 1. 扣除消耗
-    setPlayer(p => ({ ...p, resources: { ...p.resources, spiritStones: p.resources.spiritStones - 5 } }));
+    // 1. 检查并扣除消耗
+    const cost = 5;
+    if (player.resources.spiritStones < cost) {
+      showResult("灵石不足", `外出游历需要 ${cost} 灵石，当前灵石: ${player.resources.spiritStones}`, false);
+      return;
+    }
+    setPlayer(p => ({ ...p, resources: { ...p.resources, spiritStones: Math.max(0, p.resources.spiritStones - cost) } }));
     
     // 2. 概率判定
     if (Math.random() < 0.4) { // 提高一点概率方便测试
@@ -1166,31 +1196,63 @@ function App() {
 
   // --- 存档逻辑 ---
   const handleSave = () => {
+    // === 使用saveSystem统一管理存档 ===
+    // 原代码保留作为备份：
+    // const gameState = {
+    //   player,
+    //   children,
+    //   activeNpcs,
+    //   deadNpcs,
+    //   gameStage,
+    //   logs,
+    //   inventory,
+    //   messages: messageManager.toJSON(),
+    //   lastMessageCheck,
+    // };
+    // return saveGameToStorage(gameState);
+    
     const gameState = {
       player,
       children,
       activeNpcs,
-      deadNpcs, // 新增：保存死亡NPC列表
-      rival,
+      deadNpcs,
       gameStage,
       logs,
       inventory,
-      messages: messageManager.toJSON(), // 保存消息中心数据
-      lastMessageCheck, // 保存消息检查记录
-      // 可以在这里加更多，比如 businesses 如果它是独立状态的话
+      messages: messageManager.toJSON(),
+      lastMessageCheck,
+      // 新增：保存更多游戏状态
+      pendingSectChoices,
+      testQueue,
+      worldEvents: player.worldEvents || [],
+      newsBuffer: player.newsBuffer || []
     };
-    return saveGameToStorage(gameState);
+    
+    const result = saveGameToStorage(gameState);
+    if (result.success) {
+      alert(`游戏已保存！\\n保存时间：${result.time}`);
+    } else {
+      alert('保存失败：' + (result.error?.message || '未知错误'));
+    }
+    return result;
   };
 
   const handleLoad = () => {
+    // === 使用saveSystem统一管理读档 ===
+    // 原代码保留作为备份（见上方handleSave注释）
+    
     const savedData = loadGameFromStorage();
-    if (savedData) {
+    if (!savedData) {
+      alert('没有找到存档！');
+      return;
+    }
+    
+    try {
       // 恢复数据
       setPlayer(savedData.player);
       setChildren(savedData.children || []);
       setActiveNpcs(savedData.activeNpcs || []);
-      setDeadNpcs(savedData.deadNpcs || []); // 新增：恢复死亡NPC列表
-      setRival(savedData.rival);
+      setDeadNpcs(savedData.deadNpcs || []);
       setGameStage(savedData.gameStage || 'MAIN');
       setLogs(savedData.logs || []);
       setInventory(savedData.inventory || []);
@@ -1204,9 +1266,23 @@ function App() {
         setLastMessageCheck(savedData.lastMessageCheck);
       }
       
-      // 读档后通常需要重置一些UI状态
-      setIsAuto(false); 
-      alert("读取成功！欢迎回来，道友。");
+      // 恢复其他状态
+      if (savedData.pendingSectChoices) {
+        setPendingSectChoices(savedData.pendingSectChoices);
+      }
+      if (savedData.testQueue) {
+        setTestQueue(savedData.testQueue);
+      }
+      
+      // 读档后重置UI状态
+      setIsAuto(false);
+      setSelectedChild(null);
+      setModalState({ type: null, data: null });
+      
+      alert(`读取成功！欢迎回来，道友。\\n存档时间：${savedData.saveDate || '未知'}`);
+    } catch (error) {
+      console.error('读档失败:', error);
+      alert('读档失败：数据可能已损坏');
     }
   };
 
@@ -1218,31 +1294,66 @@ function App() {
   // --- 逻辑 B: 处理复仇行动 ---
   const handleRevengeAction = (action) => {
     if (action === 'SABOTAGE') {
-      if (player.resources.spiritStones < 50) return alert("灵石不足！");
-      setPlayer(p => ({...p, resources: {...p.resources, spiritStones: p.resources.spiritStones - 50}}));
-      setRival(r => ({
-        ...r,
-        combatPower: Math.max(0, r.combatPower - 100),
-        logs: [`你散布的谣言让楚清瑶心境受损，修为倒退。`, ...r.logs]
+      const cost = 50;
+      if (player.resources.spiritStones < cost) {
+        showResult("灵石不足", `散布谣言需要 ${cost} 灵石，当前灵石: ${player.resources.spiritStones}`, false);
+        return;
+      }
+      setPlayer(p => ({...p, resources: {...p.resources, spiritStones: Math.max(0, p.resources.spiritStones - cost)}}));
+      // 散布谣言削弱宿敌修为
+      setPlayer(prev => ({
+        ...prev,
+        rival: {
+          ...prev.rival,
+          currentExp: Math.max(0, (prev.rival?.currentExp || 0) - 100)
+        }
       }));
-      showResult("行动成功", "楚清瑶在家族中受到了长老的训斥。", true);
+      showResult("行动成功", "楚清瑶在家族中受到了长老的训斥，修为受损。", true);
     }
     else if (action === 'DEFEND') {
-      if (player.resources.spiritStones < 20) return alert("灵石不足！");
-      setPlayer(p => ({...p, resources: {...p.resources, spiritStones: p.resources.spiritStones - 20}}));
-      setRival(r => ({ ...r, threat: Math.max(0, r.threat - 20) }));
+      const cost = 20;
+      if (player.resources.spiritStones < cost) {
+        showResult("灵石不足", `布置防御需要 ${cost} 灵石，当前灵石: ${player.resources.spiritStones}`, false);
+        return;
+      }
+      setPlayer(p => ({...p, resources: {...p.resources, spiritStones: Math.max(0, p.resources.spiritStones - cost)}}));
+      // 注意：应该使用 player.rival.threatLevel，这个rival状态已废弃
+      setPlayer(prev => ({
+        ...prev,
+        rival: {
+          ...prev.rival,
+          threatLevel: Math.max(0, (prev.rival?.threatLevel || 0) - 20)
+        }
+      }));
       showResult("隐匿成功", "你更换了藏身之处，暂时避开了楚家的耳目。", true);
     }
     else if (action === 'DUEL') {
       const myCP = calculateCombatPower(player);
-      if (myCP > rival.combatPower) {
-        setRival(r => ({ ...r, status: "defeated" }));
+      // 计算宿敌战力
+      const rivalEntity = {
+        currentExp: player.rival?.currentExp || 300,
+        stats: { aptitude: 80 },
+        constitution: true
+      };
+      const rivalCP = calculateCombatPower(rivalEntity);
+      
+      if (myCP > rivalCP) {
+        // 更新player.rival状态为已死亡
+        setPlayer(prev => ({
+          ...prev,
+          rival: {
+            ...prev.rival,
+            isDead: true,
+            state: "DEAD",
+            threatLevel: 0
+          }
+        }));
         showResult("大仇得报！", "在决战中，你一剑刺穿了楚清瑶的气海。看着她难以置信的眼神，你终于夺回了属于你的一切！", true, null, false);
         addLog("【结局】你击败了宿敌楚清瑶，心魔尽去，大道可期！");
       } else {
         // 失败惩罚：重伤掉修为
         setPlayer(p => ({ ...p, currentExp: 0, stats: {...p.stats, health: 10} }));
-        showResult("战败", "你技不如人，重伤逃遁，修为尽失！", false);
+        showResult("战败", "你技不如人，重伤遁逃，修为尽失！", false);
       }
     }
   };
@@ -1264,6 +1375,12 @@ function App() {
 
     // 检查是否满足境界要求
     // 这里简化处理，实际应该比较境界等级
+    
+    // 检查灵石是否足够
+    if (player.resources.spiritStones < biz.cost) {
+      showResult("灵石不足", `购买${biz.name}需要 ${biz.cost} 灵石，当前灵石: ${player.resources.spiritStones}`, false);
+      return;
+    }
 
     // 计算收益 (基础收益 * (1 + 掌柜智力/100))
     const manager = children.find(c => c.id === childId);
@@ -1274,7 +1391,7 @@ function App() {
       ...prev,
       resources: {
         ...prev.resources,
-        spiritStones: prev.resources.spiritStones - biz.cost
+        spiritStones: Math.max(0, prev.resources.spiritStones - biz.cost)
       },
       businesses: [
         ...prev.businesses,
@@ -1307,23 +1424,47 @@ function App() {
   const handleExploreRealm = (realm, team) => {
     // 检查灵石
     if (player.resources.spiritStones < realm.cost) {
-      showResult("探索失败", "灵石不足", false);
+      showResult("探索失败", `探索${realm.name}需要 ${realm.cost} 灵石，当前灵石: ${player.resources.spiritStones}`, false);
       return;
     }
 
+    // === 🆕 优化探险事件生成 ===
+    // 原代码保留作为备份：
+    // const firstEvent = getRandomExplorationEvent({ realmId: realm.id, progress: 1 });
+    
     // 扣费并初始化探险状态机
     setPlayer(prev => ({
       ...prev,
-      resources: { ...prev.resources, spiritStones: prev.resources.spiritStones - realm.cost }
+      resources: { ...prev.resources, spiritStones: Math.max(0, prev.resources.spiritStones - realm.cost) }
     }));
 
     setExploreRealmState({ id: realm.id, name: realm.name, total: 10 });
     setExploreTeamIds(team);
     setExploreProgress(1);
-    setExploreLog([`你踏入【${realm.name}】的边缘，小心翼翼前行。`]);
-    const firstEvent = getRandomExplorationEvent({ realmId: realm.id, progress: 1 });
+    
+    // 生成更详细的探险日志
+    const teamNames = team.map(id => children.find(c => c.id === id)?.name).filter(Boolean).join('、');
+    const startLog = `【${realm.name}】探险开始！队伍成员：${teamNames || '独自一人'}`;
+    setExploreLog([
+      startLog,
+      `你踏入【${realm.name}】的边缘，感受到浓郁的灵气扑面而来。`,
+      `秘境难度：${realm.difficulty}，推荐战力：${realm.recommendCP}`
+    ]);
+    
+    // 使用explorationEvents生成首个事件，传入完整上下文
+    const firstEvent = getRandomExplorationEvent({ 
+      realmId: realm.id, 
+      progress: 1,
+      player,
+      inventory,
+      team
+    });
+    
     setCurrentExploreEvent(firstEvent);
     setIsExploring(true);
+    
+    // 记录探险日志到主日志
+    addLog(startLog, 'exploration');
   };
 
   // 处理测灵完成
@@ -1383,6 +1524,7 @@ function App() {
           newSkillPoints += 1;
           
           // 生成男性分娩日志（重大事件，私密）
+          // 注：玩家是女性，攻略对象都是男修，所以只有男性会生子
           let updatedNpc = generateMaleBirthLog(npc, player, Math.floor(player.age), player.time.month, child.name);
           
           // 🆕 记录记忆：生子里程碑
@@ -1574,18 +1716,24 @@ function App() {
       }
     }
     
-    // 4. 旧版宿敌系统（保留兼容）
-    if (rival.status === 'alive') {
+    // 4. 宿敌系统 - 威胁度增长和杀手追杀
+    if (!player.rival?.isDead) {
       // 庶妹是天灵根绝世天才，成长速度极快
       const growth = 20 + Math.floor(Math.random() * 30);
-      let newThreat = rival.threat + 2; // 威胁增长快一点
+      const currentThreat = player.rival?.threatLevel || 0;
+      let newThreat = currentThreat + 2; // 威胁增长快一点
 
-      // 触发战斗：威胁度 >= 100
-      if (newThreat >= 100) {
+      // 触发战斗：威胁度必须 == 100（满值）才触发
+      if (newThreat >= 100 && currentThreat < 100) {
          if (isAutoMode) setIsAuto(false); // 强制暂停
          
-         // 1. 构造敌人实体 (简单将战力转化为攻防)
-         const enemyCombatPower = rival.combatPower || 100; // 确保有默认值
+         // 1. 构造敌人实体 - 使用calculateCombatPower动态计算战力
+         const rivalEntity = {
+           currentExp: player.rival?.currentExp || 300,
+           stats: { aptitude: 80 }, // 高资质
+           constitution: true // 特殊体质加成
+         };
+         const enemyCombatPower = calculateCombatPower(rivalEntity);
          const enemyStats = {
            name: "杀手首领",
            combatStats: {
@@ -1622,18 +1770,30 @@ function App() {
 
          // 暂时不在这里结算资源扣除，等玩家在弹窗点“确定”
          // 这里只重置威胁度，防止连续触发
-         setRival(prev => ({ ...prev, threat: 0 }));
+         setPlayer(prev => ({
+           ...prev,
+           rival: {
+             ...prev.rival,
+             threatLevel: 0
+           }
+         }));
          
          // return; // 如果想完全阻断本月后续逻辑，可以return，但建议继续运行
       } else {
-         // 没满100，正常更新
-         setRival(prev => ({
-           ...prev,
-           combatPower: prev.combatPower + growth,
-           threat: Math.min(100, newThreat),
-           // 简单模拟境界提升
-           tier: prev.combatPower > 20000 ? "金丹初期" : (prev.combatPower > 5000 ? "筑基后期" : prev.tier)
-         }));
+         // 没满100，正常更新宿敌修为和威胁度
+         setPlayer(prev => {
+           const newExp = (prev.rival?.currentExp || 0) + growth;
+           return {
+             ...prev,
+             rival: {
+               ...prev.rival,
+               currentExp: newExp,
+               threatLevel: Math.min(100, newThreat),
+               // 简单模拟境界提升
+               tier: newExp > 20000 ? "金丹初期" : (newExp > 5000 ? "筑基后期" : (prev.rival?.tier || "炼气初期"))
+             }
+           };
+         });
       }
     }
 
@@ -2040,6 +2200,12 @@ function App() {
           }
         );
         
+        // === 🆕 自动分配宗门功法 ===
+        const manualMessage = assignSectManual(updated, sectObj.name);
+        if (manualMessage) {
+          addLog(manualMessage, 'cultivation');
+        }
+        
         return recalcCombatStatsWithEquip(updated);
       }
       return c;
@@ -2121,6 +2287,18 @@ function App() {
         );
         if (parentNpc) {
           MemoryManager.onChildMarriage(parentNpc, c, selectedSpouse.name);
+          // 🆕 为父母 NPC 生成结婚日志
+          const updatedParentNpc = generateMarriageLog(
+            parentNpc, 
+            player, 
+            Math.floor(player.age), 
+            player.time.month, 
+            selectedSpouse.name
+          );
+          // 更新 activeNpcs 中的父母 NPC
+          setActiveNpcs(npcs => npcs.map(n => 
+            n.id === parentNpc.id ? updatedParentNpc : n
+          ));
         }
         
         return { ...c, spouse: selectedSpouse };
@@ -2128,7 +2306,12 @@ function App() {
       return c;
     }));
 
-    setPlayer(p => ({...p, resources: {...p.resources, spiritStones: p.resources.spiritStones - 500}}));
+    const cost = 500;
+    if (player.resources.spiritStones < cost) {
+      showResult("灵石不足", `安排婚事需要 ${cost} 灵石，当前灵石: ${player.resources.spiritStones}`, false);
+      return;
+    }
+    setPlayer(p => ({...p, resources: {...p.resources, spiritStones: Math.max(0, p.resources.spiritStones - cost)}}));
     addLog(`💍 花费500灵石，为 ${marryingChild.name} 选择了 ${selectedSpouse.name} 作为配偶，家族开枝散叶指日可待！`);
     
     // 关闭弹窗并清空状态
@@ -2199,9 +2382,13 @@ function App() {
 
     // 2. 赐予丹药 (花钱换修为)
     if (actionType === 'FEED_PILL') {
-      if (player.resources.spiritStones < 100) return showResult("失败", "灵石不足 100", false);
+      const cost = 100;
+      if (player.resources.spiritStones < cost) {
+        showResult("失败", `赐予丹药需要 ${cost} 灵石，当前灵石: ${player.resources.spiritStones}`, false);
+        return;
+      }
 
-      setPlayer(p => ({...p, resources: {...p.resources, spiritStones: p.resources.spiritStones - 100}}));
+      setPlayer(p => ({...p, resources: {...p.resources, spiritStones: Math.max(0, p.resources.spiritStones - cost)}}));
       setChildren(prev => prev.map(c => {
         if (c.id === childId) {
           const gain = 500 * (1 + c.stats.aptitude / 100); // 资质越高，吸收越好
@@ -2225,9 +2412,13 @@ function App() {
 
     // 3. 亲自教导 (花钱换资质)
     if (actionType === 'EDUCATE') {
-      if (player.resources.spiritStones < 50) return showResult("失败", "灵石不足 50", false);
+      const cost = 50;
+      if (player.resources.spiritStones < cost) {
+        showResult("失败", `亲自教导需要 ${cost} 灵石，当前灵石: ${player.resources.spiritStones}`, false);
+        return;
+      }
 
-      setPlayer(p => ({...p, resources: {...p.resources, spiritStones: p.resources.spiritStones - 50}}));
+      setPlayer(p => ({...p, resources: {...p.resources, spiritStones: Math.max(0, p.resources.spiritStones - cost)}}));
       setChildren(prev => prev.map(c => {
         if (c.id === childId) {
           const gain = 1;
@@ -2286,6 +2477,34 @@ function App() {
         }
         return prev;
       });
+    }
+    
+    // === 🆕 6. 更换功法 ===
+    if (actionType === 'CHANGE_MANUAL') {
+      // 打开功法选择界面（可以通过modal实现）
+      // 这里先实现一个简单版本：显示推荐功法列表
+      const child = children.find(c => c.id === childId);
+      if (!child) return;
+      
+      const recommended = getRecommendedManuals(child.spiritRoot);
+      
+      if (recommended.length === 0) {
+        showResult('无可用功法', '当前没有适合的功法可供选择', false);
+        return;
+      }
+      
+      // TODO: 这里应该打开一个功法选择modal
+      // 暂时实现为自动选择最推荐的功法
+      const bestManual = recommended[0];
+      const result = changeManual(child, bestManual.id);
+      
+      if (result.success) {
+        setChildren(prev => prev.map(c => c.id === childId ? child : c));
+        setSelectedChild(prev => prev && prev.id === childId ? child : prev);
+        showResult('更换功法', result.message, true, { 契合度: result.compatibility });
+      } else {
+        showResult('更换失败', result.message, false);
+      }
     }
   };
 
@@ -2958,7 +3177,7 @@ function App() {
                               ...p,
                               resources: {
                                 ...p.resources,
-                                spiritStones: p.resources.spiritStones - item.price
+                                spiritStones: Math.max(0, p.resources.spiritStones - item.price)
                               }
                             }));
                             
@@ -3347,21 +3566,7 @@ function App() {
             } else if (outcome.type === 'LOG' || outcome.type === 'NONE') {
               setExploreLog(prev => [...prev, outcome.msg || '你谨慎推进。']);
             }
-            
-            // 选择完选项后自动推进到下一个事件
-            setTimeout(() => {
-              if (exploreProgress >= exploreRealmState.total) {
-                setExploreLog(prev => [...prev, '你抵达秘境尽头，带着满载的收获离开。']);
-                setIsExploring(false);
-                showResult('探索结束', '你顺利通关，满载而归！', true, null, false);
-                return;
-              }
-              const next = exploreProgress + 1;
-              setExploreProgress(next);
-              const ev = next === exploreRealmState.total ? getBossEvent(exploreRealmState.id) : getRandomExplorationEvent({ realmId: exploreRealmState.id, progress: next });
-              setCurrentExploreEvent(ev);
-              setExploreLog(prev => [...prev, `你继续深入 (${next}/${exploreRealmState.total})。`]);
-            }, 500);
+            // 不再自动推进，由组件内部的结果弹窗控制
           }}
           onStartCombat={() => {
             const enemy = generateRealmEnemy(exploreRealmState.id, exploreProgress);
