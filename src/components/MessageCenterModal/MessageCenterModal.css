@@ -69,12 +69,13 @@
 }
 
 /* 分类标签 */
-.message-center-modal {
-  background: linear-gradient(135deg, #F4EEE6 0%, #EFE6D8 100%);
+.message-filters {
+  display: flex;
   gap: 12px;
   padding: 16px 24px;
   border-bottom: 1px solid rgba(139, 69, 19, 0.15);
   background: rgba(255, 255, 255, 0.3);
+  flex-wrap: wrap;
 }
 
 .filter-btn {
@@ -100,22 +101,19 @@
   border-color: #8b4513;
   box-shadow: 0 2px 8px rgba(139, 69, 19, 0.3);
 }
-.message-center-header {
+
+/* 消息内容区 */
+.message-center-content {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 2px solid rgba(107,81,58,0.12);
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), transparent);
+  flex: 1;
+  overflow: hidden;
 }
 
-.message-center-header h2 {
-  margin: 0;
-  font-size: 24px;
-  color: #6B513A;
-  font-weight: 600;
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
-}
+/* 消息列表 */
+.message-list {
+  width: 40%;
+  overflow-y: auto;
+  border-right: 2px solid rgba(139, 69, 19, 0.2);
 }
 
 .message-list::-webkit-scrollbar {
@@ -442,9 +440,31 @@
     width: 95%;
     height: 85vh;
     max-height: 85vh;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    border-radius: 8px;
+  }
+
+  .message-center-header {
+    padding: 16px 20px;
+  }
+
+  .message-center-header h2 {
+    font-size: 20px;
+  }
+
+  .close-btn {
+    font-size: 20px;
+    padding: 2px 6px;
+  }
+
+  .message-filters {
+    padding: 12px 16px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 6px 12px;
+    font-size: 13px;
   }
 
   .message-center-content {
@@ -453,21 +473,88 @@
 
   .message-list {
     width: 100%;
-    height: 40%;
+    height: 35%;
+    min-height: 200px;
     border-right: none;
     border-bottom: 2px solid rgba(139, 69, 19, 0.2);
   }
 
+  .message-item {
+    padding: 12px;
+  }
+
+  .message-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .message-sender {
+    font-size: 13px;
+  }
+
+  .message-type-label {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+
+  .message-title {
+    font-size: 12px;
+  }
+
+  .message-time {
+    font-size: 11px;
+  }
+
   .message-reader {
-    height: 60%;
+    height: 65%;
   }
 
   .reader-content {
-    padding: 20px;
+    padding: 16px;
+  }
+
+  .reader-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .reader-header h3 {
+    font-size: 18px;
+  }
+
+  .reader-meta {
+    font-size: 12px;
   }
 
   .message-content {
     font-size: 14px;
     line-height: 1.8;
+  }
+
+  .reader-actions {
+    padding-top: 12px;
+    gap: 8px;
+  }
+
+  .action-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .reader-placeholder p:first-child {
+    font-size: 48px;
+  }
+
+  .reader-placeholder p:last-child {
+    font-size: 14px;
+  }
+
+  .empty-message p:first-child {
+    font-size: 36px;
+  }
+
+  .empty-message p:last-child {
+    font-size: 12px;
   }
 }

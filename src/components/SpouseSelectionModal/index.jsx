@@ -1,6 +1,6 @@
 // src/components/SpouseSelectionModal/index.jsx
 import React from 'react';
-import Avatar from '../Avatar';
+import Avatar from '../Common/Avatar';
 
 const SpouseSelectionModal = ({ child, candidates, onSelect, onClose }) => {
   if (!candidates || candidates.length === 0) return null;

@@ -15,6 +15,8 @@ const ExplorationModal = ({
   const [hoveredOption, setHoveredOption] = useState(null);
   const [hoveredBtn, setHoveredBtn] = useState(null);
   const [animate, setAnimate] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const [resultMessage, setResultMessage] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -49,21 +51,36 @@ const ExplorationModal = ({
 
   const progressPercent = ((progress / total) * 100).toFixed(0);
 
-  // 当玩家选择一个选项后，自动执行并进入下一步
+  // 当玩家选择一个选项后，显示结果弹窗
   const handleOptionSelect = (opt) => {
+    setResultMessage(opt.label);
+    setShowResult(true);
     onSelectOption(opt);
-    // 延迟一小段时间让玩家看到选择结果，然后自动前进
-    setTimeout(() => {
-      onNext();
-    }, 800);
   };
 
-  // 当战斗开始后，也自动前进
-  const handleCombatStart = () => {
-    onStartCombat();
+  // 确认结果后继续前进
+  const handleConfirmResult = () => {
+    setShowResult(false);
+    setResultMessage('');
     setTimeout(() => {
       onNext();
-    }, 800);
+    }, 300);
+  };
+
+  // 当战斗开始后，显示结果并前进
+  const handleCombatStart = () => {
+    setResultMessage('战斗开始！');
+    setShowResult(true);
+    onStartCombat();
+  };
+
+  // 战斗结果确认后继续
+  const handleCombatResultConfirm = () => {
+    setShowResult(false);
+    setResultMessage('');
+    setTimeout(() => {
+      onNext();
+    }, 300);
   };
 
   return (
@@ -178,6 +195,30 @@ const ExplorationModal = ({
         </div>
       </div>
 
+      {/* 结果显示弹窗 */}
+      {showResult && (
+        <div style={styles.resultOverlay}>
+          <div style={styles.resultBox}>
+            <div style={styles.resultIcon}>✨</div>
+            <div style={styles.resultTitle}>选择结果</div>
+            <div style={styles.resultMessage}>
+              {log && log.length > 0 ? log[log.length - 1] : resultMessage}
+            </div>
+            <button
+              style={{
+                ...styles.resultBtn,
+                ...(hoveredBtn === 'result' ? styles.resultBtnHover : {})
+              }}
+              onMouseEnter={() => setHoveredBtn('result')}
+              onMouseLeave={() => setHoveredBtn(null)}
+              onClick={handleConfirmResult}
+            >
+              继续探索
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 添加CSS动画 */}
       <style>{`
         @keyframes slideIn {
@@ -198,6 +239,27 @@ const ExplorationModal = ({
           to {
             opacity: 1;
             transform: translateX(0);
+          }
+        }
+        @keyframes popIn {
+          0% {
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        @keyframes bounce {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-10px);
           }
         }
       `}</style>
@@ -355,7 +417,7 @@ const styles = {
     textAlign: 'left'
   },
   optionBtnHover: {
-    borderColor: '#4299e1',
+    border: '2px solid #4299e1',
     background: '#ebf8ff',
     transform: 'translateX(4px)',
     boxShadow: '0 4px 12px rgba(66, 153, 225, 0.15)'
@@ -420,7 +482,69 @@ const styles = {
   },
   exitBtnHover: {
     background: '#e2e8f0',
-    borderColor: '#94a3b8'
+    border: '1px solid #94a3b8'
+  },
+  resultOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0, 0, 0, 0.6)',
+    backdropFilter: 'blur(2px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    borderRadius: '16px'
+  },
+  resultBox: {
+    background: 'linear-gradient(135deg, #ffffff, #f0f9ff)',
+    borderRadius: '16px',
+    padding: '32px',
+    maxWidth: '400px',
+    width: '90%',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    textAlign: 'center',
+    animation: 'popIn 0.3s ease-out',
+    border: '2px solid #3b82f6'
+  },
+  resultIcon: {
+    fontSize: '48px',
+    marginBottom: '16px',
+    animation: 'bounce 0.6s ease-in-out'
+  },
+  resultTitle: {
+    fontSize: '20px',
+    fontWeight: 'bold',
+    color: '#1e40af',
+    marginBottom: '16px'
+  },
+  resultMessage: {
+    fontSize: '15px',
+    color: '#475569',
+    lineHeight: 1.8,
+    marginBottom: '24px',
+    padding: '16px',
+    background: 'rgba(59, 130, 246, 0.08)',
+    borderRadius: '8px',
+    border: '1px solid rgba(59, 130, 246, 0.2)'
+  },
+  resultBtn: {
+    padding: '12px 32px',
+    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '16px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+  },
+  resultBtnHover: {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 6px 20px rgba(59, 130, 246, 0.4)'
   }
 };
 
